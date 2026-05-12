@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+    />
+    <meta name="theme-color" content="#11151d" />
+    <title>Starbound Orders</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main id="app-shell">
+      <canvas id="bevy-canvas" tabindex="0"></canvas>
+
+      <section id="top-panel" aria-label="狀態">
+        <div>
+          <strong>Starbound Orders</strong>
+          <span>MVP v0.1</span>
+        </div>
+        <div class="resource-row">
+          <span>Credits</span>
+          <output id="credits">450</output>
+        </div>
+        <output id="command-status">啟動中...</output>
+        <output id="perf-stats">-- FPS / -- ms</output>
+        <output id="focus-status" hidden>背景節流中</output>
+      </section>
+
+      <section id="mission-panel" aria-label="任務">
+        <div class="mission done">探索核心星區</div>
+        <div class="mission">探索 3 個星區</div>
+        <div class="mission">完成第一筆礦物銷售</div>
+      </section>
+
+      <nav id="control-panel" aria-label="控制">
+        <button type="button" data-command="toggle_pause" data-label="暫停">暫停</button>
+        <button type="button" data-command="speed_1" data-label="1x">1x</button>
+        <button type="button" data-command="speed_3" data-label="3x">3x</button>
+        <button type="button" data-command="save" data-label="儲存">儲存</button>
+        <button type="button" data-command="select_scout" data-label="選 Scout">選 Scout</button>
+        <button type="button" data-command="enter_north_gate" data-label="進入北門">進入北門</button>
+        <button type="button" data-command="reset" data-label="重置">重置</button>
+      </nav>
+    </main>
+
+    <script type="module" src="./bootstrap.js"></script>
+  </body>
+</html>
