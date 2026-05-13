@@ -12,6 +12,7 @@ const missionPanel = document.getElementById("mission-panel");
 const moreControls = document.getElementById("more-controls");
 const pinchDebugMarker = document.getElementById("pinch-debug-marker");
 const pinchDebugLabel = document.getElementById("pinch-debug-label");
+const bevyCanvas = document.getElementById("bevy-canvas");
 let lastCommandAt = 0;
 let lastShownEvent = "";
 let lastShownPerf = "";
@@ -187,6 +188,38 @@ function updatePinchDebugMarker(debug) {
     const dy = debug.y - debug.start_y;
     pinchDebugLabel.textContent = `縮放中心 ${Math.round(debug.x)},${Math.round(debug.y)} · 起點偏移 ${Math.round(dx)},${Math.round(dy)}`;
   }
+}
+
+function publishClientPinchDebug(debug) {
+  const value = JSON.stringify(debug);
+  localStorage.setItem("starbound_orders_pinch_debug", value);
+  lastShownPinchDebug = value;
+  updatePinchDebugMarker(debug);
+}
+
+bevyCanvas?.addEventListener("touchmove", (event) => {
+  if (event.touches.length < 2) {
+    return;
+  }
+  const first = event.touches[0];
+  const second = event.touches[1];
+  const midpoint = {
+    x: (first.clientX + second.clientX) * 0.5,
+    y: (first.clientY + second.clientY) * 0.5,
+  };
+  publishClientPinchDebug({
+    active: true,
+    x: midpoint.x,
+    y: midpoint.y,
+    start_x: midpoint.x,
+    start_y: midpoint.y,
+  });
+}, { passive: true });
+
+for (const eventName of ["touchend", "touchcancel"]) {
+  bevyCanvas?.addEventListener(eventName, () => {
+    publishClientPinchDebug({ active: false, x: 0, y: 0, start_x: 0, start_y: 0 });
+  }, { passive: true });
 }
 
 setInterval(() => {
