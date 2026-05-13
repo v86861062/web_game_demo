@@ -8,7 +8,7 @@
     />
     <meta name="theme-color" content="#11151d" />
     <title>Starbound Orders</title>
-    <link rel="stylesheet" href="./styles.css?v=pinch-sector-debug-20260513" />
+    <link rel="stylesheet" href="./styles.css?v=pinch-finger-debug-20260513" />
   </head>
   <body>
     <main id="app-shell">
@@ -24,6 +24,22 @@
       <div id="pinch-sector-debug-marker" aria-hidden="true">
         <span></span>
         <output id="pinch-sector-debug-label">青色：最近星區中心</output>
+      </div>
+      <div id="pinch-finger-one-marker" class="pinch-finger-marker finger-one" aria-hidden="true">
+        <span></span>
+        <output id="pinch-finger-one-label">手指 1</output>
+      </div>
+      <div id="pinch-finger-one-anchor-marker" class="pinch-finger-anchor-marker finger-one" aria-hidden="true">
+        <span></span>
+        <output id="pinch-finger-one-anchor-label">手指 1 地圖點</output>
+      </div>
+      <div id="pinch-finger-two-marker" class="pinch-finger-marker finger-two" aria-hidden="true">
+        <span></span>
+        <output id="pinch-finger-two-label">手指 2</output>
+      </div>
+      <div id="pinch-finger-two-anchor-marker" class="pinch-finger-anchor-marker finger-two" aria-hidden="true">
+        <span></span>
+        <output id="pinch-finger-two-anchor-label">手指 2 地圖點</output>
       </div>
 
       <section id="top-panel" aria-label="狀態">
@@ -70,6 +86,6 @@
       </nav>
     </main>
 
-    <script type="module" src="./bootstrap.js?v=pinch-sector-debug-20260513"></script>
+    <script type="module" src="./bootstrap.js?v=pinch-finger-debug-20260513"></script>
   </body>
 </html>

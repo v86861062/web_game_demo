@@ -25,6 +25,14 @@ const pinchAnchorDebugMarker = document.getElementById("pinch-anchor-debug-marke
 const pinchAnchorDebugLabel = document.getElementById("pinch-anchor-debug-label");
 const pinchSectorDebugMarker = document.getElementById("pinch-sector-debug-marker");
 const pinchSectorDebugLabel = document.getElementById("pinch-sector-debug-label");
+const pinchFingerOneMarker = document.getElementById("pinch-finger-one-marker");
+const pinchFingerOneLabel = document.getElementById("pinch-finger-one-label");
+const pinchFingerOneAnchorMarker = document.getElementById("pinch-finger-one-anchor-marker");
+const pinchFingerOneAnchorLabel = document.getElementById("pinch-finger-one-anchor-label");
+const pinchFingerTwoMarker = document.getElementById("pinch-finger-two-marker");
+const pinchFingerTwoLabel = document.getElementById("pinch-finger-two-label");
+const pinchFingerTwoAnchorMarker = document.getElementById("pinch-finger-two-anchor-marker");
+const pinchFingerTwoAnchorLabel = document.getElementById("pinch-finger-two-anchor-label");
 const bevyCanvas = document.getElementById("bevy-canvas");
 let lastCommandAt = 0;
 let lastShownEvent = "";
@@ -206,6 +214,52 @@ function updatePinchDebugMarker(debug) {
   }
 }
 
+function setMarker(marker, x, y, active = true) {
+  if (!marker) {
+    return;
+  }
+  marker.dataset.active = String(active);
+  if (active) {
+    marker.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
+  }
+}
+
+function hideFingerPointDebugMarkers() {
+  for (const marker of [
+    pinchFingerOneMarker,
+    pinchFingerOneAnchorMarker,
+    pinchFingerTwoMarker,
+    pinchFingerTwoAnchorMarker,
+  ]) {
+    setMarker(marker, 0, 0, false);
+  }
+}
+
+function updateFingerPointDebugMarkers(debug) {
+  if (!debug?.active) {
+    hideFingerPointDebugMarkers();
+    return;
+  }
+
+  setMarker(pinchFingerOneMarker, debug.first_finger_x, debug.first_finger_y);
+  setMarker(pinchFingerOneAnchorMarker, debug.first_anchor_x, debug.first_anchor_y);
+  setMarker(pinchFingerTwoMarker, debug.second_finger_x, debug.second_finger_y);
+  setMarker(pinchFingerTwoAnchorMarker, debug.second_anchor_x, debug.second_anchor_y);
+
+  if (pinchFingerOneLabel) {
+    pinchFingerOneLabel.textContent = `紫色手指1 ${Math.round(debug.first_finger_x)},${Math.round(debug.first_finger_y)}`;
+  }
+  if (pinchFingerOneAnchorLabel) {
+    pinchFingerOneAnchorLabel.textContent = `橘色手指1地圖點 ${Math.round(debug.first_anchor_x)},${Math.round(debug.first_anchor_y)} · 漂移 ${debug.first_drift.toFixed(1)}px`;
+  }
+  if (pinchFingerTwoLabel) {
+    pinchFingerTwoLabel.textContent = `綠色手指2 ${Math.round(debug.second_finger_x)},${Math.round(debug.second_finger_y)}`;
+  }
+  if (pinchFingerTwoAnchorLabel) {
+    pinchFingerTwoAnchorLabel.textContent = `藍色手指2地圖點 ${Math.round(debug.second_anchor_x)},${Math.round(debug.second_anchor_y)} · 漂移 ${debug.second_drift.toFixed(1)}px`;
+  }
+}
+
 function updatePinchAnchorDebugMarker(debug) {
   if (!pinchAnchorDebugMarker) {
     return;
@@ -216,8 +270,11 @@ function updatePinchAnchorDebugMarker(debug) {
     if (pinchSectorDebugMarker) {
       pinchSectorDebugMarker.dataset.active = "false";
     }
+    hideFingerPointDebugMarkers();
     return;
   }
+
+  updateFingerPointDebugMarkers(debug);
 
   pinchAnchorDebugMarker.dataset.active = "true";
   pinchAnchorDebugMarker.style.transform = `translate(${debug.anchor_x}px, ${debug.anchor_y}px) translate(-50%, -50%)`;

@@ -33,7 +33,9 @@ button {
 
 #pinch-debug-marker,
 #pinch-anchor-debug-marker,
-#pinch-sector-debug-marker {
+#pinch-sector-debug-marker,
+.pinch-finger-marker,
+.pinch-finger-anchor-marker {
   position: absolute;
   left: 0;
   top: 0;
@@ -48,7 +50,9 @@ button {
 }
 
 #pinch-anchor-debug-marker,
-#pinch-sector-debug-marker {
+#pinch-sector-debug-marker,
+.pinch-finger-marker,
+.pinch-finger-anchor-marker {
   z-index: 4;
 }
 
@@ -58,13 +62,17 @@ button {
 
 #pinch-debug-marker[data-active="true"],
 #pinch-anchor-debug-marker[data-active="true"],
-#pinch-sector-debug-marker[data-active="true"] {
+#pinch-sector-debug-marker[data-active="true"],
+.pinch-finger-marker[data-active="true"],
+.pinch-finger-anchor-marker[data-active="true"] {
   opacity: 1;
 }
 
 #pinch-debug-marker span,
 #pinch-anchor-debug-marker span,
-#pinch-sector-debug-marker span {
+#pinch-sector-debug-marker span,
+.pinch-finger-marker span,
+.pinch-finger-anchor-marker span {
   position: absolute;
   width: 30px;
   height: 30px;
@@ -93,12 +101,55 @@ button {
     0 0 18px rgba(54, 245, 255, 0.85);
 }
 
+.pinch-finger-marker span {
+  width: 14px;
+  height: 14px;
+}
+
+.pinch-finger-marker.finger-one span {
+  border-color: #bd7cff;
+  box-shadow:
+    0 0 0 3px rgba(189, 124, 255, 0.22),
+    0 0 15px rgba(189, 124, 255, 0.78);
+}
+
+.pinch-finger-marker.finger-two span {
+  border-color: #7dff91;
+  box-shadow:
+    0 0 0 3px rgba(125, 255, 145, 0.22),
+    0 0 15px rgba(125, 255, 145, 0.78);
+}
+
+.pinch-finger-anchor-marker span {
+  width: 20px;
+  height: 20px;
+  border-style: dashed;
+}
+
+.pinch-finger-anchor-marker.finger-one span {
+  border-color: #ff9f43;
+  box-shadow:
+    0 0 0 3px rgba(255, 159, 67, 0.2),
+    0 0 15px rgba(255, 159, 67, 0.72);
+}
+
+.pinch-finger-anchor-marker.finger-two span {
+  border-color: #49a3ff;
+  box-shadow:
+    0 0 0 3px rgba(73, 163, 255, 0.2),
+    0 0 15px rgba(73, 163, 255, 0.72);
+}
+
 #pinch-debug-marker::before,
 #pinch-debug-marker::after,
 #pinch-anchor-debug-marker::before,
 #pinch-anchor-debug-marker::after,
 #pinch-sector-debug-marker::before,
-#pinch-sector-debug-marker::after {
+#pinch-sector-debug-marker::after,
+.pinch-finger-marker::before,
+.pinch-finger-marker::after,
+.pinch-finger-anchor-marker::before,
+.pinch-finger-anchor-marker::after {
   content: "";
   position: absolute;
   background: #ff5fd2;
@@ -114,9 +165,31 @@ button {
   background: #36f5ff;
 }
 
+.pinch-finger-marker.finger-one::before,
+.pinch-finger-marker.finger-one::after {
+  background: #bd7cff;
+}
+
+.pinch-finger-anchor-marker.finger-one::before,
+.pinch-finger-anchor-marker.finger-one::after {
+  background: #ff9f43;
+}
+
+.pinch-finger-marker.finger-two::before,
+.pinch-finger-marker.finger-two::after {
+  background: #7dff91;
+}
+
+.pinch-finger-anchor-marker.finger-two::before,
+.pinch-finger-anchor-marker.finger-two::after {
+  background: #49a3ff;
+}
+
 #pinch-debug-marker::before,
 #pinch-anchor-debug-marker::before,
-#pinch-sector-debug-marker::before {
+#pinch-sector-debug-marker::before,
+.pinch-finger-marker::before,
+.pinch-finger-anchor-marker::before {
   width: 44px;
   height: 2px;
 }
@@ -129,9 +202,16 @@ button {
   width: 30px;
 }
 
+.pinch-finger-marker::before,
+.pinch-finger-anchor-marker::before {
+  width: 24px;
+}
+
 #pinch-debug-marker::after,
 #pinch-anchor-debug-marker::after,
-#pinch-sector-debug-marker::after {
+#pinch-sector-debug-marker::after,
+.pinch-finger-marker::after,
+.pinch-finger-anchor-marker::after {
   width: 2px;
   height: 44px;
 }
@@ -144,9 +224,16 @@ button {
   height: 30px;
 }
 
+.pinch-finger-marker::after,
+.pinch-finger-anchor-marker::after {
+  height: 24px;
+}
+
 #pinch-debug-label,
 #pinch-anchor-debug-label,
-#pinch-sector-debug-label {
+#pinch-sector-debug-label,
+.pinch-finger-marker output,
+.pinch-finger-anchor-marker output {
   position: absolute;
   left: 26px;
   top: -12px;
@@ -171,6 +258,11 @@ button {
   top: 42px;
   border-color: rgba(54, 245, 255, 0.5);
   color: #c8fbff;
+}
+
+.pinch-finger-marker output,
+.pinch-finger-anchor-marker output {
+  display: none;
 }
 
 #top-panel,
