@@ -1,5 +1,9 @@
-const assetVersion = new URLSearchParams(window.location.search).get("deploy") ?? "";
+const urlParams = new URLSearchParams(window.location.search);
+const assetVersion = urlParams.get("deploy") ?? "";
 const assetSuffix = assetVersion ? `?deploy=${encodeURIComponent(assetVersion)}` : "";
+const pinchMode = ["follow", "fixed", "soft"].includes(urlParams.get("pinch"))
+  ? urlParams.get("pinch")
+  : "follow";
 const wasmModulePromise = import(`./out/starbound_orders.js${assetSuffix}`);
 
 const commandStatus = document.getElementById("command-status");
@@ -240,6 +244,7 @@ function publishTouchGesture(touches, active = true) {
   localStorage.setItem("starbound_orders_touch_gesture", JSON.stringify({
     seq: touchGestureSeq,
     active,
+    mode: pinchMode,
     touches: active ? points : [],
   }));
 }
