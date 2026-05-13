@@ -21,6 +21,7 @@ let lastShownPerf = "";
 let lastShownHud = "";
 let lastShownPinchDebug = "";
 let clientPinchStart = null;
+let touchGestureSeq = 0;
 
 function setStatus(message) {
   if (commandStatus) {
@@ -209,8 +210,24 @@ function touchMidpoint(touches) {
   };
 }
 
+function publishTouchGesture(touches, active = true) {
+  touchGestureSeq += 1;
+  const points = Array.from(touches).slice(0, 2).map((touch) => ({
+    id: touch.identifier,
+    x: touch.clientX,
+    y: touch.clientY,
+  }));
+  localStorage.setItem("starbound_orders_touch_gesture", JSON.stringify({
+    seq: touchGestureSeq,
+    active,
+    touches: active ? points : [],
+  }));
+}
+
 bevyCanvas?.addEventListener("touchstart", (event) => {
   if (event.touches.length >= 2) {
+    event.preventDefault();
+    publishTouchGesture(event.touches, true);
     clientPinchStart = touchMidpoint(event.touches);
     publishClientPinchDebug({
       active: true,
@@ -220,12 +237,14 @@ bevyCanvas?.addEventListener("touchstart", (event) => {
       start_y: clientPinchStart.y,
     });
   }
-}, { passive: true });
+}, { passive: false });
 
 bevyCanvas?.addEventListener("touchmove", (event) => {
   if (event.touches.length < 2) {
     return;
   }
+  event.preventDefault();
+  publishTouchGesture(event.touches, true);
   clientPinchStart ??= touchMidpoint(event.touches);
   const midpoint = touchMidpoint(event.touches);
   publishClientPinchDebug({
@@ -235,13 +254,17 @@ bevyCanvas?.addEventListener("touchmove", (event) => {
     start_x: clientPinchStart.x,
     start_y: clientPinchStart.y,
   });
-}, { passive: true });
+}, { passive: false });
 
 for (const eventName of ["touchend", "touchcancel"]) {
-  bevyCanvas?.addEventListener(eventName, () => {
+  bevyCanvas?.addEventListener(eventName, (event) => {
+    if (clientPinchStart) {
+      event.preventDefault();
+    }
     clientPinchStart = null;
+    publishTouchGesture([], false);
     publishClientPinchDebug({ active: false, x: 0, y: 0, start_x: 0, start_y: 0 });
-  }, { passive: true });
+  }, { passive: false });
 }
 
 setInterval(() => {
