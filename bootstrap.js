@@ -225,6 +225,23 @@ function publishClientPinchDebug(debug) {
   updatePinchDebugMarker(debug);
 }
 
+function hideClientPinchAnchorDebug() {
+  const debug = {
+    active: false,
+    finger_x: 0,
+    finger_y: 0,
+    anchor_x: 0,
+    anchor_y: 0,
+    drift: 0,
+    map_x: 0,
+    map_y: 0,
+  };
+  const value = JSON.stringify(debug);
+  localStorage.setItem("starbound_orders_pinch_anchor_debug", value);
+  lastShownPinchAnchorDebug = value;
+  updatePinchAnchorDebugMarker(debug);
+}
+
 function touchMidpoint(touches) {
   const first = touches[0];
   const second = touches[1];
@@ -289,6 +306,7 @@ for (const eventName of ["touchend", "touchcancel"]) {
     clientPinchStart = null;
     publishTouchGesture([], false);
     publishClientPinchDebug({ active: false, x: 0, y: 0, start_x: 0, start_y: 0 });
+    hideClientPinchAnchorDebug();
   }, { passive: false });
 }
 
