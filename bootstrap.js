@@ -1,4 +1,6 @@
-import init from "./out/starbound_orders.js";
+const assetVersion = new URLSearchParams(window.location.search).get("deploy") ?? "";
+const assetSuffix = assetVersion ? `?deploy=${encodeURIComponent(assetVersion)}` : "";
+const wasmModulePromise = import(`./out/starbound_orders.js${assetSuffix}`);
 
 const commandStatus = document.getElementById("command-status");
 const perfStats = document.getElementById("perf-stats");
@@ -297,7 +299,9 @@ moreControls?.addEventListener("click", (event) => {
   toggleMoreControls();
 });
 
-init().then(() => {
+wasmModulePromise.then(({ default: init }) => init({
+  module_or_path: `./out/starbound_orders_bg.wasm${assetSuffix}`,
+})).then(() => {
   setStatus("模擬執行中");
 }).catch((error) => {
   if (String(error).includes("Using exceptions for control flow")) {
