@@ -23,15 +23,24 @@
           <span>Credits</span>
           <output id="credits">450</output>
         </div>
+        <output id="resource-summary">Energy 24 · Ore 0 · Metal 0</output>
         <output id="command-status">啟動中...</output>
         <output id="perf-stats">-- FPS / -- ms</output>
         <output id="focus-status" hidden>背景節流中</output>
       </section>
 
+      <section id="ship-panel" aria-label="艦船">
+        <div class="panel-title">艦船</div>
+        <div id="ship-list">
+          <div class="ship-row">等待模擬資料...</div>
+        </div>
+      </section>
+
       <section id="mission-panel" aria-label="任務">
-        <div class="mission done">探索核心星區</div>
-        <div class="mission">探索 3 個星區</div>
-        <div class="mission">完成第一筆礦物銷售</div>
+        <div class="panel-title">任務</div>
+        <div id="mission-list">
+          <div class="mission pending">等待模擬資料...</div>
+        </div>
       </section>
 
       <nav id="control-panel" aria-label="控制">

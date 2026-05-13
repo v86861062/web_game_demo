@@ -3,9 +3,14 @@ import init from "./out/starbound_orders.js";
 const commandStatus = document.getElementById("command-status");
 const perfStats = document.getElementById("perf-stats");
 const focusStatus = document.getElementById("focus-status");
+const creditsOutput = document.getElementById("credits");
+const resourceSummary = document.getElementById("resource-summary");
+const missionList = document.getElementById("mission-list");
+const shipList = document.getElementById("ship-list");
 let lastCommandAt = 0;
 let lastShownEvent = "";
 let lastShownPerf = "";
+let lastShownHud = "";
 
 function setStatus(message) {
   if (commandStatus) {
@@ -29,11 +34,97 @@ window.addEventListener("focus", updateFocusStatus);
 window.addEventListener("blur", updateFocusStatus);
 updateFocusStatus();
 
+function formatMission(mission) {
+  const state = mission.completed ? "✓" : "○";
+  const reward = mission.reward > 0 ? ` +${mission.reward}` : "";
+  return `${state} ${mission.description}${reward}`;
+}
+
+function cargoSummary(cargo) {
+  const parts = [];
+  if (cargo?.energy) {
+    parts.push(`Energy ${cargo.energy}`);
+  }
+  if (cargo?.ore) {
+    parts.push(`Ore ${cargo.ore}`);
+  }
+  if (cargo?.metal) {
+    parts.push(`Metal ${cargo.metal}`);
+  }
+  return parts.length ? parts.join(" · ") : "Cargo empty";
+}
+
+function formatShip(ship) {
+  const location = ship.target
+    ? `${ship.sector} → ${ship.target}`
+    : `${ship.sector}${ship.poi ? ` · ${ship.poi}` : ""}`;
+  return `${ship.name} · ${ship.order} · ${location} · ${cargoSummary(ship.cargo)}`;
+}
+
+function replaceChildrenWithRows(container, rows) {
+  if (!container) {
+    return;
+  }
+
+  container.replaceChildren(...rows);
+}
+
+function updateHudFromSnapshot(hud) {
+  if (creditsOutput) {
+    creditsOutput.textContent = String(hud.credits ?? "--");
+  }
+
+  if (resourceSummary && hud.resources) {
+    resourceSummary.textContent =
+      `Energy ${hud.resources.energy ?? 0} · Ore ${hud.resources.ore ?? 0} · Metal ${hud.resources.metal ?? 0}`;
+  }
+
+  if (Array.isArray(hud.missions)) {
+    const rows = hud.missions.map((mission) => {
+      const row = document.createElement("div");
+      row.className = `mission ${mission.completed ? "done" : "pending"}`;
+      row.textContent = formatMission(mission);
+      return row;
+    });
+    replaceChildrenWithRows(missionList, rows);
+  }
+
+  if (Array.isArray(hud.ships)) {
+    const rows = hud.ships.map((ship) => {
+      const row = document.createElement("div");
+      row.className = "ship-row";
+      row.textContent = formatShip(ship);
+      return row;
+    });
+    replaceChildrenWithRows(shipList, rows);
+  }
+
+  if (hud.latest_event && hud.latest_event !== lastShownEvent) {
+    lastShownEvent = hud.latest_event;
+    setStatus(hud.latest_event);
+  }
+}
+
 setInterval(() => {
   const event = localStorage.getItem("starbound_orders_event");
   if (event && event !== lastShownEvent) {
     lastShownEvent = event;
     setStatus(event);
+  }
+}, 300);
+
+setInterval(() => {
+  const hudValue = localStorage.getItem("starbound_orders_hud");
+  if (!hudValue || hudValue === lastShownHud) {
+    return;
+  }
+
+  try {
+    const hud = JSON.parse(hudValue);
+    lastShownHud = hudValue;
+    updateHudFromSnapshot(hud);
+  } catch (error) {
+    console.warn("Ignoring invalid HUD snapshot", error);
   }
 }, 300);
 

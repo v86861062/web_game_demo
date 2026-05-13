@@ -32,6 +32,7 @@ button {
 }
 
 #top-panel,
+#ship-panel,
 #mission-panel,
 #control-panel {
   position: absolute;
@@ -46,6 +47,7 @@ button {
 }
 
 #top-panel,
+#ship-panel,
 #mission-panel {
   pointer-events: none;
 }
@@ -84,6 +86,7 @@ button {
   font-weight: 700;
 }
 
+#resource-summary,
 #command-status,
 #perf-stats,
 #focus-status {
@@ -94,6 +97,10 @@ button {
 
 #command-status {
   color: #9fd4cf;
+}
+
+#resource-summary {
+  color: #d8e0e8;
 }
 
 #perf-stats {
@@ -108,11 +115,45 @@ button {
   display: none;
 }
 
+#ship-panel {
+  top: calc(max(10px, env(safe-area-inset-top)) + 150px);
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  max-height: 156px;
+  overflow: hidden;
+}
+
 #mission-panel {
+  top: calc(max(10px, env(safe-area-inset-top)) + 322px);
   bottom: calc(128px + env(safe-area-inset-bottom));
   display: grid;
   gap: 8px;
   padding: 10px;
+  overflow: hidden;
+}
+
+.panel-title {
+  color: #aab6c4;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+#mission-list,
+#ship-list {
+  display: grid;
+  gap: 8px;
+}
+
+#mission-list {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+#ship-list {
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .mission {
@@ -131,6 +172,26 @@ button {
 .mission.done {
   border-left-color: #91c96f;
   color: #b8c6b7;
+}
+
+.mission.pending {
+  border-left-color: #63b6b3;
+}
+
+.ship-row {
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  border-left: 3px solid #7a95d6;
+  border-radius: 6px;
+  background: rgba(238, 242, 246, 0.08);
+  color: #dfe6ee;
+  font-size: 12px;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 #control-panel {
@@ -159,6 +220,7 @@ button {
 
 @media (min-width: 700px) {
   #top-panel,
+  #ship-panel,
   #mission-panel,
   #control-panel {
     left: 18px;
@@ -166,7 +228,12 @@ button {
     width: 360px;
   }
 
+  #ship-panel {
+    top: 160px;
+  }
+
   #mission-panel {
+    top: 324px;
     bottom: 142px;
   }
 }
