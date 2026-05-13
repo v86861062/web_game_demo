@@ -7,6 +7,9 @@ const creditsOutput = document.getElementById("credits");
 const resourceSummary = document.getElementById("resource-summary");
 const missionList = document.getElementById("mission-list");
 const shipList = document.getElementById("ship-list");
+const shipPanel = document.getElementById("ship-panel");
+const missionPanel = document.getElementById("mission-panel");
+const moreControls = document.getElementById("more-controls");
 let lastCommandAt = 0;
 let lastShownEvent = "";
 let lastShownPerf = "";
@@ -67,6 +70,34 @@ function replaceChildrenWithRows(container, rows) {
   }
 
   container.replaceChildren(...rows);
+}
+
+function setActiveDrawer(name) {
+  const panels = {
+    ships: shipPanel,
+    missions: missionPanel,
+  };
+  const nextDrawer = document.body.dataset.drawer === name ? "" : name;
+  document.body.dataset.drawer = nextDrawer;
+
+  for (const [drawerName, panel] of Object.entries(panels)) {
+    if (!panel) {
+      continue;
+    }
+    const isOpen = nextDrawer === drawerName;
+    panel.dataset.open = String(isOpen);
+    panel.setAttribute("aria-hidden", String(!isOpen));
+  }
+
+  for (const button of document.querySelectorAll("[data-drawer]")) {
+    button.setAttribute("aria-expanded", String(button.dataset.drawer === nextDrawer));
+  }
+}
+
+function toggleMoreControls() {
+  const expanded = document.body.dataset.controlsExpanded !== "true";
+  document.body.dataset.controlsExpanded = String(expanded);
+  moreControls?.setAttribute("aria-expanded", String(expanded));
 }
 
 function updateHudFromSnapshot(hud) {
@@ -163,6 +194,18 @@ for (const button of document.querySelectorAll("[data-command]")) {
     sendCommand(button);
   });
 }
+
+for (const button of document.querySelectorAll("[data-drawer]")) {
+  button.addEventListener("click", (event) => {
+    event.preventDefault();
+    setActiveDrawer(button.dataset.drawer);
+  });
+}
+
+moreControls?.addEventListener("click", (event) => {
+  event.preventDefault();
+  toggleMoreControls();
+});
 
 init().then(() => {
   setStatus("模擬執行中");

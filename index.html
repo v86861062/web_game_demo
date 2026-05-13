@@ -29,14 +29,14 @@
         <output id="focus-status" hidden>背景節流中</output>
       </section>
 
-      <section id="ship-panel" aria-label="艦船">
+      <section id="ship-panel" class="drawer-panel" aria-label="艦船" aria-hidden="true">
         <div class="panel-title">艦船</div>
         <div id="ship-list">
           <div class="ship-row">等待模擬資料...</div>
         </div>
       </section>
 
-      <section id="mission-panel" aria-label="任務">
+      <section id="mission-panel" class="drawer-panel" aria-label="任務" aria-hidden="true">
         <div class="panel-title">任務</div>
         <div id="mission-list">
           <div class="mission pending">等待模擬資料...</div>
@@ -45,12 +45,15 @@
 
       <nav id="control-panel" aria-label="控制">
         <button type="button" data-command="toggle_pause" data-label="暫停">暫停</button>
-        <button type="button" data-command="speed_1" data-label="1x">1x</button>
-        <button type="button" data-command="speed_3" data-label="3x">3x</button>
-        <button type="button" data-command="save" data-label="儲存">儲存</button>
-        <button type="button" data-command="select_scout" data-label="選 Scout">選 Scout</button>
-        <button type="button" data-command="enter_north_gate" data-label="進入北門">進入北門</button>
-        <button type="button" data-command="reset" data-label="重置">重置</button>
+        <button type="button" data-drawer="ships" aria-expanded="false">艦船</button>
+        <button type="button" data-drawer="missions" aria-expanded="false">任務</button>
+        <button type="button" id="more-controls" aria-expanded="false">更多</button>
+        <button type="button" data-command="speed_1" data-label="1x" class="secondary-control">1x</button>
+        <button type="button" data-command="speed_3" data-label="3x" class="secondary-control">3x</button>
+        <button type="button" data-command="save" data-label="儲存" class="secondary-control">儲存</button>
+        <button type="button" data-command="select_scout" data-label="選 Scout" class="secondary-control">選 Scout</button>
+        <button type="button" data-command="enter_north_gate" data-label="進入北門" class="secondary-control">進入北門</button>
+        <button type="button" data-command="reset" data-label="重置" class="secondary-control">重置</button>
       </nav>
     </main>
 

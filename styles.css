@@ -32,58 +32,58 @@ button {
 }
 
 #top-panel,
-#ship-panel,
-#mission-panel,
+.drawer-panel,
 #control-panel {
   position: absolute;
-  left: max(12px, env(safe-area-inset-left));
-  right: max(12px, env(safe-area-inset-right));
+  left: max(10px, env(safe-area-inset-left));
+  right: max(10px, env(safe-area-inset-right));
   z-index: 2;
   border: 1px solid rgba(215, 226, 236, 0.14);
-  border-radius: 8px;
+  border-radius: 10px;
   background: rgba(17, 21, 29, 0.82);
   backdrop-filter: blur(10px);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.24);
 }
 
-#top-panel,
-#ship-panel,
-#mission-panel {
-  pointer-events: none;
-}
-
 #top-panel {
-  top: max(10px, env(safe-area-inset-top));
+  top: max(8px, env(safe-area-inset-top));
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 10px;
+  gap: 4px 10px;
   align-items: center;
-  padding: 10px 12px;
+  padding: 8px 10px;
+  pointer-events: none;
 }
 
 #top-panel strong {
   display: block;
-  font-size: 15px;
-  line-height: 1.1;
+  font-size: 14px;
+  line-height: 1.05;
 }
 
 #top-panel span {
-  display: block;
-  margin-top: 2px;
+  display: inline-block;
+  margin-top: 1px;
   color: #aab6c4;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .resource-row {
   display: grid;
   justify-items: end;
-  gap: 2px;
-  min-width: 88px;
+  gap: 0;
+  min-width: 74px;
+}
+
+.resource-row span {
+  font-size: 11px;
 }
 
 .resource-row output {
   color: #f2c968;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
 }
 
 #resource-summary,
@@ -91,8 +91,11 @@ button {
 #perf-stats,
 #focus-status {
   grid-column: 1 / -1;
-  min-height: 18px;
-  font-size: 12px;
+  min-height: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
 }
 
 #command-status {
@@ -115,22 +118,24 @@ button {
   display: none;
 }
 
-#ship-panel {
-  top: calc(max(10px, env(safe-area-inset-top)) + 150px);
+.drawer-panel {
+  bottom: calc(74px + env(safe-area-inset-bottom));
   display: grid;
   gap: 8px;
+  max-height: 42vh;
   padding: 10px;
-  max-height: 156px;
   overflow: hidden;
+  pointer-events: auto;
+  transform: translateY(calc(100% + 90px));
+  opacity: 0;
+  transition:
+    transform 160ms ease,
+    opacity 160ms ease;
 }
 
-#mission-panel {
-  top: calc(max(10px, env(safe-area-inset-top)) + 322px);
-  bottom: calc(128px + env(safe-area-inset-bottom));
-  display: grid;
-  gap: 8px;
-  padding: 10px;
-  overflow: hidden;
+.drawer-panel[data-open="true"] {
+  transform: translateY(0);
+  opacity: 1;
 }
 
 .panel-title {
@@ -144,25 +149,17 @@ button {
 #ship-list {
   display: grid;
   gap: 8px;
-}
-
-#mission-list {
-  overflow-y: auto;
-  overscroll-behavior: contain;
-}
-
-#ship-list {
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 
 .mission {
-  min-height: 32px;
+  min-height: 38px;
   display: flex;
   align-items: center;
   padding: 0 10px;
   border-left: 3px solid #63b6b3;
-  border-radius: 6px;
+  border-radius: 7px;
   background: rgba(238, 242, 246, 0.08);
   color: #dfe6ee;
   font-size: 13px;
@@ -179,12 +176,12 @@ button {
 }
 
 .ship-row {
-  min-height: 28px;
+  min-height: 34px;
   display: flex;
   align-items: center;
   padding: 0 10px;
   border-left: 3px solid #7a95d6;
-  border-radius: 6px;
+  border-radius: 7px;
   background: rgba(238, 242, 246, 0.08);
   color: #dfe6ee;
   font-size: 12px;
@@ -195,45 +192,90 @@ button {
 }
 
 #control-panel {
-  bottom: max(10px, env(safe-area-inset-bottom));
+  bottom: max(8px, env(safe-area-inset-bottom));
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
   padding: 8px;
+  pointer-events: auto;
 }
 
 #control-panel button {
-  min-height: 44px;
+  min-height: 42px;
   border: 1px solid rgba(229, 236, 242, 0.18);
-  border-radius: 6px;
+  border-radius: 8px;
   background: #243042;
   color: #f4f7fa;
 }
 
-#control-panel button:active {
+#control-panel button:active,
+#control-panel button[data-pressed="true"],
+#control-panel button[aria-expanded="true"] {
   background: #3d5a68;
 }
 
-#control-panel button[data-pressed="true"] {
-  background: #3d5a68;
+.secondary-control {
+  display: none;
+}
+
+body[data-controls-expanded="true"] .secondary-control {
+  display: block;
+}
+
+body[data-controls-expanded="true"] .drawer-panel {
+  bottom: calc(164px + env(safe-area-inset-bottom));
 }
 
 @media (min-width: 700px) {
   #top-panel,
-  #ship-panel,
-  #mission-panel,
+  .drawer-panel,
   #control-panel {
     left: 18px;
     right: auto;
     width: 360px;
   }
 
+  #top-panel {
+    top: 10px;
+    gap: 10px;
+    padding: 10px 12px;
+  }
+
+  #top-panel strong {
+    font-size: 15px;
+  }
+
+  #top-panel span,
+  #resource-summary,
+  #command-status,
+  #perf-stats,
+  #focus-status {
+    font-size: 12px;
+  }
+
+  #ship-panel,
+  #mission-panel {
+    transform: none;
+    opacity: 1;
+  }
+
   #ship-panel {
     top: 160px;
+    bottom: auto;
+    max-height: 156px;
   }
 
   #mission-panel {
     top: 324px;
     bottom: 142px;
+    max-height: none;
+  }
+
+  #control-panel {
+    bottom: max(10px, env(safe-area-inset-bottom));
+  }
+
+  .secondary-control {
+    display: block;
   }
 }
