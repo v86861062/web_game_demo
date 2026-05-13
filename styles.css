@@ -267,7 +267,8 @@ button {
 
 #top-panel,
 .drawer-panel,
-#control-panel {
+#control-panel,
+#pinch-scale-panel {
   position: absolute;
   left: max(10px, env(safe-area-inset-left));
   right: max(10px, env(safe-area-inset-right));
@@ -287,6 +288,40 @@ button {
   align-items: center;
   padding: 8px 10px;
   pointer-events: none;
+}
+
+#pinch-scale-panel {
+  top: calc(max(8px, env(safe-area-inset-top)) + 116px);
+  right: auto;
+  display: none;
+  width: min(280px, calc(100vw - 20px));
+  gap: 2px;
+  padding: 8px 10px;
+  pointer-events: none;
+  z-index: 6;
+  color: #e7f6ff;
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+#pinch-scale-panel[data-active="true"] {
+  display: grid;
+}
+
+#pinch-scale-panel strong {
+  color: #7ddcff;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+#pinch-scale-panel output {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#pinch-scale-panel[aria-hidden="true"] {
+  display: none;
 }
 
 #top-panel strong {

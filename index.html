@@ -8,7 +8,7 @@
     />
     <meta name="theme-color" content="#11151d" />
     <title>Starbound Orders</title>
-    <link rel="stylesheet" href="./styles.css?v=pinch-finger-debug-20260513" />
+    <link rel="stylesheet" href="./styles.css?v=pinch-scale-debug-20260514" />
   </head>
   <body>
     <main id="app-shell">
@@ -41,6 +41,15 @@
         <span></span>
         <output id="pinch-finger-two-anchor-label">手指 2 地圖點</output>
       </div>
+
+      <section id="pinch-scale-panel" aria-label="縮放診斷" aria-hidden="true">
+        <strong>Pinch Scale 診斷</strong>
+        <output id="pinch-scale-distance">距離 -- → --</output>
+        <output id="pinch-scale-ratio">ratio --</output>
+        <output id="pinch-scale-camera">scale -- → --</output>
+        <output id="pinch-scale-drift">中心 -- · 手指 --/--</output>
+        <output id="pinch-scale-input">JS Δ --ms · Rust Δ --ms</output>
+      </section>
 
       <section id="top-panel" aria-label="狀態">
         <div>
@@ -86,6 +95,6 @@
       </nav>
     </main>
 
-    <script type="module" src="./bootstrap.js?v=pinch-finger-debug-20260513"></script>
+    <script type="module" src="./bootstrap.js?v=pinch-scale-debug-20260514"></script>
   </body>
 </html>

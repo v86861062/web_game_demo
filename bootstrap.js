@@ -33,6 +33,12 @@ const pinchFingerTwoMarker = document.getElementById("pinch-finger-two-marker");
 const pinchFingerTwoLabel = document.getElementById("pinch-finger-two-label");
 const pinchFingerTwoAnchorMarker = document.getElementById("pinch-finger-two-anchor-marker");
 const pinchFingerTwoAnchorLabel = document.getElementById("pinch-finger-two-anchor-label");
+const pinchScalePanel = document.getElementById("pinch-scale-panel");
+const pinchScaleDistance = document.getElementById("pinch-scale-distance");
+const pinchScaleRatio = document.getElementById("pinch-scale-ratio");
+const pinchScaleCamera = document.getElementById("pinch-scale-camera");
+const pinchScaleDrift = document.getElementById("pinch-scale-drift");
+const pinchScaleInput = document.getElementById("pinch-scale-input");
 const bevyCanvas = document.getElementById("bevy-canvas");
 let lastCommandAt = 0;
 let lastShownEvent = "";
@@ -41,6 +47,9 @@ let lastShownHud = "";
 let lastShownPinchDebug = "";
 let lastShownPinchAnchorDebug = "";
 let clientPinchStart = null;
+let clientPinchStartDistance = 0;
+let lastTouchGestureAt = 0;
+let lastAnchorDebugAt = 0;
 let touchGestureSeq = 0;
 
 function setStatus(message) {
@@ -271,10 +280,13 @@ function updatePinchAnchorDebugMarker(debug) {
       pinchSectorDebugMarker.dataset.active = "false";
     }
     hideFingerPointDebugMarkers();
+    updatePinchScalePanel(debug);
     return;
   }
 
   updateFingerPointDebugMarkers(debug);
+  lastAnchorDebugAt = performance.now();
+  updatePinchScalePanel(debug);
 
   pinchAnchorDebugMarker.dataset.active = "true";
   pinchAnchorDebugMarker.style.transform = `translate(${debug.anchor_x}px, ${debug.anchor_y}px) translate(-50%, -50%)`;
@@ -337,8 +349,57 @@ function touchMidpoint(touches) {
   };
 }
 
+function touchDistance(touches) {
+  const first = touches[0];
+  const second = touches[1];
+  if (!first || !second) {
+    return 0;
+  }
+  return Math.hypot(second.clientX - first.clientX, second.clientY - first.clientY);
+}
+
+function formatNumber(value, digits = 2) {
+  return Number.isFinite(value) ? value.toFixed(digits) : "--";
+}
+
+function updatePinchScalePanel(debug) {
+  if (!pinchScalePanel) {
+    return;
+  }
+
+  if (!debug?.active) {
+    pinchScalePanel.dataset.active = "false";
+    pinchScalePanel.setAttribute("aria-hidden", "true");
+    return;
+  }
+
+  const now = performance.now();
+  const jsAge = lastTouchGestureAt > 0 ? now - lastTouchGestureAt : NaN;
+  const rustAge = lastAnchorDebugAt > 0 ? now - lastAnchorDebugAt : NaN;
+  pinchScalePanel.dataset.active = "true";
+  pinchScalePanel.setAttribute("aria-hidden", "false");
+
+  if (pinchScaleDistance) {
+    pinchScaleDistance.textContent = `距離 ${formatNumber(debug.start_distance, 1)} → ${formatNumber(debug.current_distance, 1)} px`;
+  }
+  if (pinchScaleRatio) {
+    pinchScaleRatio.textContent = `ratio ${formatNumber(debug.zoom_ratio, 3)} · 手指距離 ${formatNumber(clientPinchStartDistance, 1)} → ${formatNumber(debug.current_distance, 1)}`;
+  }
+  if (pinchScaleCamera) {
+    pinchScaleCamera.textContent = `camera scale ${formatNumber(debug.start_scale, 3)} → ${formatNumber(debug.current_scale, 3)} · Δ ${formatNumber(debug.scale_delta, 3)}`;
+  }
+  if (pinchScaleDrift) {
+    pinchScaleDrift.textContent = `漂移 中心 ${formatNumber(debug.drift, 1)} · 手指 ${formatNumber(debug.first_drift, 1)} / ${formatNumber(debug.second_drift, 1)} px`;
+  }
+  if (pinchScaleInput) {
+    pinchScaleInput.textContent = `更新延遲 JS ${formatNumber(jsAge, 0)}ms · Rust ${formatNumber(rustAge, 0)}ms · seq ${touchGestureSeq}`;
+  }
+}
+
 function publishTouchGesture(touches, active = true) {
   touchGestureSeq += 1;
+  lastTouchGestureAt = performance.now();
+  const distance = active && touches.length >= 2 ? touchDistance(touches) : 0;
   const points = Array.from(touches).slice(0, 2).map((touch) => ({
     id: touch.identifier,
     x: touch.clientX,
@@ -349,6 +410,9 @@ function publishTouchGesture(touches, active = true) {
     active,
     mode: pinchMode,
     anchor_mode: pinchAnchorMode,
+    distance,
+    start_distance: clientPinchStartDistance,
+    client_time_ms: lastTouchGestureAt,
     touches: active ? points : [],
   }));
 }
@@ -356,8 +420,9 @@ function publishTouchGesture(touches, active = true) {
 bevyCanvas?.addEventListener("touchstart", (event) => {
   if (event.touches.length >= 2) {
     event.preventDefault();
-    publishTouchGesture(event.touches, true);
     clientPinchStart = touchMidpoint(event.touches);
+    clientPinchStartDistance = touchDistance(event.touches);
+    publishTouchGesture(event.touches, true);
     publishClientPinchDebug({
       active: true,
       x: clientPinchStart.x,
@@ -373,8 +438,11 @@ bevyCanvas?.addEventListener("touchmove", (event) => {
     return;
   }
   event.preventDefault();
-  publishTouchGesture(event.touches, true);
   clientPinchStart ??= touchMidpoint(event.touches);
+  if (clientPinchStartDistance <= 0) {
+    clientPinchStartDistance = touchDistance(event.touches);
+  }
+  publishTouchGesture(event.touches, true);
   const midpoint = touchMidpoint(event.touches);
   publishClientPinchDebug({
     active: true,
@@ -391,6 +459,7 @@ for (const eventName of ["touchend", "touchcancel"]) {
       event.preventDefault();
     }
     clientPinchStart = null;
+    clientPinchStartDistance = 0;
     publishTouchGesture([], false);
     publishClientPinchDebug({ active: false, x: 0, y: 0, start_x: 0, start_y: 0 });
     hideClientPinchAnchorDebug();
