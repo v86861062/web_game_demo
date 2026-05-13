@@ -31,7 +31,8 @@ button {
   display: block;
 }
 
-#pinch-debug-marker {
+#pinch-debug-marker,
+#pinch-anchor-debug-marker {
   position: absolute;
   left: 0;
   top: 0;
@@ -45,11 +46,17 @@ button {
   transition: opacity 80ms ease;
 }
 
-#pinch-debug-marker[data-active="true"] {
+#pinch-anchor-debug-marker {
+  z-index: 4;
+}
+
+#pinch-debug-marker[data-active="true"],
+#pinch-anchor-debug-marker[data-active="true"] {
   opacity: 1;
 }
 
-#pinch-debug-marker span {
+#pinch-debug-marker span,
+#pinch-anchor-debug-marker span {
   position: absolute;
   width: 30px;
   height: 30px;
@@ -60,29 +67,56 @@ button {
     0 0 18px rgba(255, 95, 210, 0.8);
 }
 
+#pinch-anchor-debug-marker span {
+  width: 22px;
+  height: 22px;
+  border-color: #ffd84d;
+  box-shadow:
+    0 0 0 3px rgba(255, 216, 77, 0.24),
+    0 0 18px rgba(255, 216, 77, 0.8);
+}
+
 #pinch-debug-marker::before,
-#pinch-debug-marker::after {
+#pinch-debug-marker::after,
+#pinch-anchor-debug-marker::before,
+#pinch-anchor-debug-marker::after {
   content: "";
   position: absolute;
   background: #ff5fd2;
 }
 
-#pinch-debug-marker::before {
+#pinch-anchor-debug-marker::before,
+#pinch-anchor-debug-marker::after {
+  background: #ffd84d;
+}
+
+#pinch-debug-marker::before,
+#pinch-anchor-debug-marker::before {
   width: 44px;
   height: 2px;
 }
 
-#pinch-debug-marker::after {
+#pinch-anchor-debug-marker::before {
+  width: 34px;
+}
+
+#pinch-debug-marker::after,
+#pinch-anchor-debug-marker::after {
   width: 2px;
   height: 44px;
 }
 
-#pinch-debug-label {
+#pinch-anchor-debug-marker::after {
+  height: 34px;
+}
+
+#pinch-debug-label,
+#pinch-anchor-debug-label {
   position: absolute;
   left: 26px;
   top: -12px;
   width: max-content;
-  max-width: 220px;
+  max-width: 260px;
   padding: 3px 6px;
   border: 1px solid rgba(255, 95, 210, 0.42);
   border-radius: 6px;
@@ -90,6 +124,12 @@ button {
   color: #ffd9f5;
   font-size: 11px;
   white-space: nowrap;
+}
+
+#pinch-anchor-debug-label {
+  top: 22px;
+  border-color: rgba(255, 216, 77, 0.5);
+  color: #fff1a3;
 }
 
 #top-panel,

@@ -14,12 +14,15 @@ const missionPanel = document.getElementById("mission-panel");
 const moreControls = document.getElementById("more-controls");
 const pinchDebugMarker = document.getElementById("pinch-debug-marker");
 const pinchDebugLabel = document.getElementById("pinch-debug-label");
+const pinchAnchorDebugMarker = document.getElementById("pinch-anchor-debug-marker");
+const pinchAnchorDebugLabel = document.getElementById("pinch-anchor-debug-label");
 const bevyCanvas = document.getElementById("bevy-canvas");
 let lastCommandAt = 0;
 let lastShownEvent = "";
 let lastShownPerf = "";
 let lastShownHud = "";
 let lastShownPinchDebug = "";
+let lastShownPinchAnchorDebug = "";
 let clientPinchStart = null;
 let touchGestureSeq = 0;
 
@@ -190,7 +193,24 @@ function updatePinchDebugMarker(debug) {
   if (pinchDebugLabel) {
     const dx = debug.x - debug.start_x;
     const dy = debug.y - debug.start_y;
-    pinchDebugLabel.textContent = `縮放中心 ${Math.round(debug.x)},${Math.round(debug.y)} · 起點偏移 ${Math.round(dx)},${Math.round(dy)}`;
+    pinchDebugLabel.textContent = `粉紅兩指中點 ${Math.round(debug.x)},${Math.round(debug.y)} · 起點偏移 ${Math.round(dx)},${Math.round(dy)}`;
+  }
+}
+
+function updatePinchAnchorDebugMarker(debug) {
+  if (!pinchAnchorDebugMarker) {
+    return;
+  }
+
+  if (!debug?.active) {
+    pinchAnchorDebugMarker.dataset.active = "false";
+    return;
+  }
+
+  pinchAnchorDebugMarker.dataset.active = "true";
+  pinchAnchorDebugMarker.style.transform = `translate(${debug.anchor_x}px, ${debug.anchor_y}px) translate(-50%, -50%)`;
+  if (pinchAnchorDebugLabel) {
+    pinchAnchorDebugLabel.textContent = `黃色地圖錨點 ${Math.round(debug.anchor_x)},${Math.round(debug.anchor_y)} · 漂移 ${debug.drift.toFixed(1)}px`;
   }
 }
 
@@ -279,6 +299,21 @@ setInterval(() => {
     updatePinchDebugMarker(debug);
   } catch (error) {
     console.warn("Ignoring invalid pinch debug snapshot", error);
+  }
+}, 50);
+
+setInterval(() => {
+  const debugValue = localStorage.getItem("starbound_orders_pinch_anchor_debug");
+  if (!debugValue || debugValue === lastShownPinchAnchorDebug) {
+    return;
+  }
+
+  try {
+    const debug = JSON.parse(debugValue);
+    lastShownPinchAnchorDebug = debugValue;
+    updatePinchAnchorDebugMarker(debug);
+  } catch (error) {
+    console.warn("Ignoring invalid pinch anchor debug snapshot", error);
   }
 }, 50);
 
