@@ -10,10 +10,13 @@ const shipList = document.getElementById("ship-list");
 const shipPanel = document.getElementById("ship-panel");
 const missionPanel = document.getElementById("mission-panel");
 const moreControls = document.getElementById("more-controls");
+const pinchDebugMarker = document.getElementById("pinch-debug-marker");
+const pinchDebugLabel = document.getElementById("pinch-debug-label");
 let lastCommandAt = 0;
 let lastShownEvent = "";
 let lastShownPerf = "";
 let lastShownHud = "";
+let lastShownPinchDebug = "";
 
 function setStatus(message) {
   if (commandStatus) {
@@ -166,6 +169,40 @@ setInterval(() => {
     perfStats.textContent = perf;
   }
 }, 500);
+
+function updatePinchDebugMarker(debug) {
+  if (!pinchDebugMarker) {
+    return;
+  }
+
+  if (!debug?.active) {
+    pinchDebugMarker.dataset.active = "false";
+    return;
+  }
+
+  pinchDebugMarker.dataset.active = "true";
+  pinchDebugMarker.style.transform = `translate(${debug.x}px, ${debug.y}px) translate(-50%, -50%)`;
+  if (pinchDebugLabel) {
+    const dx = debug.x - debug.start_x;
+    const dy = debug.y - debug.start_y;
+    pinchDebugLabel.textContent = `縮放中心 ${Math.round(debug.x)},${Math.round(debug.y)} · 起點偏移 ${Math.round(dx)},${Math.round(dy)}`;
+  }
+}
+
+setInterval(() => {
+  const debugValue = localStorage.getItem("starbound_orders_pinch_debug");
+  if (!debugValue || debugValue === lastShownPinchDebug) {
+    return;
+  }
+
+  try {
+    const debug = JSON.parse(debugValue);
+    lastShownPinchDebug = debugValue;
+    updatePinchDebugMarker(debug);
+  } catch (error) {
+    console.warn("Ignoring invalid pinch debug snapshot", error);
+  }
+}, 50);
 
 function sendCommand(button) {
   const now = performance.now();

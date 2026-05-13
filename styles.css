@@ -31,6 +31,67 @@ button {
   display: block;
 }
 
+#pinch-debug-marker {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 80ms ease;
+}
+
+#pinch-debug-marker[data-active="true"] {
+  opacity: 1;
+}
+
+#pinch-debug-marker span {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border: 2px solid #ff5fd2;
+  border-radius: 999px;
+  box-shadow:
+    0 0 0 3px rgba(255, 95, 210, 0.22),
+    0 0 18px rgba(255, 95, 210, 0.8);
+}
+
+#pinch-debug-marker::before,
+#pinch-debug-marker::after {
+  content: "";
+  position: absolute;
+  background: #ff5fd2;
+}
+
+#pinch-debug-marker::before {
+  width: 44px;
+  height: 2px;
+}
+
+#pinch-debug-marker::after {
+  width: 2px;
+  height: 44px;
+}
+
+#pinch-debug-label {
+  position: absolute;
+  left: 26px;
+  top: -12px;
+  width: max-content;
+  max-width: 220px;
+  padding: 3px 6px;
+  border: 1px solid rgba(255, 95, 210, 0.42);
+  border-radius: 6px;
+  background: rgba(17, 21, 29, 0.78);
+  color: #ffd9f5;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
 #top-panel,
 .drawer-panel,
 #control-panel {
