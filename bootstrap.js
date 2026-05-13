@@ -18,6 +18,7 @@ let lastShownEvent = "";
 let lastShownPerf = "";
 let lastShownHud = "";
 let lastShownPinchDebug = "";
+let clientPinchStart = null;
 
 function setStatus(message) {
   if (commandStatus) {
@@ -207,17 +208,19 @@ bevyCanvas?.addEventListener("touchmove", (event) => {
     x: (first.clientX + second.clientX) * 0.5,
     y: (first.clientY + second.clientY) * 0.5,
   };
+  clientPinchStart ??= midpoint;
   publishClientPinchDebug({
     active: true,
-    x: midpoint.x,
-    y: midpoint.y,
-    start_x: midpoint.x,
-    start_y: midpoint.y,
+    x: clientPinchStart.x,
+    y: clientPinchStart.y,
+    start_x: clientPinchStart.x,
+    start_y: clientPinchStart.y,
   });
 }, { passive: true });
 
 for (const eventName of ["touchend", "touchcancel"]) {
   bevyCanvas?.addEventListener(eventName, () => {
+    clientPinchStart = null;
     publishClientPinchDebug({ active: false, x: 0, y: 0, start_x: 0, start_y: 0 });
   }, { passive: true });
 }
