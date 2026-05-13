@@ -225,10 +225,11 @@ bevyCanvas?.addEventListener("touchmove", (event) => {
     return;
   }
   clientPinchStart ??= touchMidpoint(event.touches);
+  const midpoint = touchMidpoint(event.touches);
   publishClientPinchDebug({
     active: true,
-    x: clientPinchStart.x,
-    y: clientPinchStart.y,
+    x: midpoint.x,
+    y: midpoint.y,
     start_x: clientPinchStart.x,
     start_y: clientPinchStart.y,
   });
