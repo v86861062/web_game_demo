@@ -198,17 +198,33 @@ function publishClientPinchDebug(debug) {
   updatePinchDebugMarker(debug);
 }
 
+function touchMidpoint(touches) {
+  const first = touches[0];
+  const second = touches[1];
+  return {
+    x: (first.clientX + second.clientX) * 0.5,
+    y: (first.clientY + second.clientY) * 0.5,
+  };
+}
+
+bevyCanvas?.addEventListener("touchstart", (event) => {
+  if (event.touches.length >= 2) {
+    clientPinchStart = touchMidpoint(event.touches);
+    publishClientPinchDebug({
+      active: true,
+      x: clientPinchStart.x,
+      y: clientPinchStart.y,
+      start_x: clientPinchStart.x,
+      start_y: clientPinchStart.y,
+    });
+  }
+}, { passive: true });
+
 bevyCanvas?.addEventListener("touchmove", (event) => {
   if (event.touches.length < 2) {
     return;
   }
-  const first = event.touches[0];
-  const second = event.touches[1];
-  const midpoint = {
-    x: (first.clientX + second.clientX) * 0.5,
-    y: (first.clientY + second.clientY) * 0.5,
-  };
-  clientPinchStart ??= midpoint;
+  clientPinchStart ??= touchMidpoint(event.touches);
   publishClientPinchDebug({
     active: true,
     x: clientPinchStart.x,
