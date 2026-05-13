@@ -32,7 +32,8 @@ button {
 }
 
 #pinch-debug-marker,
-#pinch-anchor-debug-marker {
+#pinch-anchor-debug-marker,
+#pinch-sector-debug-marker {
   position: absolute;
   left: 0;
   top: 0;
@@ -46,17 +47,24 @@ button {
   transition: opacity 80ms ease;
 }
 
-#pinch-anchor-debug-marker {
+#pinch-anchor-debug-marker,
+#pinch-sector-debug-marker {
   z-index: 4;
 }
 
+#pinch-sector-debug-marker {
+  z-index: 5;
+}
+
 #pinch-debug-marker[data-active="true"],
-#pinch-anchor-debug-marker[data-active="true"] {
+#pinch-anchor-debug-marker[data-active="true"],
+#pinch-sector-debug-marker[data-active="true"] {
   opacity: 1;
 }
 
 #pinch-debug-marker span,
-#pinch-anchor-debug-marker span {
+#pinch-anchor-debug-marker span,
+#pinch-sector-debug-marker span {
   position: absolute;
   width: 30px;
   height: 30px;
@@ -76,10 +84,21 @@ button {
     0 0 18px rgba(255, 216, 77, 0.8);
 }
 
+#pinch-sector-debug-marker span {
+  width: 18px;
+  height: 18px;
+  border-color: #36f5ff;
+  box-shadow:
+    0 0 0 3px rgba(54, 245, 255, 0.24),
+    0 0 18px rgba(54, 245, 255, 0.85);
+}
+
 #pinch-debug-marker::before,
 #pinch-debug-marker::after,
 #pinch-anchor-debug-marker::before,
-#pinch-anchor-debug-marker::after {
+#pinch-anchor-debug-marker::after,
+#pinch-sector-debug-marker::before,
+#pinch-sector-debug-marker::after {
   content: "";
   position: absolute;
   background: #ff5fd2;
@@ -90,8 +109,14 @@ button {
   background: #ffd84d;
 }
 
+#pinch-sector-debug-marker::before,
+#pinch-sector-debug-marker::after {
+  background: #36f5ff;
+}
+
 #pinch-debug-marker::before,
-#pinch-anchor-debug-marker::before {
+#pinch-anchor-debug-marker::before,
+#pinch-sector-debug-marker::before {
   width: 44px;
   height: 2px;
 }
@@ -100,8 +125,13 @@ button {
   width: 34px;
 }
 
+#pinch-sector-debug-marker::before {
+  width: 30px;
+}
+
 #pinch-debug-marker::after,
-#pinch-anchor-debug-marker::after {
+#pinch-anchor-debug-marker::after,
+#pinch-sector-debug-marker::after {
   width: 2px;
   height: 44px;
 }
@@ -110,8 +140,13 @@ button {
   height: 34px;
 }
 
+#pinch-sector-debug-marker::after {
+  height: 30px;
+}
+
 #pinch-debug-label,
-#pinch-anchor-debug-label {
+#pinch-anchor-debug-label,
+#pinch-sector-debug-label {
   position: absolute;
   left: 26px;
   top: -12px;
@@ -130,6 +165,12 @@ button {
   top: 22px;
   border-color: rgba(255, 216, 77, 0.5);
   color: #fff1a3;
+}
+
+#pinch-sector-debug-label {
+  top: 42px;
+  border-color: rgba(54, 245, 255, 0.5);
+  color: #c8fbff;
 }
 
 #top-panel,

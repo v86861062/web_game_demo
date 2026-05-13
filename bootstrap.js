@@ -20,6 +20,8 @@ const pinchDebugMarker = document.getElementById("pinch-debug-marker");
 const pinchDebugLabel = document.getElementById("pinch-debug-label");
 const pinchAnchorDebugMarker = document.getElementById("pinch-anchor-debug-marker");
 const pinchAnchorDebugLabel = document.getElementById("pinch-anchor-debug-label");
+const pinchSectorDebugMarker = document.getElementById("pinch-sector-debug-marker");
+const pinchSectorDebugLabel = document.getElementById("pinch-sector-debug-label");
 const bevyCanvas = document.getElementById("bevy-canvas");
 let lastCommandAt = 0;
 let lastShownEvent = "";
@@ -208,6 +210,9 @@ function updatePinchAnchorDebugMarker(debug) {
 
   if (!debug?.active) {
     pinchAnchorDebugMarker.dataset.active = "false";
+    if (pinchSectorDebugMarker) {
+      pinchSectorDebugMarker.dataset.active = "false";
+    }
     return;
   }
 
@@ -215,6 +220,22 @@ function updatePinchAnchorDebugMarker(debug) {
   pinchAnchorDebugMarker.style.transform = `translate(${debug.anchor_x}px, ${debug.anchor_y}px) translate(-50%, -50%)`;
   if (pinchAnchorDebugLabel) {
     pinchAnchorDebugLabel.textContent = `黃色地圖錨點 ${Math.round(debug.anchor_x)},${Math.round(debug.anchor_y)} · 漂移 ${debug.drift.toFixed(1)}px`;
+  }
+
+  if (!pinchSectorDebugMarker) {
+    return;
+  }
+
+  if (debug.sector_id === null || debug.sector_id === undefined) {
+    pinchSectorDebugMarker.dataset.active = "false";
+    return;
+  }
+
+  pinchSectorDebugMarker.dataset.active = "true";
+  pinchSectorDebugMarker.style.transform = `translate(${debug.sector_x}px, ${debug.sector_y}px) translate(-50%, -50%)`;
+  if (pinchSectorDebugLabel) {
+    const sectorName = debug.sector_name ?? `#${debug.sector_id}`;
+    pinchSectorDebugLabel.textContent = `青色星區中心 ${sectorName} ${Math.round(debug.sector_x)},${Math.round(debug.sector_y)} · 距手指 ${debug.sector_drift.toFixed(1)}px`;
   }
 }
 
@@ -235,6 +256,11 @@ function hideClientPinchAnchorDebug() {
     drift: 0,
     map_x: 0,
     map_y: 0,
+    sector_id: null,
+    sector_name: null,
+    sector_x: 0,
+    sector_y: 0,
+    sector_drift: 0,
   };
   const value = JSON.stringify(debug);
   localStorage.setItem("starbound_orders_pinch_anchor_debug", value);
