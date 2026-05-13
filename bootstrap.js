@@ -4,6 +4,9 @@ const assetSuffix = assetVersion ? `?deploy=${encodeURIComponent(assetVersion)}`
 const pinchMode = ["follow", "fixed", "soft"].includes(urlParams.get("pinch"))
   ? urlParams.get("pinch")
   : "follow";
+const pinchAnchorMode = ["exact", "sector", "auto"].includes(urlParams.get("anchor"))
+  ? urlParams.get("anchor")
+  : "exact";
 const wasmModulePromise = import(`./out/starbound_orders.js${assetSuffix}`);
 
 const commandStatus = document.getElementById("command-status");
@@ -288,6 +291,7 @@ function publishTouchGesture(touches, active = true) {
     seq: touchGestureSeq,
     active,
     mode: pinchMode,
+    anchor_mode: pinchAnchorMode,
     touches: active ? points : [],
   }));
 }
