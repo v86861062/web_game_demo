@@ -10,6 +10,7 @@ const pinchMode = ["follow", "fixed", "soft"].includes(urlParams.get("pinch"))
 const pinchAnchorMode = ["exact", "sector", "auto"].includes(urlParams.get("anchor"))
   ? urlParams.get("anchor")
   : "exact";
+const touchTraceEnabled = ["touch", "1", "true"].includes((urlParams.get("trace") ?? "").toLowerCase());
 const wasmModulePromise = import(`./out/starbound_orders.js${assetSuffix}`);
 
 const commandStatus = document.getElementById("command-status");
@@ -54,6 +55,242 @@ let clientPinchStartDistance = 0;
 let lastTouchGestureAt = 0;
 let lastAnchorDebugAt = 0;
 let touchGestureSeq = 0;
+let touchTrace = null;
+
+function createTouchTraceOverlay() {
+  if (!touchTraceEnabled || !document.getElementById("app-shell")) {
+    return null;
+  }
+
+  const canvas = document.createElement("canvas");
+  canvas.id = "touch-trace-canvas";
+  canvas.setAttribute("aria-hidden", "true");
+
+  const panel = document.createElement("section");
+  panel.id = "touch-trace-panel";
+  panel.setAttribute("aria-label", "實機觸控軌跡診斷");
+  panel.innerHTML = `
+    <strong>Touch Trace 實機診斷</strong>
+    <output id="touch-trace-env">env --</output>
+    <output id="touch-trace-event">event --</output>
+    <output id="touch-trace-midpoint">mid --</output>
+    <output id="touch-trace-camera">camera --</output>
+    <output id="touch-trace-transition">transition --</output>
+  `;
+
+  document.getElementById("app-shell").append(canvas, panel);
+
+  const state = {
+    canvas,
+    context: canvas.getContext("2d"),
+    panel,
+    env: panel.querySelector("#touch-trace-env"),
+    event: panel.querySelector("#touch-trace-event"),
+    midpoint: panel.querySelector("#touch-trace-midpoint"),
+    camera: panel.querySelector("#touch-trace-camera"),
+    transition: panel.querySelector("#touch-trace-transition"),
+    pointsById: new Map(),
+    midpoints: [],
+    cameraSamples: [],
+    logs: [],
+    startMidpoint: null,
+    startDistance: 0,
+    startCamera: null,
+    lastTouchCount: 0,
+    oneFingerAfterPinch: 0,
+    touchEndWithRemainingFinger: 0,
+    maxSamples: 120,
+  };
+
+  resizeTouchTraceCanvas(state);
+  window.addEventListener("resize", () => resizeTouchTraceCanvas(state));
+  window.visualViewport?.addEventListener("resize", () => resizeTouchTraceCanvas(state));
+  return state;
+}
+
+touchTrace = createTouchTraceOverlay();
+
+function resizeTouchTraceCanvas(state = touchTrace) {
+  if (!state?.canvas) {
+    return;
+  }
+  const dpr = window.devicePixelRatio || 1;
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+  state.canvas.width = Math.max(1, Math.round(width * dpr));
+  state.canvas.height = Math.max(1, Math.round(height * dpr));
+  state.canvas.style.width = `${width}px`;
+  state.canvas.style.height = `${height}px`;
+  state.context?.setTransform(dpr, 0, 0, dpr, 0, 0);
+  drawTouchTrace(state);
+}
+
+function readCameraSnapshot() {
+  try {
+    return JSON.parse(localStorage.getItem("starbound_orders_camera") ?? "null");
+  } catch {
+    return null;
+  }
+}
+
+function pushLimited(array, item, limit) {
+  array.push(item);
+  while (array.length > limit) {
+    array.shift();
+  }
+}
+
+function drawPath(context, points, color, width = 3) {
+  if (!points?.length) {
+    return;
+  }
+  context.strokeStyle = color;
+  context.lineWidth = width;
+  context.beginPath();
+  context.moveTo(points[0].x, points[0].y);
+  for (const point of points.slice(1)) {
+    context.lineTo(point.x, point.y);
+  }
+  context.stroke();
+
+  const last = points[points.length - 1];
+  context.fillStyle = color;
+  context.beginPath();
+  context.arc(last.x, last.y, width + 3, 0, Math.PI * 2);
+  context.fill();
+}
+
+function drawTouchTrace(state = touchTrace) {
+  if (!state?.context) {
+    return;
+  }
+  const { context, canvas } = state;
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  drawPath(context, state.midpoints, "rgba(255, 64, 201, 0.95)", 4);
+  const colors = ["rgba(189, 124, 255, 0.95)", "rgba(125, 255, 145, 0.95)", "rgba(255, 159, 67, 0.95)", "rgba(73, 163, 255, 0.95)"];
+  let index = 0;
+  for (const points of state.pointsById.values()) {
+    drawPath(context, points, colors[index % colors.length], 3);
+    index += 1;
+  }
+}
+
+function updateTouchTracePanel(state = touchTrace) {
+  if (!state?.panel) {
+    return;
+  }
+  const latest = state.logs[state.logs.length - 1];
+  const camera = readCameraSnapshot();
+  if (camera) {
+    if (!state.startCamera) {
+      state.startCamera = camera;
+    }
+    pushLimited(state.cameraSamples, { ...camera, t: performance.now() }, state.maxSamples);
+  }
+
+  const vv = window.visualViewport;
+  const envText = `vw ${window.innerWidth}×${window.innerHeight} · vv ${Math.round(vv?.width ?? 0)}×${Math.round(vv?.height ?? 0)} · DPR ${formatNumber(window.devicePixelRatio, 2)}`;
+  const eventText = latest
+    ? `${latest.type} touches ${latest.count} · changed ${latest.changed} · seq ${touchGestureSeq}`
+    : "event --";
+  const midpointText = latest?.midpoint
+    ? `mid ${Math.round(latest.midpoint.x)},${Math.round(latest.midpoint.y)} · Δ ${formatNumber(latest.midpoint.x - (state.startMidpoint?.x ?? latest.midpoint.x), 1)},${formatNumber(latest.midpoint.y - (state.startMidpoint?.y ?? latest.midpoint.y), 1)} · dist ${formatNumber(latest.distance, 1)} ratio ${formatNumber(latest.distance / Math.max(1, state.startDistance), 3)}`
+    : "mid --";
+  const cameraText = camera
+    ? `camera ${formatNumber(camera.x, 1)},${formatNumber(camera.y, 1)} scale ${formatNumber(camera.scale, 3)} · Δ ${formatNumber(camera.x - (state.startCamera?.x ?? camera.x), 1)},${formatNumber(camera.y - (state.startCamera?.y ?? camera.y), 1)}`
+    : "camera --";
+  const transitionText = `transitions ${state.lastTouchCount}→${latest?.count ?? 0} · 2→1 end ${state.touchEndWithRemainingFinger} · 1-finger-after-pinch ${state.oneFingerAfterPinch}`;
+
+  state.env.textContent = envText;
+  state.event.textContent = eventText;
+  state.midpoint.textContent = midpointText;
+  state.camera.textContent = cameraText;
+  state.transition.textContent = transitionText;
+  state.panel.dataset.active = "true";
+
+  localStorage.setItem("starbound_orders_touch_trace", JSON.stringify({
+    active: true,
+    env: {
+      inner_width: window.innerWidth,
+      inner_height: window.innerHeight,
+      visual_width: vv?.width ?? null,
+      visual_height: vv?.height ?? null,
+      dpr: window.devicePixelRatio || 1,
+      user_agent: navigator.userAgent,
+    },
+    latest,
+    start_midpoint: state.startMidpoint,
+    start_distance: state.startDistance,
+    start_camera: state.startCamera,
+    camera,
+    one_finger_after_pinch: state.oneFingerAfterPinch,
+    touch_end_with_remaining_finger: state.touchEndWithRemainingFinger,
+    log_tail: state.logs.slice(-12),
+  }));
+}
+
+function recordTouchTrace(type, event) {
+  if (!touchTrace) {
+    return;
+  }
+  const now = performance.now();
+  const touches = Array.from(event.touches ?? []);
+  const changedTouches = Array.from(event.changedTouches ?? []);
+  const points = touches.map((touch) => ({ id: touch.identifier, x: touch.clientX, y: touch.clientY }));
+  const midpoint = points.length >= 2
+    ? { x: (points[0].x + points[1].x) * 0.5, y: (points[0].y + points[1].y) * 0.5 }
+    : null;
+  const distance = points.length >= 2
+    ? Math.hypot(points[1].x - points[0].x, points[1].y - points[0].y)
+    : 0;
+
+  if (points.length >= 2 && !touchTrace.startMidpoint) {
+    touchTrace.startMidpoint = midpoint;
+    touchTrace.startDistance = distance;
+    touchTrace.startCamera = readCameraSnapshot();
+  }
+  if (type === "touchstart" && touchTrace.lastTouchCount === 0) {
+    touchTrace.pointsById.clear();
+    touchTrace.midpoints = [];
+    touchTrace.logs = [];
+    touchTrace.startMidpoint = points.length >= 2 ? midpoint : null;
+    touchTrace.startDistance = points.length >= 2 ? distance : 0;
+    touchTrace.startCamera = readCameraSnapshot();
+    touchTrace.oneFingerAfterPinch = 0;
+    touchTrace.touchEndWithRemainingFinger = 0;
+  }
+  if ((type === "touchend" || type === "touchcancel") && touchTrace.lastTouchCount >= 2 && points.length === 1) {
+    touchTrace.touchEndWithRemainingFinger += 1;
+  }
+  if (touchTrace.startMidpoint && points.length === 1) {
+    touchTrace.oneFingerAfterPinch += 1;
+  }
+
+  for (const point of points) {
+    if (!touchTrace.pointsById.has(point.id)) {
+      touchTrace.pointsById.set(point.id, []);
+    }
+    pushLimited(touchTrace.pointsById.get(point.id), { ...point, t: now }, touchTrace.maxSamples);
+  }
+  if (midpoint) {
+    pushLimited(touchTrace.midpoints, { ...midpoint, t: now }, touchTrace.maxSamples);
+  }
+
+  pushLimited(touchTrace.logs, {
+    type,
+    t: now,
+    count: points.length,
+    changed: changedTouches.length,
+    points,
+    midpoint,
+    distance,
+    camera: readCameraSnapshot(),
+  }, touchTrace.maxSamples);
+
+  drawTouchTrace(touchTrace);
+  updateTouchTracePanel(touchTrace);
+  touchTrace.lastTouchCount = points.length;
+}
 
 function setStatus(message) {
   if (commandStatus) {
@@ -421,6 +658,7 @@ function publishTouchGesture(touches, active = true) {
 }
 
 bevyCanvas?.addEventListener("touchstart", (event) => {
+  recordTouchTrace("touchstart", event);
   if (event.touches.length >= 2) {
     event.preventDefault();
     clientPinchStart = touchMidpoint(event.touches);
@@ -437,6 +675,7 @@ bevyCanvas?.addEventListener("touchstart", (event) => {
 }, { passive: false });
 
 bevyCanvas?.addEventListener("touchmove", (event) => {
+  recordTouchTrace("touchmove", event);
   if (event.touches.length < 2) {
     return;
   }
@@ -458,6 +697,7 @@ bevyCanvas?.addEventListener("touchmove", (event) => {
 
 for (const eventName of ["touchend", "touchcancel"]) {
   bevyCanvas?.addEventListener(eventName, (event) => {
+    recordTouchTrace(eventName, event);
     if (clientPinchStart) {
       event.preventDefault();
     }
