@@ -1,6 +1,9 @@
 const urlParams = new URLSearchParams(window.location.search);
-const assetVersion = urlParams.get("deploy") ?? "";
+const assetVersion = new URLSearchParams(window.location.search).get("deploy") ?? "";
 const assetSuffix = assetVersion ? `?deploy=${encodeURIComponent(assetVersion)}` : "";
+const symbolModeParam = new URLSearchParams(window.location.search).get("symbols") ?? "world";
+const symbolMode = symbolModeParam.toLowerCase() === "screen" ? "screen" : "world";
+localStorage.setItem("starbound_orders_symbol_mode", symbolMode);
 const pinchMode = ["follow", "fixed", "soft"].includes(urlParams.get("pinch"))
   ? urlParams.get("pinch")
   : "follow";
