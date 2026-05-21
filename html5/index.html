@@ -16,23 +16,33 @@
         <div class="hud-row"><strong>Time</strong><span id="time-summary">--</span></div>
         <div id="command-status">啟動中...</div>
       </section>
-      <section id="ship-panel" class="drawer-panel" aria-label="艦船">
-        <h2>艦船</h2>
-        <div id="ship-list"></div>
-      </section>
-      <section id="chronocam-panel" class="drawer-panel" aria-label="ChronoCam">
-        <h2>ChronoCam</h2>
-        <div class="chrono-row"><strong>Mode</strong><span id="chronocam-mode">--</span></div>
-        <div class="chrono-row"><strong>View</strong><span id="chronocam-view-time">--</span></div>
-        <div class="chrono-row"><strong>Follow</strong><span id="chronocam-follow">--</span></div>
-        <div class="chrono-actions">
-          <button data-command="chrono_rewind_5">回看 5s</button>
-          <button data-command="chrono_live">回到 Live</button>
+      <section id="mobile-sheet" data-active-tab="ships" data-collapsed="false" aria-label="戰術抽屜">
+        <div id="mobile-sheet-grip">
+          <button id="mobile-sheet-toggle" type="button" aria-expanded="true">收合</button>
         </div>
-      </section>
-      <section id="mission-panel" class="drawer-panel" aria-label="任務">
-        <h2>任務</h2>
-        <div id="mission-list"></div>
+        <div id="mobile-sheet-tabs" role="tablist" aria-label="戰術面板">
+          <button type="button" data-sheet-tab="ships" aria-selected="true">艦船</button>
+          <button type="button" data-sheet-tab="chrono" aria-selected="false">Chrono</button>
+          <button type="button" data-sheet-tab="missions" aria-selected="false">任務</button>
+        </div>
+        <section id="ship-panel" class="drawer-panel" data-sheet-panel="ships" aria-label="艦船">
+          <h2>艦船</h2>
+          <div id="ship-list"></div>
+        </section>
+        <section id="chronocam-panel" class="drawer-panel" data-sheet-panel="chrono" aria-label="ChronoCam">
+          <h2>ChronoCam</h2>
+          <div class="chrono-row"><strong>Mode</strong><span id="chronocam-mode">--</span></div>
+          <div class="chrono-row"><strong>View</strong><span id="chronocam-view-time">--</span></div>
+          <div class="chrono-row"><strong>Follow</strong><span id="chronocam-follow">--</span></div>
+          <div class="chrono-actions">
+            <button data-command="chrono_rewind_5">回看 5s</button>
+            <button data-command="chrono_live">回到 Live</button>
+          </div>
+        </section>
+        <section id="mission-panel" class="drawer-panel" data-sheet-panel="missions" aria-label="任務">
+          <h2>任務</h2>
+          <div id="mission-list"></div>
+        </section>
       </section>
       <nav id="controls" aria-label="控制">
         <button data-command="toggle_pause">暫停</button>

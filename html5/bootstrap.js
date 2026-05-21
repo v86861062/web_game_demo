@@ -87,6 +87,39 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 
+function setMobileSheetTab(tab) {
+  const sheet = document.querySelector("#mobile-sheet");
+  if (!sheet) return;
+  sheet.dataset.activeTab = tab;
+  document.querySelectorAll("#mobile-sheet-tabs [data-sheet-tab]").forEach((button) => {
+    button.setAttribute("aria-selected", String(button.dataset.sheetTab === tab));
+  });
+}
+
+function setMobileSheetCollapsed(collapsed) {
+  const sheet = document.querySelector("#mobile-sheet");
+  const toggle = document.querySelector("#mobile-sheet-toggle");
+  if (!sheet || !toggle) return;
+  sheet.dataset.collapsed = String(collapsed);
+  toggle.textContent = collapsed ? "展開" : "收合";
+  toggle.setAttribute("aria-expanded", String(!collapsed));
+}
+
+function wireMobileSheet() {
+  document.querySelectorAll("#mobile-sheet-tabs [data-sheet-tab]").forEach((button) => {
+    button.addEventListener("click", () => {
+      setMobileSheetCollapsed(false);
+      setMobileSheetTab(button.dataset.sheetTab);
+    });
+  });
+  document.querySelector("#mobile-sheet-toggle")?.addEventListener("click", () => {
+    const sheet = document.querySelector("#mobile-sheet");
+    setMobileSheetCollapsed(sheet?.dataset.collapsed !== "true");
+  });
+  setMobileSheetTab(document.querySelector("#mobile-sheet")?.dataset.activeTab || "ships");
+  setMobileSheetCollapsed(document.querySelector("#mobile-sheet")?.dataset.collapsed === "true");
+}
+
 function wireControls() {
   document.querySelectorAll("button[data-command]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -126,6 +159,7 @@ async function main() {
   renderer = createRenderer(document.querySelector("#star-map"));
   installInput(renderer, { onTap: handleMapTap });
   wireControls();
+  wireMobileSheet();
   publishSnapshot();
   renderHud(latestSnapshot);
   renderer.render(latestSnapshot);

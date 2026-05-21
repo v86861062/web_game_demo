@@ -29,23 +29,64 @@ body { min-height: 100vh; touch-action: none; }
 .hud-row { display: flex; justify-content: space-between; gap: 14px; font-size: 13px; }
 #command-status { margin-top: 8px; color: #9be7ff; font-size: 12px; }
 
-.drawer-panel {
+#mobile-sheet {
   position: absolute;
-  left: 12px;
-  right: 12px;
-  max-height: 18vh;
+  left: 10px;
+  right: 10px;
+  bottom: calc(112px + env(safe-area-inset-bottom));
+  max-height: 232px;
+  padding: 8px;
+  border: 1px solid rgba(128, 171, 255, 0.28);
+  border-radius: 20px;
+  background: rgba(4, 8, 15, 0.72);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.36);
+  pointer-events: auto;
+  overflow: hidden;
+}
+#mobile-sheet[data-collapsed="true"] { max-height: 58px; }
+#mobile-sheet-grip { display: flex; justify-content: center; margin-bottom: 6px; }
+#mobile-sheet-toggle {
+  min-width: 76px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: rgba(18, 27, 49, 0.92);
+}
+#mobile-sheet-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 8px;
+}
+#mobile-sheet-tabs button {
+  padding: 8px 6px;
+  border-radius: 12px;
+  font-size: 12px;
+  background: rgba(28, 42, 76, 0.82);
+}
+#mobile-sheet-tabs button[aria-selected="true"] {
+  border-color: rgba(155, 231, 255, 0.75);
+  color: #ffffff;
+  background: linear-gradient(180deg, rgba(64,102,180,0.96), rgba(25,50,91,0.94));
+}
+#mobile-sheet[data-collapsed="true"] #mobile-sheet-tabs,
+#mobile-sheet[data-collapsed="true"] .drawer-panel { display: none; }
+
+.drawer-panel {
+  max-height: 140px;
   overflow: auto;
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 16px;
   padding: 10px;
-  background: rgba(4, 8, 15, 0.62);
-  backdrop-filter: blur(8px);
-  pointer-events: none;
+  background: rgba(4, 8, 15, 0.48);
 }
-#ship-panel { bottom: 108px; }
-#chronocam-panel { bottom: 520px; max-height: 16vh; pointer-events: auto; }
+#mobile-sheet[data-active-tab="ships"] .drawer-panel:not([data-sheet-panel="ships"]),
+#mobile-sheet[data-active-tab="chrono"] .drawer-panel:not([data-sheet-panel="chrono"]),
+#mobile-sheet[data-active-tab="missions"] .drawer-panel:not([data-sheet-panel="missions"]) {
+  display: none;
+}
 #chronocam-panel.replay { border-color: rgba(255, 209, 102, 0.62); box-shadow: 0 0 0 1px rgba(255, 209, 102, 0.22), 0 20px 60px rgba(0,0,0,0.35); }
-#mission-panel { bottom: 266px; display: none; }
 .drawer-panel h2 { margin: 0 0 8px; font-size: 13px; color: #aec7ff; }
 .ship-row, .mission { display: grid; gap: 2px; padding: 6px 0; border-top: 1px solid rgba(255,255,255,0.08); font-size: 12px; }
 .ship-row:first-of-type, .mission:first-of-type { border-top: 0; }
@@ -79,8 +120,38 @@ button:active { transform: translateY(1px); }
 
 @media (min-width: 760px) {
   #hud { right: auto; width: 360px; }
-  #ship-panel { left: auto; top: 130px; bottom: auto; right: 12px; width: 320px; max-height: 32vh; }
-  #chronocam-panel { left: auto; top: 318px; bottom: auto; right: 12px; width: 320px; max-height: 20vh; }
-  #mission-panel { display: block; left: auto; top: 420px; bottom: auto; right: 12px; width: 320px; max-height: 30vh; }
+  #mobile-sheet {
+    left: auto;
+    right: 12px;
+    bottom: auto;
+    top: 130px;
+    width: 320px;
+    max-height: none;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    backdrop-filter: none;
+    box-shadow: none;
+    overflow: visible;
+    pointer-events: none;
+  }
+  #mobile-sheet-grip, #mobile-sheet-tabs { display: none; }
+  #mobile-sheet[data-collapsed="true"] { max-height: none; }
+  #mobile-sheet[data-collapsed="true"] .drawer-panel,
+  #mobile-sheet[data-active-tab] .drawer-panel { display: block; }
+  .drawer-panel {
+    position: absolute;
+    left: auto;
+    right: 0;
+    width: 320px;
+    max-height: 30vh;
+    background: rgba(4, 8, 15, 0.62);
+    backdrop-filter: blur(8px);
+    pointer-events: auto;
+  }
+  #ship-panel { top: 0; max-height: 32vh; }
+  #chronocam-panel { top: 188px; max-height: 20vh; }
+  #mission-panel { top: 290px; max-height: 30vh; }
   #controls { left: 50%; transform: translateX(-50%); max-width: 680px; grid-template-columns: repeat(6, 1fr); }
 }
