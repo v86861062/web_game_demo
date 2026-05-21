@@ -12,6 +12,9 @@ const COLORS = {
   selectedHalo: "rgba(255, 235, 130, 0.28)",
   clickableHalo: "rgba(127, 255, 212, 0.16)",
   target: "#ffd166",
+  activeRoute: "rgba(255, 209, 102, 0.92)",
+  nextWaypoint: "#7fffd4",
+  destination: "#ff9f7a",
   text: "rgba(232, 240, 255, 0.9)",
 };
 
@@ -156,6 +159,57 @@ export function createRenderer(canvas) {
     return { clickableHalo: true, isTarget };
   }
 
+  function drawRoutePath(entity, pathPois) {
+    if (!pathPois?.length) return null;
+    const shipPoint = worldToScreen(entity.position);
+    const points = [shipPoint, ...pathPois.map((poi) => worldToScreen(poi.position))];
+    const nextPoi = pathPois[0];
+    const destinationPoi = pathPois[pathPois.length - 1];
+    const nextPoint = worldToScreen(nextPoi.position);
+    const destinationPoint = worldToScreen(destinationPoi.position);
+    ctx.save();
+    ctx.strokeStyle = COLORS.activeRoute;
+    ctx.lineWidth = 4;
+    ctx.setLineDash([12, 7]);
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    points.slice(1).forEach((point) => ctx.lineTo(point.x, point.y));
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    ctx.fillStyle = COLORS.nextWaypoint;
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.55)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(nextPoint.x, nextPoint.y, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = COLORS.nextWaypoint;
+    ctx.font = "bold 10px system-ui, sans-serif";
+    ctx.fillText("NEXT", nextPoint.x + 12, nextPoint.y - 8);
+
+    ctx.fillStyle = COLORS.destination;
+    ctx.strokeStyle = COLORS.destination;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(destinationPoint.x, destinationPoint.y - 18);
+    ctx.lineTo(destinationPoint.x + 11, destinationPoint.y + 3);
+    ctx.lineTo(destinationPoint.x - 11, destinationPoint.y + 3);
+    ctx.closePath();
+    ctx.stroke();
+    ctx.fillText("DEST", destinationPoint.x + 12, destinationPoint.y + 6);
+    ctx.restore();
+    return {
+      shipId: entity.id,
+      targetPoiId: `poi/${destinationPoi.id}`,
+      segmentCount: Math.max(1, points.length - 1),
+      nextWaypoint: nextPoi.name,
+      destination: destinationPoi.name,
+      nextWaypointMarker: true,
+      destinationMarker: true,
+    };
+  }
+
   function drawShip(entity, isSelected) {
     const p = worldToScreen(entity.position);
     ctx.save();
@@ -225,6 +279,7 @@ export function createRenderer(canvas) {
       selectedShip: null,
       routeTarget: routeTarget ? { ...routeTarget, active: false } : null,
       clickablePoiHalos: 0,
+      routePaths: [],
     };
     snapshot.map.pois.forEach((poi) => {
       const poiDebug = drawPoi(poi, routeTarget);
@@ -234,6 +289,13 @@ export function createRenderer(canvas) {
     const selectedShipId = window.__starboundHtml5SelectedShipId;
     snapshot.entities.filter((entity) => entity.kind === "Ship").forEach((entity) => {
       const isSelected = entity.id === selectedShipId;
+      const waypointIds = entity.ship?.waypoints ?? [];
+      const pathPois = [...waypointIds, entity.ship?.target_poi]
+        .filter((id) => id !== null && id !== undefined)
+        .map((id) => poiById.get(id))
+        .filter(Boolean);
+      const routePathDebug = drawRoutePath(entity, pathPois);
+      if (routePathDebug) debug.routePaths.push(routePathDebug);
       drawShip(entity, isSelected);
       if (isSelected) {
         debug.selectedShip = { id: entity.id, halo: true, label: true };
