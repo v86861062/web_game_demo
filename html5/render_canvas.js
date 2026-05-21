@@ -23,7 +23,14 @@ const COLORS = {
 
 function fitCamera(snapshot, canvas) {
   const points = [
-    ...snapshot.map.sectors.map((sector) => sector.position),
+    ...snapshot.map.sectors.flatMap((sector) => {
+      const radius = sector.radius ?? 0;
+      return [
+        sector.position,
+        { x: sector.position.x - radius, y: sector.position.y - radius },
+        { x: sector.position.x + radius, y: sector.position.y + radius },
+      ];
+    }),
     ...snapshot.map.pois.map((poi) => poi.position),
   ];
   const minX = Math.min(...points.map((p) => p.x));
@@ -36,7 +43,7 @@ function fitCamera(snapshot, canvas) {
   return {
     x: (minX + maxX) / 2,
     y: (minY + maxY) / 2,
-    scale: Math.max(0.55, Math.min(16, scale)),
+    scale: Math.max(0.55, Math.min(22, scale)),
   };
 }
 
@@ -347,15 +354,27 @@ export function createRenderer(canvas) {
       ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
     });
 
+    const sectorBubbles = [];
     snapshot.map.sectors.forEach((sector) => {
       const p = worldToScreen(sector.position);
+      const worldRadius = sector.radius ?? 520;
+      const screenRadius = Math.max(24, Math.min(180, worldRadius / camera.scale));
       ctx.fillStyle = COLORS.sectorHalo;
-      ctx.beginPath(); ctx.arc(p.x, p.y, 28, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(p.x, p.y, screenRadius, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = "rgba(122, 167, 255, 0.28)";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(p.x, p.y, screenRadius, 0, Math.PI * 2); ctx.stroke();
       ctx.fillStyle = COLORS.sector;
       ctx.beginPath(); ctx.arc(p.x, p.y, 9, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = COLORS.text;
       ctx.font = "12px system-ui, sans-serif";
       ctx.fillText(sector.name, p.x + 12, p.y + 4);
+      sectorBubbles.push({
+        sectorId: sector.id,
+        name: sector.name,
+        worldRadius,
+        screenRadius,
+      });
     });
 
     const routeTarget = window.__starboundHtml5RouteTarget;
@@ -367,6 +386,7 @@ export function createRenderer(canvas) {
       shipHeadings: [],
       shipLegs: [],
       factionShips: [],
+      sectorBubbles,
     };
     snapshot.map.pois.forEach((poi) => {
       const poiDebug = drawPoi(poi, routeTarget);
