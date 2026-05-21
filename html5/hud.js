@@ -6,6 +6,13 @@ function formatInventory(inventory = {}) {
   return parts.length ? parts.join(" · ") : "empty";
 }
 
+function formatPriceLines(prefix, prices = {}) {
+  return Object.entries(prices)
+    .filter(([, value]) => value)
+    .map(([ware, value]) => `${prefix} ${ware}:${value}`)
+    .join(" · ");
+}
+
 export function renderHud(snapshot) {
   if (!snapshot) return;
   document.querySelector("#credits").textContent = String(snapshot.hud.credits);
@@ -33,6 +40,23 @@ export function renderHud(snapshot) {
     row.innerHTML = `<span>${mission.completed ? "✓" : "○"}</span><strong>${mission.description}</strong><small>${mission.reward} credits</small>`;
     return row;
   }));
+
+  const market = document.querySelector("#market-list");
+  if (market) {
+    market.replaceChildren(...(snapshot.market?.stations || []).map((station) => {
+      const row = document.createElement("div");
+      row.className = "market-row";
+      const buy = formatPriceLines("買", station.buy_prices);
+      const sell = formatPriceLines("賣", station.sell_prices);
+      row.innerHTML = `
+        <strong>${station.name}</strong>
+        <span>${station.kind} · cash:${station.credits}</span>
+        <small>庫存 ${formatInventory(station.inventory)} / 容量 ${formatInventory(station.capacity)}</small>
+        <small>${[buy, sell].filter(Boolean).join(" ｜ ") || "無公開報價"}</small>
+      `;
+      return row;
+    }));
+  }
 
   const chrono = snapshot.chronocam || {};
   document.querySelector("#chronocam-mode").textContent = chrono.mode || "--";

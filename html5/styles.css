@@ -55,7 +55,7 @@ body { min-height: 100vh; touch-action: none; }
 }
 #mobile-sheet-tabs {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 6px;
   margin-bottom: 8px;
 }
@@ -82,15 +82,16 @@ body { min-height: 100vh; touch-action: none; }
   background: rgba(4, 8, 15, 0.48);
 }
 #mobile-sheet[data-active-tab="ships"] .drawer-panel:not([data-sheet-panel="ships"]),
+#mobile-sheet[data-active-tab="market"] .drawer-panel:not([data-sheet-panel="market"]),
 #mobile-sheet[data-active-tab="chrono"] .drawer-panel:not([data-sheet-panel="chrono"]),
 #mobile-sheet[data-active-tab="missions"] .drawer-panel:not([data-sheet-panel="missions"]) {
   display: none;
 }
 #chronocam-panel.replay { border-color: rgba(255, 209, 102, 0.62); box-shadow: 0 0 0 1px rgba(255, 209, 102, 0.22), 0 20px 60px rgba(0,0,0,0.35); }
 .drawer-panel h2 { margin: 0 0 8px; font-size: 13px; color: #aec7ff; }
-.ship-row, .mission { display: grid; gap: 2px; padding: 6px 0; border-top: 1px solid rgba(255,255,255,0.08); font-size: 12px; }
-.ship-row:first-of-type, .mission:first-of-type { border-top: 0; }
-.ship-row span, .mission small, .ship-row small { color: rgba(238,244,255,0.68); }
+.ship-row, .market-row, .mission { display: grid; gap: 2px; padding: 6px 0; border-top: 1px solid rgba(255,255,255,0.08); font-size: 12px; }
+.ship-row:first-of-type, .market-row:first-of-type, .mission:first-of-type { border-top: 0; }
+.ship-row span, .market-row span, .market-row small, .mission small, .ship-row small { color: rgba(238,244,255,0.68); }
 .mission.completed { opacity: 0.58; }
 .chrono-row { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; padding: 2px 0; }
 .chrono-row span { color: #9be7ff; }
@@ -139,7 +140,7 @@ button:active { transform: translateY(1px); }
   #mobile-sheet-grip, #mobile-sheet-tabs { display: none; }
   #mobile-sheet[data-collapsed="true"] { max-height: none; }
   #mobile-sheet[data-collapsed="true"] .drawer-panel,
-  #mobile-sheet[data-active-tab] .drawer-panel { display: block; }
+  #mobile-sheet[data-active-tab] .drawer-panel { display: block !important; }
   .drawer-panel {
     position: absolute;
     left: auto;
@@ -151,7 +152,8 @@ button:active { transform: translateY(1px); }
     pointer-events: auto;
   }
   #ship-panel { top: 0; max-height: 32vh; }
-  #chronocam-panel { top: 188px; max-height: 20vh; }
-  #mission-panel { top: 290px; max-height: 30vh; }
+  #market-panel { top: 188px; max-height: 28vh; }
+  #chronocam-panel { top: 360px; max-height: 18vh; }
+  #mission-panel { top: 462px; max-height: 24vh; }
   #controls { left: 50%; transform: translateX(-50%); max-width: 680px; grid-template-columns: repeat(6, 1fr); }
 }

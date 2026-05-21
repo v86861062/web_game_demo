@@ -23,12 +23,17 @@
         </div>
         <div id="mobile-sheet-tabs" role="tablist" aria-label="戰術面板">
           <button type="button" data-sheet-tab="ships" aria-selected="true">艦船</button>
+          <button type="button" data-sheet-tab="market" aria-selected="false">市場</button>
           <button type="button" data-sheet-tab="chrono" aria-selected="false">Chrono</button>
           <button type="button" data-sheet-tab="missions" aria-selected="false">任務</button>
         </div>
         <section id="ship-panel" class="drawer-panel" data-sheet-panel="ships" aria-label="艦船">
           <h2>艦船</h2>
           <div id="ship-list"></div>
+        </section>
+        <section id="market-panel" class="drawer-panel" data-sheet-panel="market" aria-label="市場">
+          <h2>市場</h2>
+          <div id="market-list"></div>
         </section>
         <section id="chronocam-panel" class="drawer-panel" data-sheet-panel="chrono" aria-label="ChronoCam">
           <h2>ChronoCam</h2>
