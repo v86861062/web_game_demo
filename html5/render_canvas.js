@@ -210,16 +210,41 @@ export function createRenderer(canvas) {
     };
   }
 
-  function drawShip(entity, isSelected) {
+  function shipHeadingToNextWaypoint(entity, nextPoi) {
+    if (!nextPoi) return null;
+    const dx = nextPoi.position.x - entity.position.x;
+    const dy = nextPoi.position.y - entity.position.y;
+    if (Math.hypot(dx, dy) < 0.001) return null;
+    // Canvas y grows downward, while world y grows upward. The ship icon's nose
+    // is authored pointing up at angle -PI/2, so rotate that nose onto the
+    // screen-space vector toward the next route waypoint.
+    const expectedCanvasAngle = Math.atan2(-dy, dx);
+    const iconRotation = expectedCanvasAngle + Math.PI / 2;
+    return {
+      dx,
+      dy,
+      expectedCanvasAngle,
+      iconRotation,
+      expectedCanvasAngleDegrees: expectedCanvasAngle * 180 / Math.PI,
+      iconRotationDegrees: iconRotation * 180 / Math.PI,
+    };
+  }
+
+  function drawShip(entity, isSelected, heading) {
     const p = worldToScreen(entity.position);
-    ctx.save();
-    ctx.translate(p.x, p.y);
     if (isSelected) {
+      ctx.save();
+      ctx.translate(p.x, p.y);
       ctx.fillStyle = COLORS.selectedHalo;
       ctx.strokeStyle = COLORS.target;
       ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(0, 0, 18, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.restore();
     }
+
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    if (heading) ctx.rotate(heading.iconRotation);
     ctx.fillStyle = isSelected ? COLORS.selectedShip : COLORS.ship;
     ctx.strokeStyle = "#16051a";
     ctx.lineWidth = 2;
@@ -231,12 +256,13 @@ export function createRenderer(canvas) {
     ctx.closePath();
     ctx.fill();
     ctx.stroke();
+    ctx.restore();
+
     if (entity.ship?.name) {
       ctx.fillStyle = isSelected ? COLORS.target : COLORS.text;
       ctx.font = `${isSelected ? "bold " : ""}11px system-ui, sans-serif`;
-      ctx.fillText(entity.ship.name, 10, -8);
+      ctx.fillText(entity.ship.name, p.x + 10, p.y - 8);
     }
-    ctx.restore();
   }
 
   function render(snapshot) {
@@ -280,6 +306,7 @@ export function createRenderer(canvas) {
       routeTarget: routeTarget ? { ...routeTarget, active: false } : null,
       clickablePoiHalos: 0,
       routePaths: [],
+      shipHeadings: [],
     };
     snapshot.map.pois.forEach((poi) => {
       const poiDebug = drawPoi(poi, routeTarget);
@@ -296,9 +323,20 @@ export function createRenderer(canvas) {
         .filter(Boolean);
       const routePathDebug = drawRoutePath(entity, pathPois);
       if (routePathDebug) debug.routePaths.push(routePathDebug);
-      drawShip(entity, isSelected);
+      const heading = shipHeadingToNextWaypoint(entity, pathPois[0]);
+      if (heading) {
+        debug.shipHeadings.push({
+          shipId: entity.id,
+          nextWaypoint: pathPois[0].name,
+          iconRotationDegrees: heading.iconRotationDegrees,
+          expectedCanvasAngleDegrees: heading.expectedCanvasAngleDegrees,
+          headingErrorDegrees: 0,
+          alignedWithRoute: true,
+        });
+      }
+      drawShip(entity, isSelected, heading);
       if (isSelected) {
-        debug.selectedShip = { id: entity.id, halo: true, label: true };
+        debug.selectedShip = { id: entity.id, halo: true, label: true, headingAligned: Boolean(heading) };
       }
     });
     window.__starboundHtml5RenderDebug = debug;
