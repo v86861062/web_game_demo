@@ -1,5 +1,6 @@
-# web_game_demo
+# Starbound Orders web demo
 
-Static GitHub Pages build for Starbound Orders playtesting.
+Static GitHub Pages build for Starbound Orders.
 
-The playable files are generated from `/home/v86/workspace/starbound_orders/web`.
+Source: https://github.com/v86861062/starbound_orders
+Source commit: ff69a834968333e0f86a9ebdd9a7b618742ed67b
