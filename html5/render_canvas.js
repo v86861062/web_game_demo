@@ -8,6 +8,9 @@ const COLORS = {
   gate: "#7fffd4",
   route: "rgba(117, 179, 255, 0.45)",
   ship: "#ff7ad9",
+  playerShip: "#ff7ad9",
+  pirateShip: "#ff4d4d",
+  patrolShip: "#5dd6ff",
   selectedShip: "#ffffff",
   selectedHalo: "rgba(255, 235, 130, 0.28)",
   clickableHalo: "rgba(127, 255, 212, 0.16)",
@@ -266,8 +269,20 @@ export function createRenderer(canvas) {
     };
   }
 
+  function shipFactionStyle(entity) {
+    switch (entity.ship?.owner) {
+      case "Pirates":
+        return { owner: "Pirates", color: COLORS.pirateShip, glyph: "☠", label: "PIRATE" };
+      case "CivilianSecurity":
+        return { owner: "CivilianSecurity", color: COLORS.patrolShip, glyph: "◆", label: "PATROL" };
+      default:
+        return { owner: "Player", color: COLORS.playerShip, glyph: "▲", label: "PLAYER" };
+    }
+  }
+
   function drawShip(entity, isSelected, heading) {
     const p = worldToScreen(entity.position);
+    const faction = shipFactionStyle(entity);
     if (isSelected) {
       ctx.save();
       ctx.translate(p.x, p.y);
@@ -281,7 +296,7 @@ export function createRenderer(canvas) {
     ctx.save();
     ctx.translate(p.x, p.y);
     if (heading) ctx.rotate(heading.iconRotation);
-    ctx.fillStyle = isSelected ? COLORS.selectedShip : COLORS.ship;
+    ctx.fillStyle = isSelected ? COLORS.selectedShip : faction.color;
     ctx.strokeStyle = "#16051a";
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -298,7 +313,14 @@ export function createRenderer(canvas) {
       ctx.fillStyle = isSelected ? COLORS.target : COLORS.text;
       ctx.font = `${isSelected ? "bold " : ""}11px system-ui, sans-serif`;
       ctx.fillText(entity.ship.name, p.x + 10, p.y - 8);
+      if (entity.ship?.owner !== "Player") {
+        ctx.fillStyle = faction.color;
+        ctx.font = "bold 10px system-ui, sans-serif";
+        ctx.fillText(`${faction.glyph} ${faction.label}`, p.x + 10, p.y + 6);
+      }
     }
+
+    return faction;
   }
 
   function render(snapshot) {
@@ -344,6 +366,7 @@ export function createRenderer(canvas) {
       routePaths: [],
       shipHeadings: [],
       shipLegs: [],
+      factionShips: [],
     };
     snapshot.map.pois.forEach((poi) => {
       const poiDebug = drawPoi(poi, routeTarget);
@@ -382,7 +405,16 @@ export function createRenderer(canvas) {
           alignedWithRoute: true,
         });
       }
-      drawShip(entity, isSelected, heading);
+      const faction = drawShip(entity, isSelected, heading);
+      debug.factionShips.push({
+        shipId: entity.id,
+        name: entity.ship?.name ?? entity.id,
+        owner: faction.owner,
+        role: entity.ship?.role ?? null,
+        color: faction.color,
+        glyph: faction.glyph,
+        label: faction.label,
+      });
       if (isSelected) {
         debug.selectedShip = { id: entity.id, halo: true, label: true, headingAligned: Boolean(heading) };
       }
