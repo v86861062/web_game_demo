@@ -32,4 +32,10 @@ export function renderHud(snapshot) {
     row.innerHTML = `<span>${mission.completed ? "✓" : "○"}</span><strong>${mission.description}</strong><small>${mission.reward} credits</small>`;
     return row;
   }));
+
+  const chrono = snapshot.chronocam || {};
+  document.querySelector("#chronocam-mode").textContent = chrono.mode || "--";
+  document.querySelector("#chronocam-view-time").textContent = `${Number(chrono.view_time || 0).toFixed(1)}s`;
+  document.querySelector("#chronocam-follow").textContent = chrono.follow_live ? "Live tail" : "Replay fixed";
+  document.querySelector("#chronocam-panel")?.classList.toggle("replay", chrono.mode === "Replay");
 }

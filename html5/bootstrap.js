@@ -43,6 +43,18 @@ export function applyCommand(command, label = command.type) {
   }
 }
 
+function seekChronoCam(seconds) {
+  engine.seek(seconds);
+  publishSnapshot();
+  status(`ChronoCam 回看 ${seconds.toFixed(1)}s`);
+}
+
+function returnChronoCamLive() {
+  engine.return_to_live();
+  publishSnapshot();
+  status("ChronoCam 已回到 Live");
+}
+
 function publishSnapshot() {
   latestSnapshot = JSON.parse(engine.view_snapshot_json());
   window.__starboundLatestSnapshot = latestSnapshot;
@@ -92,6 +104,11 @@ function wireControls() {
         applyCommand({ type: "SelectShip", ship_id: "ship/scout-01" }, "Select Scout");
       } else if (command === "enter_north_gate") {
         applyCommand({ type: "AssignMove", ship_id: "ship/scout-01", target: "poi/2" }, "Scout → North Gate");
+      } else if (command === "chrono_rewind_5") {
+        const liveTime = latestSnapshot?.time ?? 0;
+        seekChronoCam(Math.max(0, liveTime - 5));
+      } else if (command === "chrono_live") {
+        returnChronoCamLive();
       } else if (command === "reset") {
         engine.reset();
         speedMultiplier = 1;
