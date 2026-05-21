@@ -3,7 +3,7 @@ const COLORS = {
   bg: "#080b12",
   grid: "rgba(106, 154, 255, 0.08)",
   sector: "#7aa7ff",
-  sectorHalo: "rgba(91, 134, 255, 0.15)",
+  sectorHalo: "rgba(91, 134, 255, 0.055)",
   poi: "#f8d36b",
   gate: "#7fffd4",
   route: "rgba(117, 179, 255, 0.45)",
@@ -18,6 +18,10 @@ const COLORS = {
   activeRoute: "rgba(255, 209, 102, 0.92)",
   nextWaypoint: "#7fffd4",
   destination: "#ff9f7a",
+  mutedRoute: "rgba(111, 146, 190, 0.20)",
+  npcRoute: "rgba(111, 146, 190, 0.16)",
+  pirateRoute: "rgba(255, 77, 77, 0.22)",
+  patrolRoute: "rgba(93, 214, 255, 0.20)",
   text: "rgba(232, 240, 255, 0.9)",
 };
 
@@ -146,9 +150,9 @@ export function createRenderer(canvas) {
     ctx.fillStyle = COLORS.clickableHalo;
     ctx.beginPath(); ctx.arc(0, 0, poi.kind === "Gate" ? 18 : 14, 0, Math.PI * 2); ctx.fill();
     if (isTarget) {
-      ctx.strokeStyle = COLORS.target;
-      ctx.lineWidth = 3;
-      ctx.setLineDash([7, 4]);
+      ctx.strokeStyle = "rgba(255, 209, 102, 0.58)";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 6]);
       ctx.beginPath(); ctx.arc(0, 0, 25, 0, Math.PI * 2); ctx.stroke();
       ctx.setLineDash([]);
       ctx.fillStyle = COLORS.target;
@@ -202,8 +206,77 @@ export function createRenderer(canvas) {
     };
   }
 
-  function drawRoutePath(entity, pathPois, legDebug) {
+  function routeVisualStyle(entity, isSelected) {
+    if (isSelected) {
+      return {
+        selected: true,
+        visualWeight: "primary",
+        strokeStyle: COLORS.activeRoute,
+        shadowStyle: "rgba(0, 0, 0, 0.55)",
+        opacity: 0.92,
+        lineWidth: 3.5,
+        dash: [12, 7],
+        markerLabelsVisible: true,
+      };
+    }
+    const owner = entity.ship?.owner;
+    if (owner === "Pirates") {
+      return {
+        selected: false,
+        visualWeight: "muted-hostile",
+        strokeStyle: COLORS.pirateRoute,
+        opacity: 0.22,
+        lineWidth: 1.6,
+        dash: [4, 8],
+        markerLabelsVisible: false,
+      };
+    }
+    if (owner === "CivilianSecurity") {
+      return {
+        selected: false,
+        visualWeight: "muted-patrol",
+        strokeStyle: COLORS.patrolRoute,
+        opacity: 0.20,
+        lineWidth: 1.5,
+        dash: [6, 10],
+        markerLabelsVisible: false,
+      };
+    }
+    return {
+      selected: false,
+      visualWeight: "muted",
+      strokeStyle: COLORS.mutedRoute,
+      opacity: 0.20,
+      lineWidth: 1.5,
+      dash: [6, 10],
+      markerLabelsVisible: false,
+    };
+  }
+
+  function drawBadge(label, point, fillStyle, offsetX, offsetY) {
+    const text = String(label);
+    ctx.save();
+    ctx.font = "bold 10px system-ui, sans-serif";
+    const padX = 6;
+    const width = Math.ceil(ctx.measureText(text).width) + padX * 2;
+    const height = 17;
+    const x = point.x + offsetX;
+    const y = point.y + offsetY;
+    ctx.fillStyle = "rgba(4, 8, 15, 0.82)";
+    ctx.strokeStyle = fillStyle;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(x, y, width, height, 7);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = fillStyle;
+    ctx.fillText(text, x + padX, y + 12);
+    ctx.restore();
+  }
+
+  function drawRoutePath(entity, pathPois, legDebug, isSelected) {
     if (!pathPois?.length) return null;
+    const style = routeVisualStyle(entity, isSelected);
     const shipPoint = worldToScreen(entity.position);
     const points = [shipPoint, ...pathPois.map((poi) => worldToScreen(poi.position))];
     const nextPoi = pathPois[0];
@@ -211,36 +284,48 @@ export function createRenderer(canvas) {
     const nextPoint = worldToScreen(nextPoi.position);
     const destinationPoint = worldToScreen(destinationPoi.position);
     ctx.save();
-    ctx.strokeStyle = COLORS.activeRoute;
-    ctx.lineWidth = 4;
-    ctx.setLineDash([12, 7]);
+    if (style.shadowStyle) {
+      ctx.strokeStyle = style.shadowStyle;
+      ctx.lineWidth = style.lineWidth + 2.2;
+      ctx.setLineDash(style.dash);
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      points.slice(1).forEach((point) => ctx.lineTo(point.x, point.y));
+      ctx.stroke();
+    }
+    ctx.globalAlpha = style.opacity;
+    ctx.strokeStyle = style.strokeStyle;
+    ctx.lineWidth = style.lineWidth;
+    ctx.setLineDash(style.dash);
     ctx.beginPath();
     ctx.moveTo(points[0].x, points[0].y);
     points.slice(1).forEach((point) => ctx.lineTo(point.x, point.y));
     ctx.stroke();
     ctx.setLineDash([]);
 
-    ctx.fillStyle = COLORS.nextWaypoint;
-    ctx.strokeStyle = "rgba(0, 0, 0, 0.55)";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(nextPoint.x, nextPoint.y, 9, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = COLORS.nextWaypoint;
-    ctx.font = "bold 10px system-ui, sans-serif";
-    ctx.fillText("NEXT", nextPoint.x + 12, nextPoint.y - 8);
+    ctx.globalAlpha = 1;
+    if (style.markerLabelsVisible) {
+      ctx.fillStyle = COLORS.nextWaypoint;
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.62)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(nextPoint.x, nextPoint.y, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      drawBadge("NEXT", nextPoint, COLORS.nextWaypoint, 11, -22);
 
-    ctx.fillStyle = COLORS.destination;
-    ctx.strokeStyle = COLORS.destination;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(destinationPoint.x, destinationPoint.y - 18);
-    ctx.lineTo(destinationPoint.x + 11, destinationPoint.y + 3);
-    ctx.lineTo(destinationPoint.x - 11, destinationPoint.y + 3);
-    ctx.closePath();
-    ctx.stroke();
-    ctx.fillText("DEST", destinationPoint.x + 12, destinationPoint.y + 6);
+      ctx.fillStyle = COLORS.destination;
+      ctx.strokeStyle = "rgba(0, 0, 0, 0.62)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(destinationPoint.x, destinationPoint.y - 16);
+      ctx.lineTo(destinationPoint.x + 10, destinationPoint.y + 3);
+      ctx.lineTo(destinationPoint.x - 10, destinationPoint.y + 3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      drawBadge("DEST", destinationPoint, COLORS.destination, 12, 4);
+    }
     ctx.restore();
     return {
       shipId: entity.id,
@@ -250,6 +335,10 @@ export function createRenderer(canvas) {
       destination: destinationPoi.name,
       nextWaypointMarker: true,
       destinationMarker: true,
+      selected: style.selected,
+      visualWeight: style.visualWeight,
+      opacity: style.opacity,
+      markerLabelsVisible: style.markerLabelsVisible,
       nextLegType: legDebug?.type ?? null,
       nextLegSpeed: legDebug?.speed ?? null,
       currentPoi: legDebug?.currentPoi ?? null,
@@ -361,7 +450,7 @@ export function createRenderer(canvas) {
       const screenRadius = Math.max(24, Math.min(180, worldRadius / camera.scale));
       ctx.fillStyle = COLORS.sectorHalo;
       ctx.beginPath(); ctx.arc(p.x, p.y, screenRadius, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = "rgba(122, 167, 255, 0.28)";
+      ctx.strokeStyle = "rgba(122, 167, 255, 0.16)";
       ctx.lineWidth = 1.5;
       ctx.beginPath(); ctx.arc(p.x, p.y, screenRadius, 0, Math.PI * 2); ctx.stroke();
       ctx.fillStyle = COLORS.sector;
@@ -412,7 +501,7 @@ export function createRenderer(canvas) {
           ...legDebug,
         });
       }
-      const routePathDebug = drawRoutePath(entity, pathPois, legDebug);
+      const routePathDebug = drawRoutePath(entity, pathPois, legDebug, isSelected);
       if (routePathDebug) debug.routePaths.push(routePathDebug);
       const heading = shipHeadingToNextWaypoint(entity, pathPois[0]);
       if (heading) {
