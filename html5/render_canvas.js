@@ -8,6 +8,10 @@ const COLORS = {
   gate: "#7fffd4",
   route: "rgba(117, 179, 255, 0.45)",
   ship: "#ff7ad9",
+  selectedShip: "#ffffff",
+  selectedHalo: "rgba(255, 235, 130, 0.28)",
+  clickableHalo: "rgba(127, 255, 212, 0.16)",
+  target: "#ffd166",
   text: "rgba(232, 240, 255, 0.9)",
 };
 
@@ -120,14 +124,27 @@ export function createRenderer(canvas) {
     }
   }
 
-  function drawPoi(poi) {
+  function drawPoi(poi, routeTarget) {
     const p = worldToScreen(poi.position);
     const r = poi.kind === "Gate" ? 5 : 4;
+    const isTarget = routeTarget?.poiId === `poi/${poi.id}`;
     ctx.save();
     ctx.translate(p.x, p.y);
+    ctx.fillStyle = COLORS.clickableHalo;
+    ctx.beginPath(); ctx.arc(0, 0, poi.kind === "Gate" ? 18 : 14, 0, Math.PI * 2); ctx.fill();
+    if (isTarget) {
+      ctx.strokeStyle = COLORS.target;
+      ctx.lineWidth = 3;
+      ctx.setLineDash([7, 4]);
+      ctx.beginPath(); ctx.arc(0, 0, 25, 0, Math.PI * 2); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = COLORS.target;
+      ctx.font = "bold 11px system-ui, sans-serif";
+      ctx.fillText("TARGET", 12, 20);
+    }
     ctx.fillStyle = poi.kind === "Gate" ? COLORS.gate : COLORS.poi;
-    ctx.strokeStyle = "rgba(0,0,0,0.45)";
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = isTarget ? COLORS.target : "rgba(0,0,0,0.45)";
+    ctx.lineWidth = isTarget ? 3 : 2;
     if (poi.kind === "Gate") {
       ctx.rotate(Math.PI / 4);
       ctx.fillRect(-r, -r, r * 2, r * 2);
@@ -136,13 +153,20 @@ export function createRenderer(canvas) {
       ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
     }
     ctx.restore();
+    return { clickableHalo: true, isTarget };
   }
 
-  function drawShip(entity) {
+  function drawShip(entity, isSelected) {
     const p = worldToScreen(entity.position);
     ctx.save();
     ctx.translate(p.x, p.y);
-    ctx.fillStyle = COLORS.ship;
+    if (isSelected) {
+      ctx.fillStyle = COLORS.selectedHalo;
+      ctx.strokeStyle = COLORS.target;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(0, 0, 18, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    }
+    ctx.fillStyle = isSelected ? COLORS.selectedShip : COLORS.ship;
     ctx.strokeStyle = "#16051a";
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -154,8 +178,8 @@ export function createRenderer(canvas) {
     ctx.fill();
     ctx.stroke();
     if (entity.ship?.name) {
-      ctx.fillStyle = COLORS.text;
-      ctx.font = "11px system-ui, sans-serif";
+      ctx.fillStyle = isSelected ? COLORS.target : COLORS.text;
+      ctx.font = `${isSelected ? "bold " : ""}11px system-ui, sans-serif`;
       ctx.fillText(entity.ship.name, 10, -8);
     }
     ctx.restore();
@@ -196,8 +220,26 @@ export function createRenderer(canvas) {
       ctx.fillText(sector.name, p.x + 12, p.y + 4);
     });
 
-    snapshot.map.pois.forEach(drawPoi);
-    snapshot.entities.filter((entity) => entity.kind === "Ship").forEach(drawShip);
+    const routeTarget = window.__starboundHtml5RouteTarget;
+    const debug = {
+      selectedShip: null,
+      routeTarget: routeTarget ? { ...routeTarget, active: false } : null,
+      clickablePoiHalos: 0,
+    };
+    snapshot.map.pois.forEach((poi) => {
+      const poiDebug = drawPoi(poi, routeTarget);
+      if (poiDebug.clickableHalo) debug.clickablePoiHalos += 1;
+      if (poiDebug.isTarget && debug.routeTarget) debug.routeTarget.active = true;
+    });
+    const selectedShipId = window.__starboundHtml5SelectedShipId;
+    snapshot.entities.filter((entity) => entity.kind === "Ship").forEach((entity) => {
+      const isSelected = entity.id === selectedShipId;
+      drawShip(entity, isSelected);
+      if (isSelected) {
+        debug.selectedShip = { id: entity.id, halo: true, label: true };
+      }
+    });
+    window.__starboundHtml5RenderDebug = debug;
   }
 
   window.addEventListener("resize", () => publishCamera());

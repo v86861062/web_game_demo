@@ -34,7 +34,10 @@ function commandEnvelope(command) {
 export function applyCommand(command, label = command.type) {
   try {
     engine.apply_command_json(commandEnvelope(command));
-    if (command.type === "SelectShip") selectedShipId = command.ship_id;
+    if (command.type === "SelectShip") {
+      selectedShipId = command.ship_id;
+      window.__starboundHtml5SelectedShipId = selectedShipId;
+    }
     publishSnapshot();
     status(`已送出：${label}`);
   } catch (error) {
@@ -73,6 +76,7 @@ function handleMapTap(point) {
     selectedShipId = hit.id;
     applyCommand({ type: "SelectShip", ship_id: hit.id }, `Select ${hit.label}`);
   } else if (hit.type === "poi") {
+    window.__starboundHtml5RouteTarget = { poiId: hit.id, label: hit.label };
     applyCommand({ type: "AssignMove", ship_id: selectedShipId, target: hit.id }, `${selectedShipId} → ${hit.label}`);
   }
 }
@@ -156,6 +160,8 @@ async function main() {
   status("載入 Rust WASM headless engine...");
   await init();
   engine = new StarboundHeadlessEngine();
+  window.__starboundHtml5SelectedShipId = selectedShipId;
+  window.__starboundHtml5RouteTarget = null;
   renderer = createRenderer(document.querySelector("#star-map"));
   installInput(renderer, { onTap: handleMapTap });
   wireControls();
