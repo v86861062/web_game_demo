@@ -12,6 +12,7 @@ let lastFrame = performance.now();
 let commandSeq = 0;
 let speedMultiplier = 1;
 let latestSnapshot = null;
+let selectedShipId = "ship/scout-01";
 
 function status(message) {
   const node = document.querySelector("#command-status");
@@ -33,6 +34,7 @@ function commandEnvelope(command) {
 export function applyCommand(command, label = command.type) {
   try {
     engine.apply_command_json(commandEnvelope(command));
+    if (command.type === "SelectShip") selectedShipId = command.ship_id;
     publishSnapshot();
     status(`已送出：${label}`);
   } catch (error) {
@@ -46,6 +48,21 @@ function publishSnapshot() {
   window.__starboundLatestSnapshot = latestSnapshot;
   localStorage.setItem("starbound_orders_html5_snapshot", JSON.stringify(latestSnapshot));
   return latestSnapshot;
+}
+
+function handleMapTap(point) {
+  const hit = renderer.hitTest(latestSnapshot, point);
+  window.__starboundHtml5LastHit = hit;
+  if (!hit) {
+    status("未命中星圖物件");
+    return;
+  }
+  if (hit.type === "ship") {
+    selectedShipId = hit.id;
+    applyCommand({ type: "SelectShip", ship_id: hit.id }, `Select ${hit.label}`);
+  } else if (hit.type === "poi") {
+    applyCommand({ type: "AssignMove", ship_id: selectedShipId, target: hit.id }, `${selectedShipId} → ${hit.label}`);
+  }
 }
 
 function frame(now) {
@@ -71,6 +88,7 @@ function wireControls() {
         speedMultiplier = 3;
         applyCommand({ type: "SetSpeed", speed: 3 }, "SetSpeed 3x");
       } else if (command === "select_scout") {
+        selectedShipId = "ship/scout-01";
         applyCommand({ type: "SelectShip", ship_id: "ship/scout-01" }, "Select Scout");
       } else if (command === "enter_north_gate") {
         applyCommand({ type: "AssignMove", ship_id: "ship/scout-01", target: "poi/2" }, "Scout → North Gate");
@@ -89,7 +107,7 @@ async function main() {
   await init();
   engine = new StarboundHeadlessEngine();
   renderer = createRenderer(document.querySelector("#star-map"));
-  installInput(renderer);
+  installInput(renderer, { onTap: handleMapTap });
   wireControls();
   publishSnapshot();
   renderHud(latestSnapshot);

@@ -79,6 +79,31 @@ export function createRenderer(canvas) {
     publishCamera();
   }
 
+  function hitTest(snapshot, screen) {
+    if (!snapshot) return null;
+    const ships = snapshot.entities.filter((entity) => entity.kind === "Ship");
+    let nearestShip = null;
+    for (const entity of ships) {
+      const p = worldToScreen(entity.position);
+      const distance = Math.hypot(p.x - screen.x, p.y - screen.y);
+      if (distance <= 22 && (!nearestShip || distance < nearestShip.distance)) {
+        nearestShip = { type: "ship", id: entity.id, label: entity.ship?.name ?? entity.id, distance };
+      }
+    }
+    if (nearestShip) return nearestShip;
+
+    let nearestPoi = null;
+    for (const poi of snapshot.map.pois) {
+      const p = worldToScreen(poi.position);
+      const radius = poi.kind === "Gate" ? 20 : 16;
+      const distance = Math.hypot(p.x - screen.x, p.y - screen.y);
+      if (distance <= radius && (!nearestPoi || distance < nearestPoi.distance)) {
+        nearestPoi = { type: "poi", id: `poi/${poi.id}`, label: poi.name, distance };
+      }
+    }
+    return nearestPoi;
+  }
+
   function publishCamera() {
     window.__starboundHtml5Camera = { ...camera };
     localStorage.setItem("starbound_orders_html5_camera", JSON.stringify(camera));
@@ -177,5 +202,5 @@ export function createRenderer(canvas) {
 
   window.addEventListener("resize", () => publishCamera());
   publishCamera();
-  return { canvas, camera, render, panBy, zoomAt, screenToWorld, worldToScreen, publishCamera };
+  return { canvas, camera, render, panBy, zoomAt, screenToWorld, worldToScreen, hitTest, publishCamera };
 }

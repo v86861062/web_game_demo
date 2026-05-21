@@ -1,6 +1,10 @@
-export function installInput(renderer) {
+const TAP_DRAG_THRESHOLD = 8;
+
+export function installInput(renderer, { onTap } = {}) {
   const canvas = renderer.canvas;
   const pointers = new Map();
+  const starts = new Map();
+  const moved = new Set();
   let lastPinchDistance = null;
   let lastPanPoint = null;
 
@@ -11,14 +15,20 @@ export function installInput(renderer) {
 
   canvas.addEventListener("pointerdown", (event) => {
     canvas.setPointerCapture(event.pointerId);
-    pointers.set(event.pointerId, localPoint(event));
-    lastPanPoint = pointers.size === 1 ? localPoint(event) : null;
+    const point = localPoint(event);
+    pointers.set(event.pointerId, point);
+    starts.set(event.pointerId, point);
+    lastPanPoint = pointers.size === 1 ? point : null;
     lastPinchDistance = null;
   });
 
   canvas.addEventListener("pointermove", (event) => {
     if (!pointers.has(event.pointerId)) return;
     const point = localPoint(event);
+    const start = starts.get(event.pointerId);
+    if (start && Math.hypot(point.x - start.x, point.y - start.y) > TAP_DRAG_THRESHOLD) {
+      moved.add(event.pointerId);
+    }
     pointers.set(event.pointerId, point);
 
     if (pointers.size === 1 && lastPanPoint) {
@@ -39,9 +49,14 @@ export function installInput(renderer) {
   });
 
   function release(event) {
+    const point = localPoint(event);
+    const wasTap = pointers.size === 1 && starts.has(event.pointerId) && !moved.has(event.pointerId);
     pointers.delete(event.pointerId);
+    starts.delete(event.pointerId);
+    moved.delete(event.pointerId);
     lastPinchDistance = null;
     lastPanPoint = pointers.size === 1 ? [...pointers.values()][0] : null;
+    if (wasTap) onTap?.(point);
   }
 
   canvas.addEventListener("pointerup", release);
