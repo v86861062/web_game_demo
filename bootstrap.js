@@ -1,4 +1,8 @@
 const urlParams = new URLSearchParams(window.location.search);
+const TIMELINE_PROTOCOL_VERSION = 1;
+const VIEW_SNAPSHOT_KEY = "starbound_orders_view_snapshot";
+const TIMELINE_STATUS_KEY = "starbound_orders_timeline_status";
+const COMMAND_INBOX_KEY = "starbound_orders_command_inbox";
 const assetVersion = new URLSearchParams(window.location.search).get("deploy") ?? "";
 const assetSuffix = assetVersion ? `?deploy=${encodeURIComponent(assetVersion)}` : "";
 const symbolModeParam = new URLSearchParams(window.location.search).get("symbols") ?? "world";
@@ -48,6 +52,8 @@ let lastCommandAt = 0;
 let lastShownEvent = "";
 let lastShownPerf = "";
 let lastShownHud = "";
+let lastShownViewSnapshot = "";
+let lastShownTimelineStatus = "";
 let lastShownPinchDebug = "";
 let lastShownPinchAnchorDebug = "";
 let clientPinchStart = null;
@@ -422,6 +428,21 @@ setInterval(() => {
 }, 300);
 
 setInterval(() => {
+  const viewValue = localStorage.getItem(VIEW_SNAPSHOT_KEY);
+  if (viewValue && viewValue !== lastShownViewSnapshot) {
+    try {
+      const viewSnapshot = JSON.parse(viewValue);
+      if (viewSnapshot.protocol_version === TIMELINE_PROTOCOL_VERSION && viewSnapshot.hud) {
+        lastShownViewSnapshot = viewValue;
+        lastShownHud = JSON.stringify(viewSnapshot.hud);
+        updateHudFromSnapshot(viewSnapshot.hud);
+        return;
+      }
+    } catch (error) {
+      console.warn("Ignoring invalid ViewSnapshot", error);
+    }
+  }
+
   const hudValue = localStorage.getItem("starbound_orders_hud");
   if (!hudValue || hudValue === lastShownHud) {
     return;
@@ -433,6 +454,23 @@ setInterval(() => {
     updateHudFromSnapshot(hud);
   } catch (error) {
     console.warn("Ignoring invalid HUD snapshot", error);
+  }
+}, 300);
+
+setInterval(() => {
+  const statusValue = localStorage.getItem(TIMELINE_STATUS_KEY);
+  if (!statusValue || statusValue === lastShownTimelineStatus) {
+    return;
+  }
+  try {
+    const status = JSON.parse(statusValue);
+    if (status.protocol_version === TIMELINE_PROTOCOL_VERSION) {
+      lastShownTimelineStatus = statusValue;
+      document.body.dataset.timelineMode = status.mode ?? "Live";
+      document.body.dataset.timelineViewTime = String(status.view_time ?? 0);
+    }
+  } catch (error) {
+    console.warn("Ignoring invalid timeline status", error);
   }
 }, 300);
 
@@ -739,6 +777,38 @@ setInterval(() => {
   }
 }, 50);
 
+function commandEnvelopeForButton(command) {
+  const base = {
+    protocol_version: TIMELINE_PROTOCOL_VERSION,
+    id: `web-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    issued_at_frontend_time: performance.now() / 1000,
+    target_sim_time: Number(document.body.dataset.timelineViewTime ?? 0),
+    source: "WebOverlay",
+  };
+
+  switch (command) {
+    case "toggle_pause":
+      return { ...base, command: { type: "TogglePause" } };
+    case "speed_1":
+      return { ...base, command: { type: "SetSpeed", speed: 1.0 } };
+    case "speed_3":
+      return { ...base, command: { type: "SetSpeed", speed: 3.0 } };
+    case "save":
+      return { ...base, command: { type: "Save" } };
+    case "reset":
+      return { ...base, command: { type: "ResetSimulation" } };
+    case "select_scout":
+      return { ...base, command: { type: "SelectShip", ship_id: "ship/scout-01" } };
+    case "enter_north_gate":
+      return {
+        ...base,
+        command: { type: "AssignMove", ship_id: "ship/scout-01", target: "poi/3" },
+      };
+    default:
+      return null;
+  }
+}
+
 function sendCommand(button) {
   const now = performance.now();
   if (now - lastCommandAt < 120) {
@@ -747,7 +817,13 @@ function sendCommand(button) {
   lastCommandAt = now;
 
   const command = button.dataset.command;
-  localStorage.setItem("starbound_orders_command", command);
+  const envelope = commandEnvelopeForButton(command);
+  if (envelope) {
+    localStorage.setItem(COMMAND_INBOX_KEY, JSON.stringify(envelope));
+    localStorage.removeItem("starbound_orders_command");
+  } else {
+    localStorage.setItem("starbound_orders_command", command);
+  }
   setStatus(`已送出：${button.dataset.label}`);
 
   button.dataset.pressed = "true";
