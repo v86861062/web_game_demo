@@ -10,7 +10,6 @@ let engine;
 let renderer;
 let lastFrame = performance.now();
 let commandSeq = 0;
-let speedMultiplier = 1;
 let latestSnapshot = null;
 let selectedShipId = "ship/scout-01";
 
@@ -84,7 +83,7 @@ function handleMapTap(point) {
 function frame(now) {
   const elapsed = Math.min(0.12, Math.max(0, (now - lastFrame) / 1000));
   lastFrame = now;
-  engine.tick(elapsed * speedMultiplier);
+  engine.tick(elapsed);
   const snapshot = publishSnapshot();
   renderHud(snapshot);
   renderer.render(snapshot);
@@ -131,10 +130,8 @@ function wireControls() {
       if (command === "toggle_pause") {
         applyCommand({ type: "TogglePause" }, "TogglePause");
       } else if (command === "speed_1") {
-        speedMultiplier = 1;
         applyCommand({ type: "SetSpeed", speed: 1 }, "SetSpeed 1x");
       } else if (command === "speed_3") {
-        speedMultiplier = 3;
         applyCommand({ type: "SetSpeed", speed: 3 }, "SetSpeed 3x");
       } else if (command === "select_scout") {
         selectedShipId = "ship/scout-01";
@@ -148,7 +145,6 @@ function wireControls() {
         returnChronoCamLive();
       } else if (command === "reset") {
         engine.reset();
-        speedMultiplier = 1;
         publishSnapshot();
         status("已重置");
       }

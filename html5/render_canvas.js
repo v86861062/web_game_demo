@@ -159,7 +159,40 @@ export function createRenderer(canvas) {
     return { clickableHalo: true, isTarget };
   }
 
-  function drawRoutePath(entity, pathPois) {
+  function shipBaseSpeed(entity) {
+    switch (entity.ship?.role) {
+      case "Scout": return 44;
+      case "Miner": return 30;
+      case "Trader": return 36;
+      default: return null;
+    }
+  }
+
+  function routePairKey(fromPoiId, toPoiId) {
+    return `${fromPoiId}->${toPoiId}`;
+  }
+
+  function currentLegDebug(entity, nextPoi, poiById, gateRoutePairs) {
+    if (!nextPoi) return null;
+    const currentPoiId = entity.ship?.current_poi;
+    const currentPoi = currentPoiId !== null && currentPoiId !== undefined ? poiById.get(currentPoiId) : null;
+    const isGateJump = Boolean(
+      currentPoi
+      && currentPoi.kind === "Gate"
+      && nextPoi.kind === "Gate"
+      && currentPoi.sector_id !== nextPoi.sector_id
+      && gateRoutePairs.has(routePairKey(currentPoi.id, nextPoi.id))
+    );
+    const speed = isGateJump ? 240 : shipBaseSpeed(entity);
+    return {
+      currentPoi: currentPoi?.name ?? null,
+      nextWaypoint: nextPoi.name,
+      type: isGateJump ? "GateJump" : "Local",
+      speed,
+    };
+  }
+
+  function drawRoutePath(entity, pathPois, legDebug) {
     if (!pathPois?.length) return null;
     const shipPoint = worldToScreen(entity.position);
     const points = [shipPoint, ...pathPois.map((poi) => worldToScreen(poi.position))];
@@ -207,6 +240,9 @@ export function createRenderer(canvas) {
       destination: destinationPoi.name,
       nextWaypointMarker: true,
       destinationMarker: true,
+      nextLegType: legDebug?.type ?? null,
+      nextLegSpeed: legDebug?.speed ?? null,
+      currentPoi: legDebug?.currentPoi ?? null,
     };
   }
 
@@ -307,6 +343,7 @@ export function createRenderer(canvas) {
       clickablePoiHalos: 0,
       routePaths: [],
       shipHeadings: [],
+      shipLegs: [],
     };
     snapshot.map.pois.forEach((poi) => {
       const poiDebug = drawPoi(poi, routeTarget);
@@ -314,6 +351,10 @@ export function createRenderer(canvas) {
       if (poiDebug.isTarget && debug.routeTarget) debug.routeTarget.active = true;
     });
     const selectedShipId = window.__starboundHtml5SelectedShipId;
+    const gateRoutePairs = new Set(snapshot.map.routes.flatMap((route) => [
+      routePairKey(route.from_gate, route.to_gate),
+      routePairKey(route.to_gate, route.from_gate),
+    ]));
     snapshot.entities.filter((entity) => entity.kind === "Ship").forEach((entity) => {
       const isSelected = entity.id === selectedShipId;
       const waypointIds = entity.ship?.waypoints ?? [];
@@ -321,7 +362,14 @@ export function createRenderer(canvas) {
         .filter((id) => id !== null && id !== undefined)
         .map((id) => poiById.get(id))
         .filter(Boolean);
-      const routePathDebug = drawRoutePath(entity, pathPois);
+      const legDebug = currentLegDebug(entity, pathPois[0], poiById, gateRoutePairs);
+      if (legDebug) {
+        debug.shipLegs.push({
+          shipId: entity.id,
+          ...legDebug,
+        });
+      }
+      const routePathDebug = drawRoutePath(entity, pathPois, legDebug);
       if (routePathDebug) debug.routePaths.push(routePathDebug);
       const heading = shipHeadingToNextWaypoint(entity, pathPois[0]);
       if (heading) {
