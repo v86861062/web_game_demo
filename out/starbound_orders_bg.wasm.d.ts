@@ -1,6 +1,14 @@
 /* tslint:disable */
 /* eslint-disable */
 export const memory: WebAssembly.Memory;
+export const __wbg_starboundheadlessengine_free: (a: number, b: number) => void;
+export const starboundheadlessengine_apply_command_json: (a: number, b: number, c: number) => [number, number];
+export const starboundheadlessengine_new: () => number;
+export const starboundheadlessengine_reset: (a: number) => void;
+export const starboundheadlessengine_return_to_live: (a: number) => void;
+export const starboundheadlessengine_seek: (a: number, b: number) => void;
+export const starboundheadlessengine_tick: (a: number, b: number) => void;
+export const starboundheadlessengine_view_snapshot_json: (a: number) => [number, number, number, number];
 export const main: (a: number, b: number) => number;
 export const wgpu_render_bundle_draw: (a: number, b: number, c: number, d: number, e: number) => void;
 export const wgpu_render_bundle_draw_indexed: (a: number, b: number, c: number, d: number, e: number, f: number) => void;

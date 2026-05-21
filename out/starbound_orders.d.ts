@@ -1,10 +1,30 @@
 /* tslint:disable */
 /* eslint-disable */
 
+export class StarboundHeadlessEngine {
+    free(): void;
+    [Symbol.dispose](): void;
+    apply_command_json(json: string): void;
+    constructor();
+    reset(): void;
+    return_to_live(): void;
+    seek(seconds: number): void;
+    tick(seconds: number): void;
+    view_snapshot_json(): string;
+}
+
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
+    readonly __wbg_starboundheadlessengine_free: (a: number, b: number) => void;
+    readonly starboundheadlessengine_apply_command_json: (a: number, b: number, c: number) => [number, number];
+    readonly starboundheadlessengine_new: () => number;
+    readonly starboundheadlessengine_reset: (a: number) => void;
+    readonly starboundheadlessengine_return_to_live: (a: number) => void;
+    readonly starboundheadlessengine_seek: (a: number, b: number) => void;
+    readonly starboundheadlessengine_tick: (a: number, b: number) => void;
+    readonly starboundheadlessengine_view_snapshot_json: (a: number) => [number, number, number, number];
     readonly main: (a: number, b: number) => number;
     readonly wgpu_render_bundle_draw: (a: number, b: number, c: number, d: number, e: number) => void;
     readonly wgpu_render_bundle_draw_indexed: (a: number, b: number, c: number, d: number, e: number, f: number) => void;

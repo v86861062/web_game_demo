@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Starbound Orders HTML5 Preview</title>
+    <link rel="stylesheet" href="./styles.css?v=html5-spike-1" />
+  </head>
+  <body>
+    <main id="app">
+      <canvas id="star-map" aria-label="Starbound Orders HTML5 star map"></canvas>
+      <section id="hud" aria-label="狀態">
+        <div class="hud-title">Starbound Orders <span>HTML5 preview</span></div>
+        <div class="hud-row"><strong>Credits</strong><span id="credits">--</span></div>
+        <div class="hud-row"><strong>Resources</strong><span id="resource-summary">--</span></div>
+        <div class="hud-row"><strong>Time</strong><span id="time-summary">--</span></div>
+        <div id="command-status">啟動中...</div>
+      </section>
+      <section id="ship-panel" class="drawer-panel" aria-label="艦船">
+        <h2>艦船</h2>
+        <div id="ship-list"></div>
+      </section>
+      <section id="mission-panel" class="drawer-panel" aria-label="任務">
+        <h2>任務</h2>
+        <div id="mission-list"></div>
+      </section>
+      <nav id="controls" aria-label="控制">
+        <button data-command="toggle_pause">暫停</button>
+        <button data-command="speed_1">1x</button>
+        <button data-command="speed_3">3x</button>
+        <button data-command="select_scout">選 Scout</button>
+        <button data-command="enter_north_gate">進入北門</button>
+        <button data-command="reset">重置</button>
+      </nav>
+    </main>
+    <script type="module" src="./bootstrap.js?v=html5-spike-1"></script>
+  </body>
+</html>

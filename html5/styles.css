@@ -1,0 +1,79 @@
+:root {
+  color-scheme: dark;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #080b12;
+  color: #eef4ff;
+}
+
+* { box-sizing: border-box; }
+html, body, #app { margin: 0; min-height: 100%; width: 100%; overflow: hidden; }
+body { min-height: 100vh; touch-action: none; }
+#app { position: fixed; inset: 0; background: radial-gradient(circle at 50% 30%, #17213d, #070a10 72%); }
+#star-map { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+
+#hud {
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  left: 12px;
+  right: 12px;
+  padding: 12px;
+  border: 1px solid rgba(128, 171, 255, 0.28);
+  border-radius: 18px;
+  background: rgba(8, 12, 22, 0.72);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  pointer-events: none;
+}
+.hud-title { font-weight: 800; letter-spacing: 0.04em; margin-bottom: 8px; }
+.hud-title span { color: #8fb7ff; font-size: 12px; font-weight: 600; }
+.hud-row { display: flex; justify-content: space-between; gap: 14px; font-size: 13px; }
+#command-status { margin-top: 8px; color: #9be7ff; font-size: 12px; }
+
+.drawer-panel {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  max-height: 18vh;
+  overflow: auto;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px;
+  padding: 10px;
+  background: rgba(4, 8, 15, 0.62);
+  backdrop-filter: blur(8px);
+  pointer-events: none;
+}
+#ship-panel { bottom: 108px; }
+#mission-panel { bottom: 266px; display: none; }
+.drawer-panel h2 { margin: 0 0 8px; font-size: 13px; color: #aec7ff; }
+.ship-row, .mission { display: grid; gap: 2px; padding: 6px 0; border-top: 1px solid rgba(255,255,255,0.08); font-size: 12px; }
+.ship-row:first-of-type, .mission:first-of-type { border-top: 0; }
+.ship-row span, .mission small, .ship-row small { color: rgba(238,244,255,0.68); }
+.mission.completed { opacity: 0.58; }
+
+#controls {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: max(10px, env(safe-area-inset-bottom));
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+button {
+  appearance: none;
+  border: 1px solid rgba(144, 183, 255, 0.35);
+  border-radius: 14px;
+  padding: 12px 8px;
+  background: linear-gradient(180deg, rgba(47,74,132,0.88), rgba(19,29,54,0.9));
+  color: #f1f6ff;
+  font-weight: 800;
+  box-shadow: 0 10px 24px rgba(0,0,0,0.28);
+}
+button:active { transform: translateY(1px); }
+
+@media (min-width: 760px) {
+  #hud { right: auto; width: 360px; }
+  #ship-panel { left: auto; top: 130px; bottom: auto; right: 12px; width: 320px; max-height: 32vh; }
+  #mission-panel { display: block; left: auto; top: 420px; bottom: auto; right: 12px; width: 320px; max-height: 30vh; }
+  #controls { left: 50%; transform: translateX(-50%); max-width: 680px; grid-template-columns: repeat(6, 1fr); }
+}
