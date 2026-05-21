@@ -11,6 +11,7 @@ export function renderHud(snapshot) {
   document.querySelector("#credits").textContent = String(snapshot.hud.credits);
   document.querySelector("#resource-summary").textContent = formatInventory(snapshot.hud.resources);
   document.querySelector("#time-summary").textContent = `${snapshot.time.toFixed(1)}s · ${snapshot.hud.paused ? "paused" : `${snapshot.hud.speed}x`}`;
+  document.querySelector("#latest-event").textContent = snapshot.hud.latest_event || "--";
 
   const ships = document.querySelector("#ship-list");
   ships.replaceChildren(...snapshot.hud.ships.map((ship, index) => {
