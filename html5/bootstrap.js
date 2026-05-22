@@ -5,6 +5,9 @@ import { renderHud } from "./hud.js";
 
 const TICK_SECONDS = 1 / 30;
 const COMMAND_PROTOCOL_VERSION = 1;
+const SAVE_KEY = "starbound_orders_html5_save_envelope";
+const SNAPSHOT_KEY = "starbound_orders_html5_snapshot";
+const OFFLINE_MIN_SECONDS = 10;
 
 let engine;
 let renderer;
@@ -12,6 +15,7 @@ let lastFrame = performance.now();
 let commandSeq = 0;
 let latestSnapshot = null;
 let selectedShipId = "ship/scout-01";
+let lastAutoSaveAt = 0;
 
 function status(message) {
   const node = document.querySelector("#command-status");
@@ -37,7 +41,7 @@ export function applyCommand(command, label = command.type) {
       selectedShipId = command.ship_id;
       window.__starboundHtml5SelectedShipId = selectedShipId;
     }
-    publishSnapshot();
+    persistAfterMutation();
     status(`已送出：${label}`);
   } catch (error) {
     console.error(error);
@@ -60,8 +64,43 @@ function returnChronoCamLive() {
 function publishSnapshot() {
   latestSnapshot = JSON.parse(engine.view_snapshot_json());
   window.__starboundLatestSnapshot = latestSnapshot;
-  localStorage.setItem("starbound_orders_html5_snapshot", JSON.stringify(latestSnapshot));
+  localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(latestSnapshot));
   return latestSnapshot;
+}
+
+function saveToLocalStorage(savedAt = Date.now()) {
+  const envelope = engine.save_game_envelope_json(BigInt(Math.round(savedAt)));
+  localStorage.setItem(SAVE_KEY, envelope);
+  window.__starboundHtml5LastSaveEnvelope = JSON.parse(envelope);
+  return envelope;
+}
+
+function loadSaveAndCatchUpOffline(now = Date.now()) {
+  const savedJson = localStorage.getItem(SAVE_KEY);
+  if (!savedJson) return null;
+  const envelope = JSON.parse(savedJson);
+  engine.load_save_game_envelope_json(savedJson);
+  const offlineSeconds = Math.max(0, (now - Number(envelope.saved_at_wall_clock_ms || now)) / 1000);
+  if (offlineSeconds >= OFFLINE_MIN_SECONDS) {
+    const report = JSON.parse(engine.catch_up_offline(offlineSeconds, BigInt(Math.round(now))));
+    window.__starboundHtml5LastOfflineReport = report;
+    status(`離線收益已結算：${Math.round(report.simulated_seconds / 60)}m`);
+    return report;
+  }
+  return null;
+}
+
+function persistAfterMutation() {
+  publishSnapshot();
+  saveToLocalStorage();
+}
+
+function simulateOffline(seconds = 2 * 60 * 60, now = Date.now()) {
+  const report = JSON.parse(engine.catch_up_offline(seconds, BigInt(Math.round(now))));
+  window.__starboundHtml5LastOfflineReport = report;
+  persistAfterMutation();
+  status(`已模擬離線：${Math.round(report.simulated_seconds / 60)}m`);
+  return report;
 }
 
 function handleMapTap(point) {
@@ -85,7 +124,16 @@ function frame(now) {
   lastFrame = now;
   engine.tick(elapsed);
   const snapshot = publishSnapshot();
-  renderHud(snapshot, { onTradeCommand: applyCommand });
+  if (now - lastAutoSaveAt > 5000) {
+    saveToLocalStorage(now);
+    lastAutoSaveAt = now;
+  }
+  renderHud(snapshot, {
+    onTradeCommand: applyCommand,
+    onUpgradeCommand: applyCommand,
+    onAssignmentCommand: applyCommand,
+    onAcknowledgeOfflineReport: applyCommand,
+  });
   renderer.render(snapshot);
   requestAnimationFrame(frame);
 }
@@ -159,9 +207,12 @@ function wireControls() {
         seekChronoCam(Math.max(0, liveTime - 5));
       } else if (command === "chrono_live") {
         returnChronoCamLive();
+      } else if (command === "simulate_offline") {
+        simulateOffline();
       } else if (command === "reset") {
         engine.reset();
-        publishSnapshot();
+        localStorage.removeItem(SAVE_KEY);
+        persistAfterMutation();
         status("已重置");
       }
     });
@@ -172,6 +223,12 @@ async function main() {
   status("載入 Rust WASM headless engine...");
   await init();
   engine = new StarboundHeadlessEngine();
+  try {
+    loadSaveAndCatchUpOffline(Date.now());
+  } catch (error) {
+    console.warn("Save load/offline catch-up failed; starting fresh", error);
+    localStorage.removeItem(SAVE_KEY);
+  }
   window.__starboundHtml5SelectedShipId = selectedShipId;
   window.__starboundHtml5RouteTarget = null;
   renderer = createRenderer(document.querySelector("#star-map"));
@@ -180,10 +237,18 @@ async function main() {
   wireMobileSheet();
   wireMarketTabs();
   publishSnapshot();
-  renderHud(latestSnapshot, { onTradeCommand: applyCommand });
+  renderHud(latestSnapshot, {
+    onTradeCommand: applyCommand,
+    onUpgradeCommand: applyCommand,
+    onAssignmentCommand: applyCommand,
+    onAcknowledgeOfflineReport: applyCommand,
+  });
   renderer.render(latestSnapshot);
   window.__starboundHtml5Ready = true;
   window.__starboundHtml5Engine = engine;
+  window.__starboundHtml5SaveNow = saveToLocalStorage;
+  window.__starboundHtml5LoadSaveAndCatchUpOffline = loadSaveAndCatchUpOffline;
+  window.__starboundHtml5SimulateOffline = simulateOffline;
   status("HTML5 frontend 已連線 Rust headless engine");
   requestAnimationFrame(frame);
 }

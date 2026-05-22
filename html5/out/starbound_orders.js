@@ -22,6 +22,40 @@ export class StarboundHeadlessEngine {
             throw takeFromExternrefTable0(ret[0]);
         }
     }
+    /**
+     * @param {number} offline_seconds
+     * @param {bigint} ended_at_wall_clock_ms
+     * @returns {string}
+     */
+    catch_up_offline(offline_seconds, ended_at_wall_clock_ms) {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const ret = wasm.starboundheadlessengine_catch_up_offline(this.__wbg_ptr, offline_seconds, ended_at_wall_clock_ms);
+            var ptr1 = ret[0];
+            var len1 = ret[1];
+            if (ret[3]) {
+                ptr1 = 0; len1 = 0;
+                throw takeFromExternrefTable0(ret[2]);
+            }
+            deferred2_0 = ptr1;
+            deferred2_1 = len1;
+            return getStringFromWasm0(ptr1, len1);
+        } finally {
+            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+        }
+    }
+    /**
+     * @param {string} json
+     */
+    load_save_game_envelope_json(json) {
+        const ptr0 = passStringToWasm0(json, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ret = wasm.starboundheadlessengine_load_save_game_envelope_json(this.__wbg_ptr, ptr0, len0);
+        if (ret[1]) {
+            throw takeFromExternrefTable0(ret[0]);
+        }
+    }
     constructor() {
         const ret = wasm.starboundheadlessengine_new();
         this.__wbg_ptr = ret;
@@ -33,6 +67,28 @@ export class StarboundHeadlessEngine {
     }
     return_to_live() {
         wasm.starboundheadlessengine_return_to_live(this.__wbg_ptr);
+    }
+    /**
+     * @param {bigint} saved_at_wall_clock_ms
+     * @returns {string}
+     */
+    save_game_envelope_json(saved_at_wall_clock_ms) {
+        let deferred2_0;
+        let deferred2_1;
+        try {
+            const ret = wasm.starboundheadlessengine_save_game_envelope_json(this.__wbg_ptr, saved_at_wall_clock_ms);
+            var ptr1 = ret[0];
+            var len1 = ret[1];
+            if (ret[3]) {
+                ptr1 = 0; len1 = 0;
+                throw takeFromExternrefTable0(ret[2]);
+            }
+            deferred2_0 = ptr1;
+            deferred2_1 = len1;
+            return getStringFromWasm0(ptr1, len1);
+        } finally {
+            wasm.__wbindgen_free(deferred2_0, deferred2_1, 1);
+        }
     }
     /**
      * @param {number} seconds

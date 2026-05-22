@@ -3,9 +3,12 @@
 export const memory: WebAssembly.Memory;
 export const __wbg_starboundheadlessengine_free: (a: number, b: number) => void;
 export const starboundheadlessengine_apply_command_json: (a: number, b: number, c: number) => [number, number];
+export const starboundheadlessengine_catch_up_offline: (a: number, b: number, c: bigint) => [number, number, number, number];
+export const starboundheadlessengine_load_save_game_envelope_json: (a: number, b: number, c: number) => [number, number];
 export const starboundheadlessengine_new: () => number;
 export const starboundheadlessengine_reset: (a: number) => void;
 export const starboundheadlessengine_return_to_live: (a: number) => void;
+export const starboundheadlessengine_save_game_envelope_json: (a: number, b: bigint) => [number, number, number, number];
 export const starboundheadlessengine_seek: (a: number, b: number) => void;
 export const starboundheadlessengine_tick: (a: number, b: number) => void;
 export const starboundheadlessengine_view_snapshot_json: (a: number) => [number, number, number, number];

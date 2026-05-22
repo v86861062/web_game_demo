@@ -5,9 +5,12 @@ export class StarboundHeadlessEngine {
     free(): void;
     [Symbol.dispose](): void;
     apply_command_json(json: string): void;
+    catch_up_offline(offline_seconds: number, ended_at_wall_clock_ms: bigint): string;
+    load_save_game_envelope_json(json: string): void;
     constructor();
     reset(): void;
     return_to_live(): void;
+    save_game_envelope_json(saved_at_wall_clock_ms: bigint): string;
     seek(seconds: number): void;
     tick(seconds: number): void;
     view_snapshot_json(): string;
@@ -19,9 +22,12 @@ export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly __wbg_starboundheadlessengine_free: (a: number, b: number) => void;
     readonly starboundheadlessengine_apply_command_json: (a: number, b: number, c: number) => [number, number];
+    readonly starboundheadlessengine_catch_up_offline: (a: number, b: number, c: bigint) => [number, number, number, number];
+    readonly starboundheadlessengine_load_save_game_envelope_json: (a: number, b: number, c: number) => [number, number];
     readonly starboundheadlessengine_new: () => number;
     readonly starboundheadlessengine_reset: (a: number) => void;
     readonly starboundheadlessengine_return_to_live: (a: number) => void;
+    readonly starboundheadlessengine_save_game_envelope_json: (a: number, b: bigint) => [number, number, number, number];
     readonly starboundheadlessengine_seek: (a: number, b: number) => void;
     readonly starboundheadlessengine_tick: (a: number, b: number) => void;
     readonly starboundheadlessengine_view_snapshot_json: (a: number) => [number, number, number, number];

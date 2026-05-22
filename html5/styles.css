@@ -90,6 +90,11 @@ body { min-height: 100vh; touch-action: none; }
 #chronocam-panel.replay { border-color: rgba(255, 209, 102, 0.62); box-shadow: 0 0 0 1px rgba(255, 209, 102, 0.22), 0 20px 60px rgba(0,0,0,0.35); }
 .drawer-panel h2 { margin: 0 0 8px; font-size: 13px; color: #aec7ff; }
 .ship-row, .market-row, .mission { display: grid; gap: 2px; padding: 6px 0; border-top: 1px solid rgba(255,255,255,0.08); font-size: 12px; }
+.fleet-summary, .fleet-alerts { display: grid; gap: 4px; margin-bottom: 8px; font-size: 12px; }
+.fleet-kpi { display: flex; justify-content: space-between; gap: 10px; padding: 5px 8px; border-radius: 10px; background: rgba(28, 42, 76, 0.48); }
+.fleet-alert { padding: 6px 8px; border-radius: 10px; color: #ffd166; background: rgba(255, 209, 102, 0.10); }
+.upgrade-row button, .report-row button, .fleet-actions button { justify-self: start; margin-top: 4px; padding: 6px 9px; font-size: 11px; }
+.fleet-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 .ship-row:first-of-type, .market-row:first-of-type, .mission:first-of-type { border-top: 0; }
 .ship-row span, .market-row span, .market-row small, .mission small, .ship-row small { color: rgba(238,244,255,0.68); }
 .market-section { margin-top: 8px; padding-top: 4px; border-top: 1px solid rgba(155,231,255,0.12); }
@@ -102,8 +107,10 @@ body { min-height: 100vh; touch-action: none; }
 #market-panel[data-market-tab="production"] .market-section[data-market-tab="production"],
 #market-panel[data-market-tab="risk"] .market-section[data-market-tab="risk"],
 #market-panel[data-market-tab="risk"] .market-section[data-market-tab="alerts"],
+#market-panel[data-market-tab="upgrades"] .market-section[data-market-tab="upgrades"],
+#market-panel[data-market-tab="reports"] .market-section[data-market-tab="reports"],
 #market-panel[data-market-tab="stations"] .market-section[data-market-tab="stations"] { display: block; }
-#market-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin: 0 0 8px; }
+#market-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin: 0 0 8px; }
 #market-tabs button { padding: 6px 4px; border-radius: 10px; font-size: 11px; }
 #market-tabs button[aria-selected="true"] { border-color: rgba(155, 231, 255, 0.75); color: #fff; background: linear-gradient(180deg, rgba(54,94,164,0.96), rgba(22,47,88,0.94)); }
 .trade-command-row button { justify-self: start; margin-top: 4px; padding: 6px 9px; font-size: 11px; }

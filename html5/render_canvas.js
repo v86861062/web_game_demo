@@ -102,7 +102,7 @@ export function createRenderer(canvas) {
 
   function hitTest(snapshot, screen) {
     if (!snapshot) return null;
-    const ships = snapshot.entities.filter((entity) => entity.kind === "Ship");
+    const ships = snapshot.entities.filter((entity) => entity.kind === "Ship" && entity.ship?.owner === "Player");
     let nearestShip = null;
     for (const entity of ships) {
       const p = worldToScreen(entity.position);

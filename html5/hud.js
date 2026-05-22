@@ -26,6 +26,17 @@ function formatPercent(value) {
   return `${Math.round(Number(value || 0) * 100)}%`;
 }
 
+function formatSeconds(value) {
+  const seconds = Math.max(0, Number(value || 0));
+  if (seconds >= 3600) return `${(seconds / 3600).toFixed(1)}h`;
+  if (seconds >= 60) return `${Math.round(seconds / 60)}m`;
+  return `${Math.round(seconds)}s`;
+}
+
+function formatAssignment(value) {
+  return String(value || "Idle").replace(/([a-z])([A-Z])/g, "$1 $2");
+}
+
 function idValue(value, prefix) {
   if (typeof value === "string") return value.includes("/") ? value : `${prefix}/${value}`;
   if (typeof value === "number") return `${prefix}/${value}`;
@@ -44,7 +55,7 @@ function marketSection(title, rows, tab = "overview") {
   return section;
 }
 
-export function renderHud(snapshot, { onTradeCommand } = {}) {
+export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssignmentCommand, onAcknowledgeOfflineReport } = {}) {
   if (!snapshot) return;
   document.querySelector("#credits").textContent = String(snapshot.hud.credits);
   document.querySelector("#resource-summary").textContent = formatInventory(snapshot.hud.resources);
@@ -52,19 +63,72 @@ export function renderHud(snapshot, { onTradeCommand } = {}) {
   document.querySelector("#latest-event").textContent = snapshot.hud.latest_event || "--";
 
   const ships = document.querySelector("#ship-list");
+  const dashboard = snapshot.fleet_dashboard || {};
+  const fleetSummary = document.querySelector("#fleet-summary");
+  if (fleetSummary) {
+    const kpis = [
+      ["總艦船", dashboard.total_ships ?? snapshot.hud.ships.length],
+      ["派工中", dashboard.active_assignments ?? 0],
+      ["閒置", dashboard.idle_ships ?? 0],
+      ["估計收益", `${Math.round(dashboard.credits_per_hour_estimate || 0)} cr/h`],
+      ["瓶頸", dashboard.current_bottleneck || "--"],
+    ];
+    fleetSummary.replaceChildren(...kpis.map(([label, value]) => {
+      const row = document.createElement("div");
+      row.className = "fleet-kpi";
+      row.innerHTML = `<strong>${label}</strong><span>${value}</span>`;
+      return row;
+    }));
+  }
+  const fleetAlerts = document.querySelector("#fleet-alerts");
+  if (fleetAlerts) {
+    fleetAlerts.replaceChildren(...(snapshot.alerts || []).slice(0, 3).map((alert) => {
+      const row = document.createElement("div");
+      row.className = "fleet-alert";
+      row.textContent = `${alert.kind}: ${alert.message}`;
+      return row;
+    }));
+  }
   ships.replaceChildren(...snapshot.hud.ships.map((ship, index) => {
     const row = document.createElement("div");
     row.className = "ship-row";
     row.dataset.shipIndex = String(index);
     const cargo = formatInventory(ship.cargo || {});
+    const card = (dashboard.cards || [])[index];
+    const assignment = card?.assignment || ship.order;
     const plan = ship.trade_plan
       ? `${ship.trade_plan.ware} ${ship.trade_plan.amount} · POI ${ship.trade_plan.source_poi} → ${ship.trade_plan.destination_poi}`
       : "";
     row.innerHTML = `
       <strong>${ship.name}</strong>
-      <span>${ship.role} · ${ship.order}${cargo !== "empty" ? ` · cargo ${cargo}` : ""}</span>
+      <span>${ship.role} · ${formatAssignment(assignment)} · ${card?.risk_policy || "Balanced"}${cargo !== "empty" ? ` · cargo ${cargo}` : ""}</span>
       <small>${ship.sector}${ship.target ? ` → ${ship.target}` : ""}${plan ? ` · ${plan}` : ""}</small>
+      ${card?.alert ? `<small>⚠ ${card.alert}</small>` : ""}
     `;
+    if (card?.ship_id) {
+      const actions = document.createElement("div");
+      actions.className = "fleet-actions";
+      const trade = document.createElement("button");
+      trade.type = "button";
+      trade.textContent = "最佳交易";
+      trade.addEventListener("click", () => onAssignmentCommand?.({
+        type: "SetFleetAssignment",
+        ship_id: idValue(card.ship_id, "ship"),
+        assignment: "auto_trade_best_profit",
+        risk_policy: "balanced",
+      }, `${ship.name} 最佳交易`));
+      const mine = document.createElement("button");
+      mine.type = "button";
+      mine.textContent = "採礦補給";
+      mine.addEventListener("click", () => onAssignmentCommand?.({
+        type: "SetFleetAssignment",
+        ship_id: idValue(card.ship_id, "ship"),
+        assignment: "auto_mine_and_sell",
+        risk_policy: "safe",
+      }, `${ship.name} 採礦補給`));
+      actions.append(trade, mine);
+      row.append(actions);
+    }
     return row;
   }));
 
@@ -191,6 +255,49 @@ export function renderHud(snapshot, { onTradeCommand } = {}) {
       return row;
     });
 
+    const report = snapshot.latest_offline_report;
+    const reportRows = [];
+    if (report) {
+      const row = document.createElement("div");
+      row.className = "market-row report-row offline-report-row";
+      const ack = document.createElement("button");
+      ack.type = "button";
+      ack.textContent = "收起報告";
+      ack.addEventListener("click", () => onAcknowledgeOfflineReport?.({ type: "AcknowledgeOfflineReport" }, "Acknowledge offline report"));
+      row.innerHTML = `
+        <strong>離線收益報告</strong>
+        <span>${formatSeconds(report.simulated_seconds)} · net ${report.net_credits}cr · cargo ${formatInventory(report.delivered_cargo)}</span>
+        <small>cap ${formatSeconds(report.capped_seconds)} · incidents:${report.pirate_incidents?.length || 0} · stalls:${report.production_stalls?.length || 0}</small>
+      `;
+      row.append(ack);
+      reportRows.push(row);
+    }
+    for (const summary of snapshot.report_history || []) {
+      const row = document.createElement("div");
+      row.className = "market-row report-row";
+      row.innerHTML = `<strong>${summary.headline}</strong><span>${formatSeconds(summary.simulated_seconds)} · ${summary.net_credits}cr</span>`;
+      reportRows.push(row);
+    }
+
+    const upgradeRows = (snapshot.available_upgrades || []).map((upgrade) => {
+      const row = document.createElement("div");
+      row.className = "market-row upgrade-row";
+      const button = document.createElement("button");
+      button.type = "button";
+      button.disabled = !upgrade.affordable;
+      button.textContent = upgrade.affordable ? `購買 ${upgrade.name}` : `${upgrade.name} 不足額`;
+      button.addEventListener("click", () => onUpgradeCommand?.({
+        type: "BuyUpgrade",
+        upgrade: upgrade.id,
+      }, `Buy ${upgrade.name}`));
+      row.innerHTML = `
+        <strong>${upgrade.name} Lv.${upgrade.level}</strong>
+        <span>${upgrade.cost}cr · ${upgrade.effect}</span>
+      `;
+      row.append(button);
+      return row;
+    });
+
     const stationRows = (snapshot.market?.stations || []).map((station) => {
       const row = document.createElement("div");
       row.className = "market-row";
@@ -224,6 +331,8 @@ export function renderHud(snapshot, { onTradeCommand } = {}) {
       marketSection("航線風險", riskRows, "risk"),
       marketSection("海盜衝擊", pirateImpactRows, "risk"),
       marketSection("市場警報", alertRows, "alerts"),
+      marketSection("升級", upgradeRows, "upgrades"),
+      marketSection("離線報告", reportRows.length ? reportRows : [Object.assign(document.createElement("div"), { className: "market-row", textContent: "目前沒有未讀離線報告。" })], "reports"),
       marketSection("市場歷史", historyRows, "stations"),
       marketSection("站點", stationRows, "stations"),
     );
