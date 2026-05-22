@@ -34,9 +34,10 @@ function idValue(value, prefix) {
   return `${prefix}/0`;
 }
 
-function marketSection(title, rows) {
+function marketSection(title, rows, tab = "overview") {
   const section = document.createElement("section");
   section.className = "market-section";
+  section.dataset.marketTab = tab;
   const heading = document.createElement("h3");
   heading.textContent = title;
   section.append(heading, ...rows);
@@ -105,13 +106,25 @@ export function renderHud(snapshot, { onTradeCommand } = {}) {
       return row;
     });
 
+    const competitionRows = (snapshot.market?.competition || []).map((competition) => {
+      const row = document.createElement("div");
+      row.className = "market-row competition-row";
+      row.innerHTML = `
+        <strong>${competition.ware} 競價</strong>
+        <span>買 ${competition.best_buy_price || "--"} @ ${competition.best_buy_station || "--"} · 賣 ${competition.best_sell_price || "--"} @ ${competition.best_sell_station || "--"}</span>
+        <small>spread:${competition.spread} · buyers:${competition.competing_buyers} · sellers:${competition.competing_sellers}</small>
+      `;
+      return row;
+    });
+
     const queueRows = (snapshot.market?.build_queues || []).map((queue) => {
       const row = document.createElement("div");
       row.className = "market-row build-row";
       row.innerHTML = `
         <strong>${queue.station}</strong>
         <span>${queue.owner} building ${queue.blueprint} · ${formatPercent(queue.progress)}</span>
-        <small>needs ${formatInventory(queue.required)} · ${queue.ready ? "材料已就緒" : "等待物流補料"}</small>
+        <small>needs ${formatInventory(queue.required)} · missing ${formatInventory(queue.missing || {})} · ETA ${Number(queue.remaining_seconds || 0).toFixed(0)}s</small>
+        <small>${queue.ready ? "材料已就緒" : "等待物流補料"}</small>
       `;
       return row;
     });
@@ -123,6 +136,17 @@ export function renderHud(snapshot, { onTradeCommand } = {}) {
         <strong>${risk.from} → ${risk.to}</strong>
         <span>risk ${formatPercent(risk.risk)} · raids:${risk.recent_raids}</span>
         <small>patrol coverage ${Number(risk.patrol_coverage || 0).toFixed(2)}</small>
+      `;
+      return row;
+    });
+
+    const pirateImpactRows = (snapshot.market?.pirate_impacts || []).slice(0, 5).map((impact) => {
+      const row = document.createElement("div");
+      row.className = "market-row pirate-impact-row";
+      row.innerHTML = `
+        <strong>${impact.route}</strong>
+        <span>pirate impact ${formatPercent(impact.risk)} · raids:${impact.recent_raids}</span>
+        <small>affected offers:${impact.affected_offers} · premium:${impact.buy_price_premium}%</small>
       `;
       return row;
     });
@@ -192,14 +216,16 @@ export function renderHud(snapshot, { onTradeCommand } = {}) {
 
     market.replaceChildren(
       routeRow,
-      marketSection("派系錢包", factionRows),
-      marketSection("手動交易", tradeRows.length ? tradeRows : [Object.assign(document.createElement("div"), { className: "market-row", textContent: "先選取玩家艦船以顯示可下單交易。" })]),
-      marketSection("Order Book", offerRows),
-      marketSection("造船佇列", queueRows),
-      marketSection("航線風險", riskRows),
-      marketSection("市場警報", alertRows),
-      marketSection("市場歷史", historyRows),
-      marketSection("站點", stationRows),
+      marketSection("派系錢包", factionRows, "overview"),
+      marketSection("市場競爭", competitionRows, "overview"),
+      marketSection("手動交易", tradeRows.length ? tradeRows : [Object.assign(document.createElement("div"), { className: "market-row", textContent: "先選取玩家艦船以顯示可下單交易。" })], "trade"),
+      marketSection("Order Book", offerRows, "orders"),
+      marketSection("造船佇列", queueRows, "production"),
+      marketSection("航線風險", riskRows, "risk"),
+      marketSection("海盜衝擊", pirateImpactRows, "risk"),
+      marketSection("市場警報", alertRows, "alerts"),
+      marketSection("市場歷史", historyRows, "stations"),
+      marketSection("站點", stationRows, "stations"),
     );
   }
 

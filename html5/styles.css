@@ -94,6 +94,18 @@ body { min-height: 100vh; touch-action: none; }
 .ship-row span, .market-row span, .market-row small, .mission small, .ship-row small { color: rgba(238,244,255,0.68); }
 .market-section { margin-top: 8px; padding-top: 4px; border-top: 1px solid rgba(155,231,255,0.12); }
 .market-section h3 { margin: 2px 0 4px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: #9be7ff; }
+.market-section[data-market-tab] { display: none; }
+#market-panel[data-market-tab="overview"] .market-section[data-market-tab="overview"],
+#market-panel[data-market-tab="trade"] .market-section[data-market-tab="trade"],
+#market-panel[data-market-tab="trade"] .market-section[data-market-tab="orders"],
+#market-panel[data-market-tab="orders"] .market-section[data-market-tab="orders"],
+#market-panel[data-market-tab="production"] .market-section[data-market-tab="production"],
+#market-panel[data-market-tab="risk"] .market-section[data-market-tab="risk"],
+#market-panel[data-market-tab="risk"] .market-section[data-market-tab="alerts"],
+#market-panel[data-market-tab="stations"] .market-section[data-market-tab="stations"] { display: block; }
+#market-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin: 0 0 8px; }
+#market-tabs button { padding: 6px 4px; border-radius: 10px; font-size: 11px; }
+#market-tabs button[aria-selected="true"] { border-color: rgba(155, 231, 255, 0.75); color: #fff; background: linear-gradient(180deg, rgba(54,94,164,0.96), rgba(22,47,88,0.94)); }
 .trade-command-row button { justify-self: start; margin-top: 4px; padding: 6px 9px; font-size: 11px; }
 .alert-row strong { color: #ffd166; }
 .risk-row span { color: #ffb86b; }

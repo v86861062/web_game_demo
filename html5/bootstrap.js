@@ -123,6 +123,22 @@ function wireMobileSheet() {
   setMobileSheetCollapsed(document.querySelector("#mobile-sheet")?.dataset.collapsed === "true");
 }
 
+function setMarketTab(tab) {
+  const panel = document.querySelector("#market-panel");
+  if (!panel) return;
+  panel.dataset.marketTab = tab;
+  document.querySelectorAll("#market-tabs [data-market-tab]").forEach((button) => {
+    button.setAttribute("aria-selected", String(button.dataset.marketTab === tab));
+  });
+}
+
+function wireMarketTabs() {
+  document.querySelectorAll("#market-tabs [data-market-tab]").forEach((button) => {
+    button.addEventListener("click", () => setMarketTab(button.dataset.marketTab));
+  });
+  setMarketTab(document.querySelector("#market-panel")?.dataset.marketTab || "overview");
+}
+
 function wireControls() {
   document.querySelectorAll("button[data-command]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -162,6 +178,7 @@ async function main() {
   installInput(renderer, { onTap: handleMapTap });
   wireControls();
   wireMobileSheet();
+  wireMarketTabs();
   publishSnapshot();
   renderHud(latestSnapshot, { onTradeCommand: applyCommand });
   renderer.render(latestSnapshot);
