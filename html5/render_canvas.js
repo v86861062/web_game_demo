@@ -253,7 +253,69 @@ export function createRenderer(canvas) {
     };
   }
 
-  function drawBadge(label, point, fillStyle, offsetX, offsetY) {
+  function createLabelLayout() {
+    return {
+      strategy: "selected-first-collision-avoidance",
+      maxDrawnLabels: 18,
+      boxes: [],
+      drawnLabels: 0,
+      skippedLabels: 0,
+      hiddenNpcShipLabels: 0,
+      hiddenRouteMarkerLabels: 0,
+      selectedShipLabelDrawn: false,
+      overlapCount: 0,
+    };
+  }
+
+  function overlapsAny(rect, boxes) {
+    return boxes.some((box) => !(rect.x + rect.width < box.x
+      || box.x + box.width < rect.x
+      || rect.y + rect.height < box.y
+      || box.y + box.height < rect.y));
+  }
+
+  function registerLabelRect(layout, rect, meta = {}) {
+    if (overlapsAny(rect, layout.boxes)) return false;
+    layout.boxes.push({ ...rect, ...meta });
+    layout.drawnLabels += 1;
+    return true;
+  }
+
+  function drawTextLabel(layout, text, point, options = {}) {
+    const label = String(text ?? "");
+    if (!label) return false;
+    if (!options.force && layout.drawnLabels >= layout.maxDrawnLabels) {
+      layout.skippedLabels += 1;
+      return false;
+    }
+    const font = options.font ?? "11px system-ui, sans-serif";
+    ctx.save();
+    ctx.font = font;
+    const width = Math.ceil(ctx.measureText(label).width);
+    const height = options.height ?? 14;
+    const candidates = options.offsets ?? [{ x: options.offsetX ?? 10, y: options.offsetY ?? -8 }];
+    for (const offset of candidates) {
+      const rect = {
+        x: point.x + offset.x - 2,
+        y: point.y + offset.y - height + 3,
+        width: width + 4,
+        height,
+      };
+      if (registerLabelRect(layout, rect, { kind: options.kind, text: label })) {
+        ctx.fillStyle = options.fillStyle ?? COLORS.text;
+        ctx.font = font;
+        ctx.globalAlpha = options.alpha ?? 1;
+        ctx.fillText(label, point.x + offset.x, point.y + offset.y);
+        ctx.restore();
+        return true;
+      }
+    }
+    layout.skippedLabels += 1;
+    ctx.restore();
+    return false;
+  }
+
+  function drawBadge(label, point, fillStyle, offsetX, offsetY, layout = null) {
     const text = String(label);
     ctx.save();
     ctx.font = "bold 10px system-ui, sans-serif";
@@ -262,6 +324,11 @@ export function createRenderer(canvas) {
     const height = 17;
     const x = point.x + offsetX;
     const y = point.y + offsetY;
+    if (layout && !registerLabelRect(layout, { x, y, width, height }, { kind: "route-badge", text })) {
+      layout.skippedLabels += 1;
+      ctx.restore();
+      return false;
+    }
     ctx.fillStyle = "rgba(4, 8, 15, 0.82)";
     ctx.strokeStyle = fillStyle;
     ctx.lineWidth = 1.5;
@@ -272,9 +339,10 @@ export function createRenderer(canvas) {
     ctx.fillStyle = fillStyle;
     ctx.fillText(text, x + padX, y + 12);
     ctx.restore();
+    return true;
   }
 
-  function drawRoutePath(entity, pathPois, legDebug, isSelected) {
+  function drawRoutePath(entity, pathPois, legDebug, isSelected, labelLayout) {
     if (!pathPois?.length) return null;
     const style = routeVisualStyle(entity, isSelected);
     const shipPoint = worldToScreen(entity.position);
@@ -312,7 +380,7 @@ export function createRenderer(canvas) {
       ctx.arc(nextPoint.x, nextPoint.y, 8, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
-      drawBadge("NEXT", nextPoint, COLORS.nextWaypoint, 11, -22);
+      drawBadge("NEXT", nextPoint, COLORS.nextWaypoint, 11, -22, labelLayout);
 
       ctx.fillStyle = COLORS.destination;
       ctx.strokeStyle = "rgba(0, 0, 0, 0.62)";
@@ -324,7 +392,9 @@ export function createRenderer(canvas) {
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
-      drawBadge("DEST", destinationPoint, COLORS.destination, 12, 4);
+      drawBadge("DEST", destinationPoint, COLORS.destination, 12, 4, labelLayout);
+    } else if (labelLayout) {
+      labelLayout.hiddenRouteMarkerLabels += 2;
     }
     ctx.restore();
     return {
@@ -376,7 +446,7 @@ export function createRenderer(canvas) {
     }
   }
 
-  function drawShip(entity, isSelected, heading) {
+  function drawShip(entity, isSelected, heading, labelLayout) {
     const p = worldToScreen(entity.position);
     const faction = shipFactionStyle(entity);
     if (isSelected) {
@@ -406,13 +476,38 @@ export function createRenderer(canvas) {
     ctx.restore();
 
     if (entity.ship?.name) {
-      ctx.fillStyle = isSelected ? COLORS.target : COLORS.text;
-      ctx.font = `${isSelected ? "bold " : ""}11px system-ui, sans-serif`;
-      ctx.fillText(entity.ship.name, p.x + 10, p.y - 8);
-      if (entity.ship?.owner !== "Player") {
-        ctx.fillStyle = faction.color;
-        ctx.font = "bold 10px system-ui, sans-serif";
-        ctx.fillText(`${faction.glyph} ${faction.label}`, p.x + 10, p.y + 6);
+      const isPlayer = entity.ship?.owner === "Player";
+      const showNpcLabel = camera.scale <= 9 || isSelected;
+      const showPlayerLabel = isSelected || camera.scale <= 18;
+      if (isPlayer && showPlayerLabel) {
+        const drawn = drawTextLabel(labelLayout, entity.ship.name, p, {
+          fillStyle: isSelected ? COLORS.target : COLORS.text,
+          font: `${isSelected ? "bold " : ""}11px system-ui, sans-serif`,
+          kind: isSelected ? "selected-ship" : "player-ship",
+          force: isSelected,
+          offsets: isSelected
+            ? [{ x: 12, y: -12 }, { x: -64, y: -14 }, { x: 12, y: 18 }, { x: -64, y: 18 }]
+            : [{ x: 10, y: -8 }, { x: 10, y: 14 }, { x: -58, y: -8 }],
+        });
+        if (isSelected) labelLayout.selectedShipLabelDrawn = drawn;
+      } else if (!isPlayer && showNpcLabel) {
+        const nameDrawn = drawTextLabel(labelLayout, entity.ship.name, p, {
+          fillStyle: COLORS.text,
+          font: "10px system-ui, sans-serif",
+          kind: "npc-ship",
+          alpha: 0.72,
+          offsets: [{ x: 10, y: -8 }, { x: 10, y: 14 }],
+        });
+        const factionDrawn = nameDrawn && drawTextLabel(labelLayout, `${faction.glyph} ${faction.label}`, p, {
+          fillStyle: faction.color,
+          font: "bold 10px system-ui, sans-serif",
+          kind: "npc-faction",
+          alpha: 0.72,
+          offsets: [{ x: 10, y: 6 }, { x: 10, y: 26 }],
+        });
+        if (!nameDrawn || !factionDrawn) labelLayout.hiddenNpcShipLabels += 1;
+      } else if (!isPlayer) {
+        labelLayout.hiddenNpcShipLabels += 1;
       }
     }
 
@@ -443,6 +538,7 @@ export function createRenderer(canvas) {
       ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
     });
 
+    const labelLayout = createLabelLayout();
     const sectorBubbles = [];
     snapshot.map.sectors.forEach((sector) => {
       const p = worldToScreen(sector.position);
@@ -455,9 +551,13 @@ export function createRenderer(canvas) {
       ctx.beginPath(); ctx.arc(p.x, p.y, screenRadius, 0, Math.PI * 2); ctx.stroke();
       ctx.fillStyle = COLORS.sector;
       ctx.beginPath(); ctx.arc(p.x, p.y, 9, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = COLORS.text;
-      ctx.font = "12px system-ui, sans-serif";
-      ctx.fillText(sector.name, p.x + 12, p.y + 4);
+      drawTextLabel(labelLayout, sector.name, p, {
+        fillStyle: COLORS.text,
+        font: "12px system-ui, sans-serif",
+        kind: "sector",
+        alpha: 0.88,
+        offsets: [{ x: 12, y: 4 }, { x: -54, y: 4 }, { x: 12, y: -14 }],
+      });
       sectorBubbles.push({
         sectorId: sector.id,
         name: sector.name,
@@ -476,6 +576,7 @@ export function createRenderer(canvas) {
       shipLegs: [],
       factionShips: [],
       sectorBubbles,
+      labelLayout,
     };
     snapshot.map.pois.forEach((poi) => {
       const poiDebug = drawPoi(poi, routeTarget);
@@ -487,7 +588,10 @@ export function createRenderer(canvas) {
       routePairKey(route.from_gate, route.to_gate),
       routePairKey(route.to_gate, route.from_gate),
     ]));
-    snapshot.entities.filter((entity) => entity.kind === "Ship").forEach((entity) => {
+    const shipEntities = snapshot.entities
+      .filter((entity) => entity.kind === "Ship")
+      .sort((a, b) => Number(b.id === selectedShipId) - Number(a.id === selectedShipId));
+    shipEntities.forEach((entity) => {
       const isSelected = entity.id === selectedShipId;
       const waypointIds = entity.ship?.waypoints ?? [];
       const pathPois = [...waypointIds, entity.ship?.target_poi]
@@ -501,7 +605,7 @@ export function createRenderer(canvas) {
           ...legDebug,
         });
       }
-      const routePathDebug = drawRoutePath(entity, pathPois, legDebug, isSelected);
+      const routePathDebug = drawRoutePath(entity, pathPois, legDebug, isSelected, labelLayout);
       if (routePathDebug) debug.routePaths.push(routePathDebug);
       const heading = shipHeadingToNextWaypoint(entity, pathPois[0]);
       if (heading) {
@@ -514,7 +618,7 @@ export function createRenderer(canvas) {
           alignedWithRoute: true,
         });
       }
-      const faction = drawShip(entity, isSelected, heading);
+      const faction = drawShip(entity, isSelected, heading, labelLayout);
       debug.factionShips.push({
         shipId: entity.id,
         name: entity.ship?.name ?? entity.id,
