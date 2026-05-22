@@ -67,16 +67,28 @@ function chooseAlertAction(alert, cards = []) {
   return { ...FLEET_ACTIONS[0], card: cards[0] };
 }
 
+function commandAssignment(value) {
+  const map = {
+    Idle: "idle",
+    AutoTradeBestProfit: "auto_trade_best_profit",
+    AutoMineAndSell: "auto_mine_and_sell",
+    PatrolRouteRisk: "patrol_route_risk",
+    EscortHighValueTrade: "escort_high_value_trade",
+    SupplyShipyard: "supply_shipyard",
+  };
+  return map[value] || value || "idle";
+}
+
 function fleetAssignmentButton(action, card, onAssignmentCommand, labelPrefix = card?.name || "Fleet") {
   const button = document.createElement("button");
   button.type = "button";
   button.textContent = action.label;
-  button.title = action.hint;
+  button.title = action.hint || action.detail || "";
   button.addEventListener("click", () => onAssignmentCommand?.({
     type: "SetFleetAssignment",
-    ship_id: idValue(card?.ship_id, "ship"),
-    assignment: action.assignment,
-    risk_policy: action.risk_policy,
+    ship_id: idValue(card?.ship_id ?? action.target_ship_id, "ship"),
+    assignment: commandAssignment(action.assignment),
+    risk_policy: action.risk_policy || "balanced",
   }, `${labelPrefix} ${action.label}`));
   return button;
 }
@@ -91,6 +103,22 @@ function marketSection(title, rows, tab = "overview") {
   return section;
 }
 
+function commandCenterSection(title, rows, className = "") {
+  const section = document.createElement("section");
+  section.className = `command-center-section ${className}`.trim();
+  const heading = document.createElement("h3");
+  heading.textContent = title;
+  section.append(heading, ...rows);
+  return section;
+}
+
+function textRow(text, className = "command-center-row") {
+  const row = document.createElement("div");
+  row.className = className;
+  row.textContent = text;
+  return row;
+}
+
 export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssignmentCommand, onAcknowledgeOfflineReport } = {}) {
   if (!snapshot) return;
   document.querySelector("#credits").textContent = String(snapshot.hud.credits);
@@ -101,6 +129,41 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
   const ships = document.querySelector("#ship-list");
   const dashboard = snapshot.fleet_dashboard || {};
   const fleetCards = dashboard.cards || [];
+  const commandCenter = document.querySelector("#fleet-command-center");
+  if (commandCenter) {
+    const rates = dashboard.resource_rates || {};
+    const incomeRows = [
+      textRow(`${Math.round(dashboard.credits_per_hour_estimate || 0)} cr/h · ${Math.round(rates.ore_per_hour || 0)} ore/h · ${Math.round(rates.metal_per_hour || 0)} metal/h`, "command-center-kpi"),
+      textRow(dashboard.top_route ? `最佳物流：${dashboard.top_route}` : "最佳物流：等待正利潤路線"),
+    ];
+    const resultRows = (dashboard.recent_results || []).slice(0, 3).map((result) => textRow(result));
+    const bottleneckRows = (dashboard.bottlenecks || []).slice(0, 3).map((bottleneck) => textRow(bottleneck, "command-center-row bottleneck"));
+    const actionRows = (dashboard.recommended_actions || []).slice(0, 4).map((action) => {
+      const row = document.createElement("div");
+      row.className = "command-center-action";
+      const copy = document.createElement("span");
+      copy.innerHTML = `<strong>${action.label}</strong><small>${action.detail || ""}</small>`;
+      const card = fleetCards.find((fleetCard) => idValue(fleetCard.ship_id, "ship") === idValue(action.target_ship_id, "ship")) || fleetCards[0];
+      row.append(copy, fleetAssignmentButton({ ...action, risk_policy: "balanced" }, card, onAssignmentCommand, "建議行動"));
+      return row;
+    });
+    commandCenter.replaceChildren(
+      (() => {
+        const title = document.createElement("h2");
+        title.textContent = "艦隊指揮中心";
+        return title;
+      })(),
+      textRow(`收益 ${Math.round(dashboard.credits_per_hour_estimate || 0)}cr/h · ${Math.round(rates.ore_per_hour || 0)}ore/h · ${Math.round(rates.metal_per_hour || 0)}metal/h`, "command-center-kpi"),
+      textRow(`最近成果：${(dashboard.recent_results || [])[0] || "等待第一輪自動任務"}`),
+      textRow(`瓶頸：${(dashboard.bottlenecks || [])[0] || "目前沒有重大瓶頸"}`, "command-center-row bottleneck"),
+      textRow(`建議：${(dashboard.recommended_actions || [])[0]?.label || "等待可執行策略"} · 下一目標：${dashboard.next_goal || "累積資源準備擴張"}`),
+      commandCenterSection("收益", incomeRows),
+      commandCenterSection("最近成果", resultRows.length ? resultRows : [textRow("等待艦隊完成第一輪自動任務")]),
+      commandCenterSection("目前瓶頸", bottleneckRows.length ? bottleneckRows : [textRow("目前沒有重大瓶頸")]),
+      commandCenterSection("建議行動", actionRows.length ? actionRows : [textRow("暫無建議行動")]),
+      commandCenterSection("下一目標", [textRow(dashboard.next_goal || "累積資源，準備下一輪擴張")]),
+    );
+  }
   const fleetSummary = document.querySelector("#fleet-summary");
   if (fleetSummary) {
     const kpis = [
