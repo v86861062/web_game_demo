@@ -186,6 +186,18 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       return row;
     });
 
+    const factionPressureRows = (snapshot.faction_pressure || []).map((pressure) => {
+      const row = document.createElement("div");
+      row.className = "market-row faction-pressure-row";
+      row.innerHTML = `
+        <strong>${pressure.name || pressure.faction} · ${pressure.stance}</strong>
+        <span>勢力壓力 ${formatPercent(pressure.pressure_score)} · trade ${formatPercent(pressure.trade_activity)} · security ${formatPercent(pressure.security_coverage)} · pirate ${formatPercent(pressure.pirate_pressure)}</span>
+        <small>${pressure.doctrine}</small>
+        <small>${pressure.headline}</small>
+      `;
+      return row;
+    });
+
     const offerRows = (snapshot.market?.offers || []).slice(0, 8).map((offer) => {
       const row = document.createElement("div");
       row.className = "market-row offer-row";
@@ -349,6 +361,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
     });
 
     market.replaceChildren(
+      marketSection("勢力態勢", factionPressureRows, "overview"),
       routeRow,
       marketSection("派系錢包", factionRows, "overview"),
       marketSection("市場競爭", competitionRows, "overview"),
