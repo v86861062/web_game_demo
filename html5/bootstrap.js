@@ -16,6 +16,7 @@ let commandSeq = 0;
 let latestSnapshot = null;
 let selectedShipId = "ship/scout-01";
 let lastAutoSaveAt = 0;
+let lastHudRenderAt = 0;
 
 function status(message) {
   const node = document.querySelector("#command-status");
@@ -128,12 +129,15 @@ function frame(now) {
     saveToLocalStorage(now);
     lastAutoSaveAt = now;
   }
-  renderHud(snapshot, {
-    onTradeCommand: applyCommand,
-    onUpgradeCommand: applyCommand,
-    onAssignmentCommand: applyCommand,
-    onAcknowledgeOfflineReport: applyCommand,
-  });
+  if (now - lastHudRenderAt > 250) {
+    renderHud(snapshot, {
+      onTradeCommand: applyCommand,
+      onUpgradeCommand: applyCommand,
+      onAssignmentCommand: applyCommand,
+      onAcknowledgeOfflineReport: applyCommand,
+    });
+    lastHudRenderAt = now;
+  }
   renderer.render(snapshot);
   requestAnimationFrame(frame);
 }
@@ -243,6 +247,7 @@ async function main() {
     onAssignmentCommand: applyCommand,
     onAcknowledgeOfflineReport: applyCommand,
   });
+  lastHudRenderAt = performance.now();
   renderer.render(latestSnapshot);
   window.__starboundHtml5Ready = true;
   window.__starboundHtml5Engine = engine;

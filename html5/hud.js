@@ -45,6 +45,42 @@ function idValue(value, prefix) {
   return `${prefix}/0`;
 }
 
+const FLEET_ACTIONS = [
+  { label: "最佳交易", assignment: "auto_trade_best_profit", risk_policy: "balanced", hint: "讓系統自動找最高利潤物流" },
+  { label: "採礦補給", assignment: "auto_mine_and_sell", risk_policy: "safe", hint: "採礦並補足生產短缺" },
+  { label: "巡邏風險", assignment: "patrol_route_risk", risk_policy: "safe", hint: "壓低高風險航線" },
+  { label: "補船塢", assignment: "supply_shipyard", risk_policy: "balanced", hint: "優先處理 Shipyard 材料瓶頸" },
+  { label: "待命", assignment: "idle", risk_policy: "balanced", hint: "停止例行任務" },
+];
+
+function chooseAlertAction(alert, cards = []) {
+  const text = `${alert?.kind || ""} ${alert?.message || ""}`.toLowerCase();
+  if (text.includes("risk") || text.includes("pirate")) {
+    return { ...FLEET_ACTIONS[2], card: cards.find((card) => /patrol/i.test(card.status) || /patrol/i.test(card.name)) || cards[0] };
+  }
+  if (text.includes("production") || text.includes("shipyard") || text.includes("bottleneck")) {
+    return { ...FLEET_ACTIONS[3], card: cards.find((card) => /trader/i.test(card.name) || /miner/i.test(card.name)) || cards[0] };
+  }
+  if (text.includes("market") || text.includes("route") || text.includes("shortage")) {
+    return { ...FLEET_ACTIONS[0], card: cards.find((card) => /trader/i.test(card.name)) || cards[0] };
+  }
+  return { ...FLEET_ACTIONS[0], card: cards[0] };
+}
+
+function fleetAssignmentButton(action, card, onAssignmentCommand, labelPrefix = card?.name || "Fleet") {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = action.label;
+  button.title = action.hint;
+  button.addEventListener("click", () => onAssignmentCommand?.({
+    type: "SetFleetAssignment",
+    ship_id: idValue(card?.ship_id, "ship"),
+    assignment: action.assignment,
+    risk_policy: action.risk_policy,
+  }, `${labelPrefix} ${action.label}`));
+  return button;
+}
+
 function marketSection(title, rows, tab = "overview") {
   const section = document.createElement("section");
   section.className = "market-section";
@@ -64,6 +100,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
 
   const ships = document.querySelector("#ship-list");
   const dashboard = snapshot.fleet_dashboard || {};
+  const fleetCards = dashboard.cards || [];
   const fleetSummary = document.querySelector("#fleet-summary");
   if (fleetSummary) {
     const kpis = [
@@ -85,7 +122,15 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
     fleetAlerts.replaceChildren(...(snapshot.alerts || []).slice(0, 3).map((alert) => {
       const row = document.createElement("div");
       row.className = "fleet-alert";
-      row.textContent = `${alert.kind}: ${alert.message}`;
+      const message = document.createElement("span");
+      message.textContent = `${alert.kind}: ${alert.message}`;
+      row.append(message);
+      const suggested = chooseAlertAction(alert, fleetCards);
+      if (suggested.card) {
+        const button = fleetAssignmentButton(suggested, suggested.card, onAssignmentCommand, "一鍵處理");
+        button.textContent = `一鍵處理：${suggested.label}`;
+        row.append(button);
+      }
       return row;
     }));
   }
@@ -94,7 +139,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
     row.className = "ship-row";
     row.dataset.shipIndex = String(index);
     const cargo = formatInventory(ship.cargo || {});
-    const card = (dashboard.cards || [])[index];
+    const card = fleetCards[index];
     const assignment = card?.assignment || ship.order;
     const plan = ship.trade_plan
       ? `${ship.trade_plan.ware} ${ship.trade_plan.amount} · POI ${ship.trade_plan.source_poi} → ${ship.trade_plan.destination_poi}`
@@ -105,28 +150,10 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       <small>${ship.sector}${ship.target ? ` → ${ship.target}` : ""}${plan ? ` · ${plan}` : ""}</small>
       ${card?.alert ? `<small>⚠ ${card.alert}</small>` : ""}
     `;
-    if (card?.ship_id) {
+    if (card?.ship_id !== undefined && card?.ship_id !== null) {
       const actions = document.createElement("div");
       actions.className = "fleet-actions";
-      const trade = document.createElement("button");
-      trade.type = "button";
-      trade.textContent = "最佳交易";
-      trade.addEventListener("click", () => onAssignmentCommand?.({
-        type: "SetFleetAssignment",
-        ship_id: idValue(card.ship_id, "ship"),
-        assignment: "auto_trade_best_profit",
-        risk_policy: "balanced",
-      }, `${ship.name} 最佳交易`));
-      const mine = document.createElement("button");
-      mine.type = "button";
-      mine.textContent = "採礦補給";
-      mine.addEventListener("click", () => onAssignmentCommand?.({
-        type: "SetFleetAssignment",
-        ship_id: idValue(card.ship_id, "ship"),
-        assignment: "auto_mine_and_sell",
-        risk_policy: "safe",
-      }, `${ship.name} 採礦補給`));
-      actions.append(trade, mine);
+      actions.append(...FLEET_ACTIONS.map((action) => fleetAssignmentButton(action, card, onAssignmentCommand, ship.name)));
       row.append(actions);
     }
     return row;
