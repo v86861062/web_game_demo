@@ -219,6 +219,7 @@ function wireControls() {
         persistAfterMutation();
         status("已重置");
       }
+      button.closest("#debug-controls")?.removeAttribute("open");
     });
   });
 }

@@ -66,9 +66,14 @@
         <button data-command="toggle_pause">暫停</button>
         <button data-command="speed_1">1x</button>
         <button data-command="speed_3">3x</button>
-        <button data-command="select_scout">選 Scout</button>
-        <button data-command="enter_north_gate">進入北門</button>
-        <button data-command="reset">重置</button>
+        <details id="debug-controls" class="debug-controls">
+          <summary aria-label="開啟工具選單">工具</summary>
+          <div class="debug-menu" role="menu" aria-label="Debug 工具">
+            <button data-command="select_scout" type="button">選 Scout</button>
+            <button data-command="enter_north_gate" type="button">進入北門</button>
+            <button data-command="reset" type="button">重置</button>
+          </div>
+        </details>
       </nav>
     </main>
     <script type="module" src="./bootstrap.js?v=html5-spike-1"></script>
