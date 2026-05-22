@@ -85,7 +85,7 @@ function frame(now) {
   lastFrame = now;
   engine.tick(elapsed);
   const snapshot = publishSnapshot();
-  renderHud(snapshot);
+  renderHud(snapshot, { onTradeCommand: applyCommand });
   renderer.render(snapshot);
   requestAnimationFrame(frame);
 }
@@ -163,7 +163,7 @@ async function main() {
   wireControls();
   wireMobileSheet();
   publishSnapshot();
-  renderHud(latestSnapshot);
+  renderHud(latestSnapshot, { onTradeCommand: applyCommand });
   renderer.render(latestSnapshot);
   window.__starboundHtml5Ready = true;
   window.__starboundHtml5Engine = engine;

@@ -92,6 +92,11 @@ body { min-height: 100vh; touch-action: none; }
 .ship-row, .market-row, .mission { display: grid; gap: 2px; padding: 6px 0; border-top: 1px solid rgba(255,255,255,0.08); font-size: 12px; }
 .ship-row:first-of-type, .market-row:first-of-type, .mission:first-of-type { border-top: 0; }
 .ship-row span, .market-row span, .market-row small, .mission small, .ship-row small { color: rgba(238,244,255,0.68); }
+.market-section { margin-top: 8px; padding-top: 4px; border-top: 1px solid rgba(155,231,255,0.12); }
+.market-section h3 { margin: 2px 0 4px; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: #9be7ff; }
+.trade-command-row button { justify-self: start; margin-top: 4px; padding: 6px 9px; font-size: 11px; }
+.alert-row strong { color: #ffd166; }
+.risk-row span { color: #ffb86b; }
 .mission.completed { opacity: 0.58; }
 .chrono-row { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; padding: 2px 0; }
 .chrono-row span { color: #9be7ff; }
@@ -151,9 +156,9 @@ button:active { transform: translateY(1px); }
     backdrop-filter: blur(8px);
     pointer-events: auto;
   }
-  #ship-panel { top: 0; max-height: 32vh; }
-  #market-panel { top: 188px; max-height: 28vh; }
-  #chronocam-panel { top: 360px; max-height: 18vh; }
-  #mission-panel { top: 462px; max-height: 24vh; }
+  #ship-panel { top: 0; max-height: 24vh; }
+  #market-panel { top: 158px; max-height: 50vh; }
+  #chronocam-panel { top: calc(158px + 52vh); max-height: 14vh; }
+  #mission-panel { top: calc(158px + 68vh); max-height: 16vh; }
   #controls { left: 50%; transform: translateX(-50%); max-width: 680px; grid-template-columns: repeat(6, 1fr); }
 }
