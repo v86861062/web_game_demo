@@ -220,12 +220,34 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       `${step.label} ${Math.round(step.current || 0)}/${Math.round(step.target || 0)} · ${step.status || "--"} · ${step.detail || ""}`,
       `command-center-row expansion ${step.complete ? "complete" : "pending"}`,
     ));
+    const recurringContractRows = (expansionCadence.recurring_contract_rewards || []).slice(0, 3).map((contract) => textRow(
+      `${contract.label || "週期合約"} · ${contract.reward_summary || "週期獎勵：待估"} · ${contract.cadence_summary || "等待合約節奏"} · ${contract.expected_effect || "預期效果：累積擴張資金"}`,
+      "command-center-row expansion-contract",
+    ));
+    const investmentChoiceRows = (expansionCadence.station_investment_choices || []).slice(0, 3).map((choice) => textRow(
+      `投資選擇：${choice.label || "站點投資"} → ${choice.target || "下一輪擴張"} · ${choice.cost_summary || "材料待評估"} · ${choice.expected_effect || "預期效果：改善擴張瓶頸"}`,
+      "command-center-row expansion-investment",
+    ));
+    const unlockReport = expansionCadence.sector_unlock_report || {};
+    const unlockReportRows = unlockReport.summary
+      ? [
+          textRow(unlockReport.summary, "command-center-row expansion-unlock-report"),
+          textRow(unlockReport.next_action || "Scout 行動：等待偵查指令", "command-center-row expansion-unlock-report"),
+          textRow(unlockReport.expected_effect || "預期效果：解鎖新合約與站點投資", "command-center-row expansion-unlock-report"),
+        ]
+      : [];
+    const topRecurringContract = (expansionCadence.recurring_contract_rewards || [])[0];
+    const topInvestmentChoice = (expansionCadence.station_investment_choices || [])[0];
+    const expansionDepthLine = `週期合約：${topRecurringContract?.reward_summary || "等待正利潤航線"} · 投資選擇：${topInvestmentChoice?.label || "等待站點缺口"} · ${unlockReport.summary || "星區解鎖報告：待評估"}`;
     const expansionRows = [
       textRow(expansionCadence.current_phase || "下一個星區：派 Scout 開路後解鎖新航線"),
       textRow(expansionCadence.next_sector || "下一個星區：等待偵查目標"),
       textRow(expansionCadence.contract_summary || "物流合約：跑 Energy / Ore 合約，累積擴張資金"),
       textRow(expansionCadence.station_investment || "站點投資：補 Forge / Shipyard 材料，把收益轉成艦隊規模"),
       textRow(expansionCadence.expected_unlock || "預期解鎖：更多航線、合約入口與艦隊容量"),
+      ...(recurringContractRows.length ? recurringContractRows : [textRow("週期合約：等待正利潤航線，先補 Energy / Ore 供應")]),
+      ...(investmentChoiceRows.length ? investmentChoiceRows : [textRow("投資選擇：等待站點材料缺口或船塢佇列")]),
+      ...(unlockReportRows.length ? unlockReportRows : [textRow("星區解鎖報告：等待偵查資料")]),
       ...expansionStepRows,
     ];
     const actionRows = (dashboard.recommended_actions || []).slice(0, 4).map((action) => {
@@ -244,6 +266,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         return title;
       })(),
       textRow(expansionSummaryLine, "command-center-kpi expansion-cadence"),
+      textRow(expansionDepthLine, "command-center-kpi expansion-depth"),
       textRow(`估計收益 ${Math.round(dashboard.credits_per_hour_estimate || 0)}cr/h · ${dashboard.income_estimate_basis || "等待第一筆交易"}`, "command-center-kpi"),
       textRow(`首分鐘目標：Energy → Ore → Metal · ${firstSessionReward} · ${firstSessionEta}`, "command-center-kpi first-session-goal"),
       textRow(firstSessionRoute),
