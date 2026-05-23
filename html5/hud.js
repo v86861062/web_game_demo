@@ -462,6 +462,9 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       row.innerHTML = `
         <strong>${upgrade.name} Lv.${upgrade.level}</strong>
         <span>${upgrade.cost}cr · ${upgrade.effect}</span>
+        <small>目前：${upgrade.current_value || "--"}</small>
+        <small>升級後：${upgrade.next_value || "--"} · ${upgrade.delta_value || ""}</small>
+        <small>${upgrade.expected_effect || "預期效果：購買後立即提升艦隊營運效率"}</small>
       `;
       row.append(button);
       return row;
