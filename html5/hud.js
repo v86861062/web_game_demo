@@ -224,10 +224,45 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       `${contract.label || "週期合約"} · ${contract.reward_summary || "週期獎勵：待估"} · ${contract.cadence_summary || "等待合約節奏"} · ${contract.expected_effect || "預期效果：累積擴張資金"}`,
       "command-center-row expansion-contract",
     ));
-    const investmentChoiceRows = (expansionCadence.station_investment_choices || []).slice(0, 3).map((choice) => textRow(
-      `投資選擇：${choice.label || "站點投資"} → ${choice.target || "下一輪擴張"} · ${choice.cost_summary || "材料待評估"} · ${choice.expected_effect || "預期效果：改善擴張瓶頸"}`,
-      "command-center-row expansion-investment",
-    ));
+    const investmentChoices = (expansionCadence.station_investment_choices || []).slice(0, 3);
+    const investmentButtonForChoice = (choice, compact = false) => {
+      const assignment = commandAssignment(choice.recommended_assignment);
+      const actionTemplate = fleetActionByAssignment(assignment);
+      const preferredCard = fleetCards.find((fleetCard) => idValue(fleetCard.ship_id, "ship") === idValue(choice.target_ship_id, "ship"))
+        || fleetCards.find((fleetCard) => assignment === "auto_mine_and_sell" ? /miner/i.test(fleetCard.name || "") : /trader/i.test(fleetCard.name || ""))
+        || fleetCards[0];
+      const button = fleetAssignmentButton({
+        ...actionTemplate,
+        label: compact ? actionTemplate.label : `投資：${actionTemplate.label}`,
+        assignment,
+        target_ship_id: choice.target_ship_id,
+        risk_policy: "balanced",
+        detail: choice.cost_summary,
+        expected_effect: choice.expected_effect,
+        hint: choice.expected_effect || actionTemplate.hint,
+      }, preferredCard, onAssignmentCommand, `投資選擇 ${choice.label || "站點投資"}`);
+      button.classList.add("investment-choice-button");
+      return button;
+    };
+    const investmentQuickRow = investmentChoices.length ? (() => {
+      const row = document.createElement("div");
+      row.className = "expansion-investment-quick";
+      const copy = document.createElement("span");
+      copy.innerHTML = `<strong>投資選擇 CTA</strong><small>${investmentChoices[0]?.expected_effect || "點選後直接派工並改善擴張瓶頸"}</small>`;
+      const buttons = document.createElement("div");
+      buttons.className = "expansion-investment-buttons";
+      buttons.append(...investmentChoices.map((choice) => investmentButtonForChoice(choice, true)));
+      row.append(copy, buttons);
+      return row;
+    })() : null;
+    const investmentChoiceRows = investmentChoices.map((choice) => {
+      const row = document.createElement("div");
+      row.className = "command-center-action expansion-investment-action";
+      const copy = document.createElement("span");
+      copy.innerHTML = `<strong>投資選擇：${choice.label || "站點投資"}</strong><small>${choice.target || "下一輪擴張"} · ${choice.cost_summary || "材料待評估"}</small><small>預期效果：${choice.expected_effect || "改善擴張瓶頸"}</small>`;
+      row.append(copy, investmentButtonForChoice(choice));
+      return row;
+    });
     const unlockReport = expansionCadence.sector_unlock_report || {};
     const unlockReportRows = unlockReport.summary
       ? [
@@ -265,6 +300,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         title.textContent = "艦隊指揮中心";
         return title;
       })(),
+      ...(investmentQuickRow ? [investmentQuickRow] : []),
       textRow(expansionSummaryLine, "command-center-kpi expansion-cadence"),
       textRow(expansionDepthLine, "command-center-kpi expansion-depth"),
       textRow(`估計收益 ${Math.round(dashboard.credits_per_hour_estimate || 0)}cr/h · ${dashboard.income_estimate_basis || "等待第一筆交易"}`, "command-center-kpi"),
