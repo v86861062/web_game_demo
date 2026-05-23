@@ -435,13 +435,18 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       ack.type = "button";
       ack.textContent = "收起報告";
       ack.addEventListener("click", () => onAcknowledgeOfflineReport?.({ type: "AcknowledgeOfflineReport" }, "Acknowledge offline report"));
+      const returnSummary = report.return_summary || {};
       row.innerHTML = `
         <strong>離線收益報告</strong>
         <span>營運結算：${formatSeconds(report.simulated_seconds)} · ${formatSignedCredits(report.net_credits)} · 貨物 ${formatInventory(report.delivered_cargo)}</span>
+        <small>${returnSummary.top_gain || formatReportBestShip(report)}</small>
+        <small>${returnSummary.top_loss || "最大損失：無貨損"}</small>
+        <small>${returnSummary.bottleneck_change || formatReportBottleneck(report)}</small>
+        <small>${returnSummary.unlock_progress || formatReportShipyard(report)}</small>
+        <small>${returnSummary.risk_summary || `風險摘要：${report.pirate_incidents?.length || 0} 起事件`}</small>
+        <small>${returnSummary.next_best_action || formatReportRecommendation(report)}</small>
         <small>${formatReportBestShip(report)}</small>
         <small>${formatReportBottleneck(report)}</small>
-        <small>${formatReportShipyard(report)}</small>
-        <small>${formatReportRecommendation(report)}</small>
         <small>風險事件:${report.pirate_incidents?.length || 0} · capped:${formatSeconds(report.capped_seconds)}</small>
       `;
       row.append(ack);
