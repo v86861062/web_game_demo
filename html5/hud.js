@@ -180,6 +180,10 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
     const latestReport = snapshot.latest_offline_report;
     const reportOutcome = latestReport ? `離線結算：${formatSeconds(latestReport.simulated_seconds)} · ${formatSignedCredits(latestReport.net_credits)} · 貨物 ${formatInventory(latestReport.delivered_cargo)}` : null;
     const rates = dashboard.resource_rates || {};
+    const firstSessionGoal = dashboard.first_session_goal || {};
+    const firstSessionEta = (firstSessionGoal.shipyard_summary || "").match(/船塢 ETA [^·]+/)?.[0] || "船塢 ETA --";
+    const firstSessionReward = (firstSessionGoal.reward_summary || "下一個獎勵：+1 Trader").split("，")[0];
+    const firstSessionRoute = firstSessionGoal.route_summary || "第一航線：等待最佳 Energy 航線";
     const incomeRows = [
       textRow(`${Math.round(dashboard.credits_per_hour_estimate || 0)} cr/h · ${Math.round(rates.ore_per_hour || 0)} ore/h · ${Math.round(rates.metal_per_hour || 0)} metal/h`, "command-center-kpi"),
       textRow(dashboard.top_route ? `最佳物流：${dashboard.top_route}` : "最佳物流：等待正利潤路線"),
@@ -209,6 +213,8 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         return title;
       })(),
       textRow(`估計收益 ${Math.round(dashboard.credits_per_hour_estimate || 0)}cr/h · ${dashboard.income_estimate_basis || "等待第一筆交易"}`, "command-center-kpi"),
+      textRow(`首分鐘目標：Energy → Ore → Metal · ${firstSessionReward} · ${firstSessionEta}`, "command-center-kpi first-session-goal"),
+      textRow(firstSessionRoute),
       textRow("進度路線：Energy → Ore → Metal → 下一艘 Trader", "command-center-kpi progression-path"),
       textRow(`預期效果：${(dashboard.recommended_actions || [])[0]?.expected_effect || "等待下一個高槓桿行動"}`),
       textRow(`最近成果：${reportOutcome || (dashboard.recent_results || [])[0] || "等待第一輪自動任務"}`),

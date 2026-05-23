@@ -103,6 +103,7 @@ body { min-height: 100vh; touch-action: none; }
 .command-center-section h3 { margin: 0; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: #9be7ff; }
 .command-center-row { font-size: 11px; color: rgba(238,244,255,0.76); line-height: 1.25; }
 .progression-path { color: #ffe08a; }
+.first-session-goal { color: #a8ffcf; text-shadow: 0 0 12px rgba(108, 255, 196, 0.18); }
 .command-center-row.progression.complete { color: #a8ffcf; }
 .command-center-row.progression.pending { color: #ffe08a; }
 .command-center-kpi { font-size: 12px; font-weight: 800; color: #fff; }
