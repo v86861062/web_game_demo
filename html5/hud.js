@@ -185,6 +185,10 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       textRow(dashboard.top_route ? `最佳物流：${dashboard.top_route}` : "最佳物流：等待正利潤路線"),
     ];
     const resultRows = (dashboard.recent_results || []).slice(0, 3).map((result) => textRow(result));
+    const progressionRows = (dashboard.progression || []).map((step) => textRow(
+      `${step.label} ${Math.round(step.current || 0)}/${Math.round(step.target || 0)} · ${step.status || "--"} · ${step.detail || ""}`,
+      `command-center-row progression ${step.complete ? "complete" : "pending"}`,
+    ));
     const bottleneckRows = (dashboard.bottlenecks || []).slice(0, 3).map((bottleneck) => textRow(bottleneck, "command-center-row bottleneck"));
     const bottleneckProgressRow = dashboard.bottleneck_relief_summary
       ? textRow(dashboard.bottleneck_relief_summary, "command-center-kpi bottleneck-progress")
@@ -205,11 +209,13 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         return title;
       })(),
       textRow(`收益 ${Math.round(dashboard.credits_per_hour_estimate || 0)}cr/h · ${Math.round(rates.ore_per_hour || 0)}ore/h · ${Math.round(rates.metal_per_hour || 0)}metal/h`, "command-center-kpi"),
+      textRow("進度路線：Energy → Ore → Metal → 下一艘 Trader", "command-center-kpi progression-path"),
       textRow(`預期效果：${(dashboard.recommended_actions || [])[0]?.expected_effect || "等待下一個高槓桿行動"}`),
       textRow(`最近成果：${reportOutcome || (dashboard.recent_results || [])[0] || "等待第一輪自動任務"}`),
       textRow(`瓶頸：${(dashboard.bottlenecks || [])[0] || "目前沒有重大瓶頸"}`, "command-center-row bottleneck"),
       ...(bottleneckProgressRow ? [bottleneckProgressRow] : []),
       textRow(`建議：${(dashboard.recommended_actions || [])[0]?.label || "等待可執行策略"} · 下一目標：${dashboard.next_goal || "累積資源準備擴張"}`),
+      commandCenterSection("進度路線", progressionRows.length ? progressionRows : [textRow("Energy → Ore → Metal → 下一艘 Trader")]),
       commandCenterSection("收益", incomeRows),
       commandCenterSection("最近成果", reportOutcome ? [textRow(reportOutcome), ...resultRows.slice(0, 2)] : (resultRows.length ? resultRows : [textRow("等待艦隊完成第一輪自動任務")])),
       commandCenterSection("目前瓶頸", [
