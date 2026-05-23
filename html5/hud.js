@@ -186,11 +186,14 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
     ];
     const resultRows = (dashboard.recent_results || []).slice(0, 3).map((result) => textRow(result));
     const bottleneckRows = (dashboard.bottlenecks || []).slice(0, 3).map((bottleneck) => textRow(bottleneck, "command-center-row bottleneck"));
+    const bottleneckProgressRow = dashboard.bottleneck_relief_summary
+      ? textRow(dashboard.bottleneck_relief_summary, "command-center-kpi bottleneck-progress")
+      : null;
     const actionRows = (dashboard.recommended_actions || []).slice(0, 4).map((action) => {
       const row = document.createElement("div");
       row.className = "command-center-action";
       const copy = document.createElement("span");
-      copy.innerHTML = `<strong>${action.label}</strong><small>${action.detail || ""}</small>`;
+      copy.innerHTML = `<strong>${action.label}</strong><small>${action.detail || ""}</small><small>${action.expected_effect ? `預期效果：${action.expected_effect}` : ""}</small>`;
       const card = fleetCards.find((fleetCard) => idValue(fleetCard.ship_id, "ship") === idValue(action.target_ship_id, "ship")) || fleetCards[0];
       row.append(copy, fleetAssignmentButton({ ...action, risk_policy: "balanced" }, card, onAssignmentCommand, "建議行動"));
       return row;
@@ -204,10 +207,15 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       textRow(`收益 ${Math.round(dashboard.credits_per_hour_estimate || 0)}cr/h · ${Math.round(rates.ore_per_hour || 0)}ore/h · ${Math.round(rates.metal_per_hour || 0)}metal/h`, "command-center-kpi"),
       textRow(`最近成果：${reportOutcome || (dashboard.recent_results || [])[0] || "等待第一輪自動任務"}`),
       textRow(`瓶頸：${(dashboard.bottlenecks || [])[0] || "目前沒有重大瓶頸"}`, "command-center-row bottleneck"),
+      ...(bottleneckProgressRow ? [bottleneckProgressRow] : []),
       textRow(`建議：${(dashboard.recommended_actions || [])[0]?.label || "等待可執行策略"} · 下一目標：${dashboard.next_goal || "累積資源準備擴張"}`),
+      textRow(`預期效果：${(dashboard.recommended_actions || [])[0]?.expected_effect || "等待下一個高槓桿行動"}`),
       commandCenterSection("收益", incomeRows),
       commandCenterSection("最近成果", reportOutcome ? [textRow(reportOutcome), ...resultRows.slice(0, 2)] : (resultRows.length ? resultRows : [textRow("等待艦隊完成第一輪自動任務")])),
-      commandCenterSection("目前瓶頸", bottleneckRows.length ? bottleneckRows : [textRow("目前沒有重大瓶頸")]),
+      commandCenterSection("目前瓶頸", [
+        ...(bottleneckProgressRow ? [bottleneckProgressRow.cloneNode(true)] : []),
+        ...(bottleneckRows.length ? bottleneckRows : [textRow("目前沒有重大瓶頸")]),
+      ]),
       commandCenterSection("建議行動", actionRows.length ? actionRows : [textRow("暫無建議行動")]),
       commandCenterSection("下一目標", [textRow(dashboard.next_goal || "累積資源，準備下一輪擴張")]),
     );
@@ -219,6 +227,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       ["派工中", dashboard.active_assignments ?? 0],
       ["閒置", dashboard.idle_ships ?? 0],
       ["估計收益", `${Math.round(dashboard.credits_per_hour_estimate || 0)} cr/h`],
+      ["瓶頸處理", `${dashboard.bottlenecks_in_progress ?? 0}/${(dashboard.bottlenecks || []).length || 0}`],
       ["瓶頸", dashboard.current_bottleneck || "--"],
     ];
     fleetSummary.replaceChildren(...kpis.map(([label, value]) => {
