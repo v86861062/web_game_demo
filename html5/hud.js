@@ -212,6 +212,22 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       textRow(riskStrategy.escort_summary || "護航：等待高價交易"),
       textRow(riskStrategy.expected_effect || "預期效果：派巡邏或護航後降低下一輪貨損風險"),
     ];
+    const expansionCadence = dashboard.expansion_cadence || {};
+    const expansionSummaryLine = expansionCadence.headline
+      ? `${expansionCadence.headline} · ${expansionCadence.current_phase || expansionCadence.next_sector || "下一個星區：待評估"}`
+      : "擴張節奏：下一個星區 → 物流合約 → 站點投資";
+    const expansionStepRows = (expansionCadence.steps || []).map((step) => textRow(
+      `${step.label} ${Math.round(step.current || 0)}/${Math.round(step.target || 0)} · ${step.status || "--"} · ${step.detail || ""}`,
+      `command-center-row expansion ${step.complete ? "complete" : "pending"}`,
+    ));
+    const expansionRows = [
+      textRow(expansionCadence.current_phase || "下一個星區：派 Scout 開路後解鎖新航線"),
+      textRow(expansionCadence.next_sector || "下一個星區：等待偵查目標"),
+      textRow(expansionCadence.contract_summary || "物流合約：跑 Energy / Ore 合約，累積擴張資金"),
+      textRow(expansionCadence.station_investment || "站點投資：補 Forge / Shipyard 材料，把收益轉成艦隊規模"),
+      textRow(expansionCadence.expected_unlock || "預期解鎖：更多航線、合約入口與艦隊容量"),
+      ...expansionStepRows,
+    ];
     const actionRows = (dashboard.recommended_actions || []).slice(0, 4).map((action) => {
       const row = document.createElement("div");
       row.className = "command-center-action";
@@ -227,6 +243,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         title.textContent = "艦隊指揮中心";
         return title;
       })(),
+      textRow(expansionSummaryLine, "command-center-kpi expansion-cadence"),
       textRow(`估計收益 ${Math.round(dashboard.credits_per_hour_estimate || 0)}cr/h · ${dashboard.income_estimate_basis || "等待第一筆交易"}`, "command-center-kpi"),
       textRow(`首分鐘目標：Energy → Ore → Metal · ${firstSessionReward} · ${firstSessionEta}`, "command-center-kpi first-session-goal"),
       textRow(firstSessionRoute),
@@ -238,6 +255,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       textRow(riskSummaryLine, "command-center-kpi risk-strategy"),
       textRow(`建議：${(dashboard.recommended_actions || [])[0]?.label || "等待可執行策略"} · 下一目標：${dashboard.next_goal || "累積資源準備擴張"}`),
       commandCenterSection("進度路線", progressionRows.length ? progressionRows : [textRow("Energy → Ore → Metal → 下一艘 Trader")]),
+      commandCenterSection("擴張節奏", expansionRows),
       commandCenterSection("收益", incomeRows),
       commandCenterSection("最近成果", reportOutcome ? [textRow(reportOutcome), ...resultRows.slice(0, 2)] : (resultRows.length ? resultRows : [textRow("等待艦隊完成第一輪自動任務")])),
       commandCenterSection("目前瓶頸", [
