@@ -33,6 +33,52 @@ function formatSeconds(value) {
   return `${Math.round(seconds)}s`;
 }
 
+function inventoryTotal(inventory = {}) {
+  return Object.values(inventory || {}).reduce((sum, value) => sum + Number(value || 0), 0);
+}
+
+function formatSignedCredits(value) {
+  const credits = Math.round(Number(value || 0));
+  return `${credits >= 0 ? "+" : ""}${credits}cr`;
+}
+
+function bestReportShip(report = {}) {
+  const ships = report.ship_summaries || [];
+  return ships.reduce((best, ship) => {
+    const score = Number(ship.earned_credits || 0) + inventoryTotal(ship.delivered_cargo) * 2 - inventoryTotal(ship.lost_cargo) * 3;
+    const bestScore = best ? Number(best.earned_credits || 0) + inventoryTotal(best.delivered_cargo) * 2 - inventoryTotal(best.lost_cargo) * 3 : -Infinity;
+    return score > bestScore ? ship : best;
+  }, null);
+}
+
+function formatReportBestShip(report = {}) {
+  const ship = bestReportShip(report);
+  if (!ship) return "最佳艦：尚無單艦成果";
+  const cargo = formatInventory(ship.delivered_cargo || {});
+  return `最佳艦：${ship.name} · ${formatAssignment(ship.assignment)} · ${formatSignedCredits(ship.earned_credits)} · 貨物 ${cargo}`;
+}
+
+function formatReportBottleneck(report = {}) {
+  const stall = (report.production_stalls || [])[0];
+  if (stall) return `瓶頸：${stall.station} ${stall.reason}`;
+  const alert = (report.alerts || [])[0];
+  return alert ? `瓶頸：${alert.message}` : "瓶頸：暫無重大卡點";
+}
+
+function formatReportShipyard(report = {}) {
+  const update = (report.shipyard_updates || [])[0];
+  if (!update) return "船塢：目前沒有建造佇列";
+  const missing = formatInventory(update.missing || {});
+  return `船塢：${update.station} · ETA ${formatSeconds(update.eta_seconds)} · 缺 ${missing}`;
+}
+
+function formatReportRecommendation(report = {}) {
+  if ((report.production_stalls || []).length) return "建議：優先補足短缺站點，讓生產鏈恢復運轉。";
+  if ((report.pirate_incidents || []).length) return "建議：派巡邏或護航壓低高風險航線。";
+  if (inventoryTotal(report.delivered_cargo) > 0) return "建議：把本輪貨物流向下一個瓶頸或升級貨艙。";
+  return "建議：跑最佳交易，讓艦隊先建立穩定現金流。";
+}
+
 function formatAssignment(value) {
   return String(value || "Idle").replace(/([a-z])([A-Z])/g, "$1 $2");
 }
@@ -131,6 +177,8 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
   const fleetCards = dashboard.cards || [];
   const commandCenter = document.querySelector("#fleet-command-center");
   if (commandCenter) {
+    const latestReport = snapshot.latest_offline_report;
+    const reportOutcome = latestReport ? `離線結算：${formatSeconds(latestReport.simulated_seconds)} · ${formatSignedCredits(latestReport.net_credits)} · 貨物 ${formatInventory(latestReport.delivered_cargo)}` : null;
     const rates = dashboard.resource_rates || {};
     const incomeRows = [
       textRow(`${Math.round(dashboard.credits_per_hour_estimate || 0)} cr/h · ${Math.round(rates.ore_per_hour || 0)} ore/h · ${Math.round(rates.metal_per_hour || 0)} metal/h`, "command-center-kpi"),
@@ -154,11 +202,11 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         return title;
       })(),
       textRow(`收益 ${Math.round(dashboard.credits_per_hour_estimate || 0)}cr/h · ${Math.round(rates.ore_per_hour || 0)}ore/h · ${Math.round(rates.metal_per_hour || 0)}metal/h`, "command-center-kpi"),
-      textRow(`最近成果：${(dashboard.recent_results || [])[0] || "等待第一輪自動任務"}`),
+      textRow(`最近成果：${reportOutcome || (dashboard.recent_results || [])[0] || "等待第一輪自動任務"}`),
       textRow(`瓶頸：${(dashboard.bottlenecks || [])[0] || "目前沒有重大瓶頸"}`, "command-center-row bottleneck"),
       textRow(`建議：${(dashboard.recommended_actions || [])[0]?.label || "等待可執行策略"} · 下一目標：${dashboard.next_goal || "累積資源準備擴張"}`),
       commandCenterSection("收益", incomeRows),
-      commandCenterSection("最近成果", resultRows.length ? resultRows : [textRow("等待艦隊完成第一輪自動任務")]),
+      commandCenterSection("最近成果", reportOutcome ? [textRow(reportOutcome), ...resultRows.slice(0, 2)] : (resultRows.length ? resultRows : [textRow("等待艦隊完成第一輪自動任務")])),
       commandCenterSection("目前瓶頸", bottleneckRows.length ? bottleneckRows : [textRow("目前沒有重大瓶頸")]),
       commandCenterSection("建議行動", actionRows.length ? actionRows : [textRow("暫無建議行動")]),
       commandCenterSection("下一目標", [textRow(dashboard.next_goal || "累積資源，準備下一輪擴張")]),
@@ -368,8 +416,12 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       ack.addEventListener("click", () => onAcknowledgeOfflineReport?.({ type: "AcknowledgeOfflineReport" }, "Acknowledge offline report"));
       row.innerHTML = `
         <strong>離線收益報告</strong>
-        <span>${formatSeconds(report.simulated_seconds)} · net ${report.net_credits}cr · cargo ${formatInventory(report.delivered_cargo)}</span>
-        <small>cap ${formatSeconds(report.capped_seconds)} · incidents:${report.pirate_incidents?.length || 0} · stalls:${report.production_stalls?.length || 0}</small>
+        <span>營運結算：${formatSeconds(report.simulated_seconds)} · ${formatSignedCredits(report.net_credits)} · 貨物 ${formatInventory(report.delivered_cargo)}</span>
+        <small>${formatReportBestShip(report)}</small>
+        <small>${formatReportBottleneck(report)}</small>
+        <small>${formatReportShipyard(report)}</small>
+        <small>${formatReportRecommendation(report)}</small>
+        <small>風險事件:${report.pirate_incidents?.length || 0} · capped:${formatSeconds(report.capped_seconds)}</small>
       `;
       row.append(ack);
       reportRows.push(row);
