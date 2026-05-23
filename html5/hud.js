@@ -221,8 +221,16 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       `command-center-row expansion ${step.complete ? "complete" : "pending"}`,
     ));
     const recurringContractRows = (expansionCadence.recurring_contract_rewards || []).slice(0, 3).map((contract) => textRow(
-      `${contract.label || "週期合約"} · ${contract.reward_summary || "週期獎勵：待估"} · ${contract.cadence_summary || "等待合約節奏"} · ${contract.expected_effect || "預期效果：累積擴張資金"}`,
+      `${contract.label || "週期合約"} · ${contract.reward_summary || "週期獎勵：待估"} · ${contract.cadence_summary || "等待合約節奏"} · ${contract.milestone_summary || "合約里程碑：等待第一趟"} · ${contract.streak_bonus_summary || "連跑 bonus：待建立"} · ${contract.expected_effect || "預期效果：累積擴張資金"}`,
       "command-center-row expansion-contract",
+    ));
+    const contractMilestoneRows = (expansionCadence.contract_milestones || []).slice(0, 3).map((milestone) => textRow(
+      `${milestone.label || "合約里程碑"} ${Math.round(milestone.current || 0)}/${Math.round(milestone.target || 0)} · ${milestone.milestone_reward || "獎勵預覽：待估"} · ${milestone.streak_bonus || "連跑 bonus：待建立"} · ${milestone.next_action || "派 Trader 跑週期合約"}`,
+      "command-center-row expansion-milestone",
+    ));
+    const midgameGoalRows = (expansionCadence.midgame_goal_chain || []).slice(0, 4).map((goal) => textRow(
+      `${goal.label || "中期目標"} · ${goal.status || "等待狀態"} · ${goal.next_action || "等待下一步"} · ${goal.expected_effect || "預期效果：延續 midgame 節奏"}`,
+      "command-center-row midgame-goal",
     ));
     const investmentChoices = (expansionCadence.station_investment_choices || []).slice(0, 3);
     const investmentButtonForChoice = (choice, compact = false) => {
@@ -273,7 +281,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       : [];
     const topRecurringContract = (expansionCadence.recurring_contract_rewards || [])[0];
     const topInvestmentChoice = (expansionCadence.station_investment_choices || [])[0];
-    const expansionDepthLine = `週期合約：${topRecurringContract?.reward_summary || "等待正利潤航線"} · 投資選擇：${topInvestmentChoice?.label || "等待站點缺口"} · ${unlockReport.summary || "星區解鎖報告：待評估"}`;
+    const expansionDepthLine = `週期合約：${topRecurringContract?.reward_summary || "等待正利潤航線"} · 里程碑：${(expansionCadence.contract_milestones || [])[0]?.label || "連跑 3 趟"} · 中期：${(expansionCadence.midgame_goal_chain || [])[0]?.label || "+1 Trader"} · 投資選擇：${topInvestmentChoice?.label || "等待站點缺口"} · ${unlockReport.summary || "星區解鎖報告：待評估"}`;
     const expansionRows = [
       textRow(expansionCadence.current_phase || "下一個星區：派 Scout 開路後解鎖新航線"),
       textRow(expansionCadence.next_sector || "下一個星區：等待偵查目標"),
@@ -281,7 +289,9 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       textRow(expansionCadence.station_investment || "站點投資：補 Forge / Shipyard 材料，把收益轉成艦隊規模"),
       textRow(expansionCadence.expected_unlock || "預期解鎖：更多航線、合約入口與艦隊容量"),
       ...(recurringContractRows.length ? recurringContractRows : [textRow("週期合約：等待正利潤航線，先補 Energy / Ore 供應")]),
+      ...(contractMilestoneRows.length ? contractMilestoneRows : [textRow("合約里程碑：連跑 3 趟後解鎖 streak bonus")]),
       ...(investmentChoiceRows.length ? investmentChoiceRows : [textRow("投資選擇：等待站點材料缺口或船塢佇列")]),
+      ...(midgameGoalRows.length ? midgameGoalRows : [textRow("中期目標鏈：+1 Trader → 雙線合約 → 下一星區")]),
       ...(unlockReportRows.length ? unlockReportRows : [textRow("星區解鎖報告：等待偵查資料")]),
       ...expansionStepRows,
     ];
@@ -315,6 +325,8 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       textRow(`建議：${(dashboard.recommended_actions || [])[0]?.label || "等待可執行策略"} · 下一目標：${dashboard.next_goal || "累積資源準備擴張"}`),
       commandCenterSection("進度路線", progressionRows.length ? progressionRows : [textRow("Energy → Ore → Metal → 下一艘 Trader")]),
       commandCenterSection("擴張節奏", expansionRows),
+      commandCenterSection("合約里程碑", contractMilestoneRows.length ? contractMilestoneRows : [textRow("連跑 3 / 6 / 10 趟會逐步提高合約節奏")]),
+      commandCenterSection("中期目標鏈", midgameGoalRows.length ? midgameGoalRows : [textRow("+1 Trader → 雙線合約 → Cargo Hold → 下一星區")]),
       commandCenterSection("收益", incomeRows),
       commandCenterSection("最近成果", reportOutcome ? [textRow(reportOutcome), ...resultRows.slice(0, 2)] : (resultRows.length ? resultRows : [textRow("等待艦隊完成第一輪自動任務")])),
       commandCenterSection("目前瓶頸", [
