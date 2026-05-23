@@ -208,7 +208,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         title.textContent = "艦隊指揮中心";
         return title;
       })(),
-      textRow(`收益 ${Math.round(dashboard.credits_per_hour_estimate || 0)}cr/h · ${Math.round(rates.ore_per_hour || 0)}ore/h · ${Math.round(rates.metal_per_hour || 0)}metal/h`, "command-center-kpi"),
+      textRow(`估計收益 ${Math.round(dashboard.credits_per_hour_estimate || 0)}cr/h · ${dashboard.income_estimate_basis || "等待第一筆交易"}`, "command-center-kpi"),
       textRow("進度路線：Energy → Ore → Metal → 下一艘 Trader", "command-center-kpi progression-path"),
       textRow(`預期效果：${(dashboard.recommended_actions || [])[0]?.expected_effect || "等待下一個高槓桿行動"}`),
       textRow(`最近成果：${reportOutcome || (dashboard.recent_results || [])[0] || "等待第一輪自動任務"}`),
