@@ -205,11 +205,11 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         return title;
       })(),
       textRow(`收益 ${Math.round(dashboard.credits_per_hour_estimate || 0)}cr/h · ${Math.round(rates.ore_per_hour || 0)}ore/h · ${Math.round(rates.metal_per_hour || 0)}metal/h`, "command-center-kpi"),
+      textRow(`預期效果：${(dashboard.recommended_actions || [])[0]?.expected_effect || "等待下一個高槓桿行動"}`),
       textRow(`最近成果：${reportOutcome || (dashboard.recent_results || [])[0] || "等待第一輪自動任務"}`),
       textRow(`瓶頸：${(dashboard.bottlenecks || [])[0] || "目前沒有重大瓶頸"}`, "command-center-row bottleneck"),
       ...(bottleneckProgressRow ? [bottleneckProgressRow] : []),
       textRow(`建議：${(dashboard.recommended_actions || [])[0]?.label || "等待可執行策略"} · 下一目標：${dashboard.next_goal || "累積資源準備擴張"}`),
-      textRow(`預期效果：${(dashboard.recommended_actions || [])[0]?.expected_effect || "等待下一個高槓桿行動"}`),
       commandCenterSection("收益", incomeRows),
       commandCenterSection("最近成果", reportOutcome ? [textRow(reportOutcome), ...resultRows.slice(0, 2)] : (resultRows.length ? resultRows : [textRow("等待艦隊完成第一輪自動任務")])),
       commandCenterSection("目前瓶頸", [
