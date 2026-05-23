@@ -95,20 +95,25 @@ const FLEET_ACTIONS = [
   { label: "最佳交易", assignment: "auto_trade_best_profit", risk_policy: "balanced", hint: "讓系統自動找最高利潤物流" },
   { label: "採礦補給", assignment: "auto_mine_and_sell", risk_policy: "safe", hint: "採礦並補足生產短缺" },
   { label: "巡邏風險", assignment: "patrol_route_risk", risk_policy: "safe", hint: "壓低高風險航線" },
+  { label: "護航交易", assignment: "escort_high_value_trade", risk_policy: "balanced", hint: "保護高價貨物並降低貨損" },
   { label: "補船塢", assignment: "supply_shipyard", risk_policy: "balanced", hint: "優先處理 Shipyard 材料瓶頸" },
   { label: "待命", assignment: "idle", risk_policy: "balanced", hint: "停止例行任務" },
 ];
 
+function fleetActionByAssignment(assignment) {
+  return FLEET_ACTIONS.find((action) => action.assignment === assignment) || FLEET_ACTIONS[0];
+}
+
 function chooseAlertAction(alert, cards = []) {
   const text = `${alert?.kind || ""} ${alert?.message || ""}`.toLowerCase();
   if (text.includes("risk") || text.includes("pirate")) {
-    return { ...FLEET_ACTIONS[2], card: cards.find((card) => /patrol/i.test(card.status) || /patrol/i.test(card.name)) || cards[0] };
+    return { ...fleetActionByAssignment("patrol_route_risk"), card: cards.find((card) => /patrol/i.test(card.status) || /patrol/i.test(card.name)) || cards[0] };
   }
   if (text.includes("production") || text.includes("shipyard") || text.includes("bottleneck")) {
-    return { ...FLEET_ACTIONS[3], card: cards.find((card) => /trader/i.test(card.name) || /miner/i.test(card.name)) || cards[0] };
+    return { ...fleetActionByAssignment("supply_shipyard"), card: cards.find((card) => /trader/i.test(card.name) || /miner/i.test(card.name)) || cards[0] };
   }
   if (text.includes("market") || text.includes("route") || text.includes("shortage")) {
-    return { ...FLEET_ACTIONS[0], card: cards.find((card) => /trader/i.test(card.name)) || cards[0] };
+    return { ...fleetActionByAssignment("auto_trade_best_profit"), card: cards.find((card) => /trader/i.test(card.name)) || cards[0] };
   }
   return { ...FLEET_ACTIONS[0], card: cards[0] };
 }
@@ -197,6 +202,16 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
     const bottleneckProgressRow = dashboard.bottleneck_relief_summary
       ? textRow(dashboard.bottleneck_relief_summary, "command-center-kpi bottleneck-progress")
       : null;
+    const riskStrategy = dashboard.risk_strategy || {};
+    const riskSummaryLine = riskStrategy.high_risk_route
+      ? `風險策略：${riskStrategy.high_risk_route} · ${riskStrategy.patrol_summary || "巡邏覆蓋：待評估"} · ${riskStrategy.escort_summary || "護航：待評估"}`
+      : "風險策略：等待高風險航線資料";
+    const riskStrategyRows = [
+      textRow(riskStrategy.high_risk_route || "高風險航線：目前沒有明顯威脅"),
+      textRow(riskStrategy.patrol_summary || "巡邏覆蓋：待評估"),
+      textRow(riskStrategy.escort_summary || "護航：等待高價交易"),
+      textRow(riskStrategy.expected_effect || "預期效果：派巡邏或護航後降低下一輪貨損風險"),
+    ];
     const actionRows = (dashboard.recommended_actions || []).slice(0, 4).map((action) => {
       const row = document.createElement("div");
       row.className = "command-center-action";
@@ -220,6 +235,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       textRow(`最近成果：${reportOutcome || (dashboard.recent_results || [])[0] || "等待第一輪自動任務"}`),
       textRow(`瓶頸：${(dashboard.bottlenecks || [])[0] || "目前沒有重大瓶頸"}`, "command-center-row bottleneck"),
       ...(bottleneckProgressRow ? [bottleneckProgressRow] : []),
+      textRow(riskSummaryLine, "command-center-kpi risk-strategy"),
       textRow(`建議：${(dashboard.recommended_actions || [])[0]?.label || "等待可執行策略"} · 下一目標：${dashboard.next_goal || "累積資源準備擴張"}`),
       commandCenterSection("進度路線", progressionRows.length ? progressionRows : [textRow("Energy → Ore → Metal → 下一艘 Trader")]),
       commandCenterSection("收益", incomeRows),
@@ -228,6 +244,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         ...(bottleneckProgressRow ? [bottleneckProgressRow.cloneNode(true)] : []),
         ...(bottleneckRows.length ? bottleneckRows : [textRow("目前沒有重大瓶頸")]),
       ]),
+      commandCenterSection("風險策略", riskStrategyRows),
       commandCenterSection("建議行動", actionRows.length ? actionRows : [textRow("暫無建議行動")]),
       commandCenterSection("下一目標", [textRow(dashboard.next_goal || "累積資源，準備下一輪擴張")]),
     );
@@ -368,10 +385,22 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       const row = document.createElement("div");
       row.className = "market-row risk-row";
       row.innerHTML = `
-        <strong>${risk.from} → ${risk.to}</strong>
-        <span>risk ${formatPercent(risk.risk)} · raids:${risk.recent_raids}</span>
-        <small>patrol coverage ${Number(risk.patrol_coverage || 0).toFixed(2)}</small>
+        <strong>${risk.strategy_summary || `${risk.from} → ${risk.to}`}</strong>
+        <span>風險 ${formatPercent(risk.risk)} · raids:${risk.recent_raids} · 巡邏覆蓋 ${formatPercent(risk.patrol_coverage || 0)}</span>
+        <small>${risk.escort_hint || "護航交易：等待高價貨物"}</small>
+        <small>${risk.expected_effect || "預期效果：派巡邏或護航後降低下一輪貨損風險"}</small>
       `;
+      const riskActions = document.createElement("div");
+      riskActions.className = "fleet-actions risk-actions";
+      const patrolCard = fleetCards.find((card) => card.assignment === "PatrolRouteRisk") || fleetCards[0];
+      const escortCard = fleetCards.find((card) => /trader/i.test(card.name)) || fleetCards[0];
+      if (patrolCard) {
+        riskActions.append(fleetAssignmentButton({ label: "派巡邏", assignment: "patrol_route_risk", risk_policy: "safe", hint: risk.expected_effect }, patrolCard, onAssignmentCommand, "風險航線"));
+      }
+      if (escortCard) {
+        riskActions.append(fleetAssignmentButton({ label: "護航交易", assignment: "escort_high_value_trade", risk_policy: "balanced", hint: risk.escort_hint }, escortCard, onAssignmentCommand, "風險航線"));
+      }
+      row.append(riskActions);
       return row;
     });
 
