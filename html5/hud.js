@@ -170,6 +170,44 @@ function textRow(text, className = "command-center-row") {
   return row;
 }
 
+function idleHomeCard(label, value, detail = "", className = "") {
+  const card = document.createElement("div");
+  card.className = `idle-home-card ${className}`.trim();
+  const title = document.createElement("strong");
+  title.textContent = label;
+  const valueNode = document.createElement("span");
+  valueNode.textContent = value;
+  card.append(title, valueNode);
+  if (detail) {
+    const detailNode = document.createElement("small");
+    detailNode.textContent = detail;
+    card.append(detailNode);
+  }
+  return card;
+}
+
+function idleDetailSection(title, rows, className = "", open = false) {
+  const section = document.createElement("details");
+  section.className = `idle-detail-section ${className}`.trim();
+  section.open = open;
+  const summary = document.createElement("summary");
+  summary.textContent = title;
+  const body = document.createElement("div");
+  body.className = "idle-detail-body";
+  body.append(...rows);
+  section.append(summary, body);
+  return section;
+}
+
+function commandActionRow(action, card, onAssignmentCommand, labelPrefix, className = "command-center-action") {
+  const row = document.createElement("div");
+  row.className = className;
+  const copy = document.createElement("span");
+  copy.innerHTML = `<strong>${action.label}</strong><small>${action.detail || ""}</small><small>${action.expected_effect ? `預期效果：${action.expected_effect}` : ""}</small>`;
+  row.append(copy, fleetAssignmentButton({ ...action, risk_policy: action.risk_policy || "balanced" }, card, onAssignmentCommand, labelPrefix));
+  return row;
+}
+
 export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssignmentCommand, onAcknowledgeOfflineReport } = {}) {
   if (!snapshot) return;
   document.querySelector("#credits").textContent = String(snapshot.hud.credits);
@@ -256,7 +294,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       const row = document.createElement("div");
       row.className = "expansion-investment-quick";
       const copy = document.createElement("span");
-      copy.innerHTML = `<strong>投資選擇 CTA</strong><small>${investmentChoices[0]?.expected_effect || "點選後直接派工並改善擴張瓶頸"}</small>`;
+      copy.innerHTML = `<strong>投資選擇：補船塢 / 採礦補給 / 最佳交易</strong><small>${investmentChoices[0]?.expected_effect || "點選後直接派工並改善擴張瓶頸"}</small>`;
       const buttons = document.createElement("div");
       buttons.className = "expansion-investment-buttons";
       buttons.append(...investmentChoices.map((choice) => investmentButtonForChoice(choice, true)));
@@ -291,51 +329,99 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       ...(recurringContractRows.length ? recurringContractRows : [textRow("週期合約：等待正利潤航線，先補 Energy / Ore 供應")]),
       ...(contractMilestoneRows.length ? contractMilestoneRows : [textRow("合約里程碑：連跑 3 趟後解鎖 streak bonus")]),
       ...(investmentChoiceRows.length ? investmentChoiceRows : [textRow("投資選擇：等待站點材料缺口或船塢佇列")]),
-      ...(midgameGoalRows.length ? midgameGoalRows : [textRow("中期目標鏈：+1 Trader → 雙線合約 → 下一星區")]),
+      textRow("中期目標鏈：+1 Trader → 雙線合約 → Cargo Hold → 下一星區", "command-center-row midgame-chain-summary"),
+      ...(midgameGoalRows.length ? midgameGoalRows : [textRow("中期目標鏈：+1 Trader → 雙線合約 → Cargo Hold → 下一星區")]),
       ...(unlockReportRows.length ? unlockReportRows : [textRow("星區解鎖報告：等待偵查資料")]),
       ...expansionStepRows,
     ];
     const actionRows = (dashboard.recommended_actions || []).slice(0, 4).map((action) => {
-      const row = document.createElement("div");
-      row.className = "command-center-action";
-      const copy = document.createElement("span");
-      copy.innerHTML = `<strong>${action.label}</strong><small>${action.detail || ""}</small><small>${action.expected_effect ? `預期效果：${action.expected_effect}` : ""}</small>`;
       const card = fleetCards.find((fleetCard) => idValue(fleetCard.ship_id, "ship") === idValue(action.target_ship_id, "ship")) || fleetCards[0];
-      row.append(copy, fleetAssignmentButton({ ...action, risk_policy: "balanced" }, card, onAssignmentCommand, "建議行動"));
-      return row;
+      return commandActionRow(action, card, onAssignmentCommand, "建議行動");
     });
+    const primaryActionRows = (dashboard.recommended_actions || []).slice(0, 1).map((action) => {
+      const card = fleetCards.find((fleetCard) => idValue(fleetCard.ship_id, "ship") === idValue(action.target_ship_id, "ship")) || fleetCards[0];
+      return commandActionRow(action, card, onAssignmentCommand, "建議行動", "command-center-action idle-primary-action");
+    });
+    const idleHero = (() => {
+      const hero = document.createElement("section");
+      hero.className = "idle-command-hero";
+      const header = document.createElement("div");
+      header.className = "idle-hero-header";
+      const title = document.createElement("strong");
+      title.textContent = "營運首頁 · 現在按哪個";
+      const scope = document.createElement("small");
+      scope.textContent = "星圖是局勢，這裡是主操作";
+      header.append(title, scope);
+      const grid = document.createElement("div");
+      grid.className = "idle-home-grid";
+      grid.append(
+        idleHomeCard(
+          "收益",
+          `估計收益 ${Math.round(dashboard.credits_per_hour_estimate || 0)}cr/h`,
+          `${Math.round(rates.ore_per_hour || 0)} ore/h · ${Math.round(rates.metal_per_hour || 0)} metal/h · ${dashboard.income_estimate_basis || "等待第一筆交易"}`,
+        ),
+        idleHomeCard(
+          "最近成果",
+          reportOutcome || (dashboard.recent_results || [])[0] || "等待第一輪自動任務",
+          firstSessionRoute,
+        ),
+        idleHomeCard(
+          "目前瓶頸",
+          (dashboard.bottlenecks || [])[0] || "目前沒有重大瓶頸",
+          bottleneckProgressRow?.textContent || riskSummaryLine,
+          "bottleneck",
+        ),
+        idleHomeCard(
+          "下一目標",
+          dashboard.next_goal || "累積資源準備擴張",
+          `首分鐘目標：Energy → Ore → Metal · ${firstSessionReward} · ${firstSessionEta}`,
+          "first-session-goal",
+        ),
+      );
+      hero.append(header, grid);
+      return hero;
+    })();
+    const primaryActionsSection = (() => {
+      const section = document.createElement("section");
+      section.className = "idle-primary-actions";
+      section.append(
+        textRow(
+          `現在按哪個：建議行動 · 預期效果：${(dashboard.recommended_actions || [])[0]?.expected_effect || "等待下一個高槓桿行動"}`,
+          "command-center-kpi",
+        ),
+        ...(primaryActionRows.length ? primaryActionRows : [textRow("建議行動：暫無可執行策略")]),
+      );
+      return section;
+    })();
     commandCenter.replaceChildren(
       (() => {
         const title = document.createElement("h2");
         title.textContent = "艦隊指揮中心";
         return title;
       })(),
+      primaryActionsSection,
       ...(investmentQuickRow ? [investmentQuickRow] : []),
-      textRow(expansionSummaryLine, "command-center-kpi expansion-cadence"),
-      textRow(expansionDepthLine, "command-center-kpi expansion-depth"),
-      textRow(`估計收益 ${Math.round(dashboard.credits_per_hour_estimate || 0)}cr/h · ${dashboard.income_estimate_basis || "等待第一筆交易"}`, "command-center-kpi"),
-      textRow(`首分鐘目標：Energy → Ore → Metal · ${firstSessionReward} · ${firstSessionEta}`, "command-center-kpi first-session-goal"),
-      textRow(firstSessionRoute),
+      idleHero,
+      textRow(`第一航線：${firstSessionRoute.replace(/^第一航線：/, "")}`, "command-center-row first-route"),
       textRow("進度路線：Energy → Ore → Metal → 下一艘 Trader", "command-center-kpi progression-path"),
-      textRow(`預期效果：${(dashboard.recommended_actions || [])[0]?.expected_effect || "等待下一個高槓桿行動"}`),
-      textRow(`最近成果：${reportOutcome || (dashboard.recent_results || [])[0] || "等待第一輪自動任務"}`),
-      textRow(`瓶頸：${(dashboard.bottlenecks || [])[0] || "目前沒有重大瓶頸"}`, "command-center-row bottleneck"),
-      ...(bottleneckProgressRow ? [bottleneckProgressRow] : []),
-      textRow(riskSummaryLine, "command-center-kpi risk-strategy"),
-      textRow(`建議：${(dashboard.recommended_actions || [])[0]?.label || "等待可執行策略"} · 下一目標：${dashboard.next_goal || "累積資源準備擴張"}`),
-      commandCenterSection("進度路線", progressionRows.length ? progressionRows : [textRow("Energy → Ore → Metal → 下一艘 Trader")]),
-      commandCenterSection("擴張節奏", expansionRows),
-      commandCenterSection("合約里程碑", contractMilestoneRows.length ? contractMilestoneRows : [textRow("連跑 3 / 6 / 10 趟會逐步提高合約節奏")]),
-      commandCenterSection("中期目標鏈", midgameGoalRows.length ? midgameGoalRows : [textRow("+1 Trader → 雙線合約 → Cargo Hold → 下一星區")]),
-      commandCenterSection("收益", incomeRows),
-      commandCenterSection("最近成果", reportOutcome ? [textRow(reportOutcome), ...resultRows.slice(0, 2)] : (resultRows.length ? resultRows : [textRow("等待艦隊完成第一輪自動任務")])),
-      commandCenterSection("目前瓶頸", [
-        ...(bottleneckProgressRow ? [bottleneckProgressRow.cloneNode(true)] : []),
+      idleDetailSection("進階：合約/擴張", [
+        textRow(expansionSummaryLine, "command-center-kpi expansion-cadence"),
+        textRow(expansionDepthLine, "command-center-kpi expansion-depth"),
+        ...expansionRows,
+      ], "expansion-detail"),
+      idleDetailSection("進階：艦隊路線/風險", [
+        ...incomeRows,
+        textRow(riskSummaryLine, "command-center-kpi risk-strategy"),
+        ...riskStrategyRows,
+        ...(progressionRows.length ? progressionRows : [textRow("Energy → Ore → Metal → 下一艘 Trader")]),
+      ], "fleet-detail"),
+      idleDetailSection("進階：報告/瓶頸", [
+        ...(reportOutcome ? [textRow(reportOutcome), ...resultRows.slice(0, 2)] : (resultRows.length ? resultRows : [textRow("等待艦隊完成第一輪自動任務")])),
+        ...(bottleneckProgressRow ? [bottleneckProgressRow] : []),
         ...(bottleneckRows.length ? bottleneckRows : [textRow("目前沒有重大瓶頸")]),
-      ]),
-      commandCenterSection("風險策略", riskStrategyRows),
-      commandCenterSection("建議行動", actionRows.length ? actionRows : [textRow("暫無建議行動")]),
-      commandCenterSection("下一目標", [textRow(dashboard.next_goal || "累積資源，準備下一輪擴張")]),
+        textRow(dashboard.next_goal || "累積資源，準備下一輪擴張"),
+      ], "report-detail"),
+      idleDetailSection("進階：建議行動", actionRows.length ? actionRows : [textRow("暫無建議行動")], "action-detail"),
     );
   }
   const fleetSummary = document.querySelector("#fleet-summary");
@@ -389,10 +475,15 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       ${card?.alert ? `<small>⚠ ${card.alert}</small>` : ""}
     `;
     if (card?.ship_id !== undefined && card?.ship_id !== null) {
+      const details = document.createElement("details");
+      details.className = "ship-actions-details";
+      const summary = document.createElement("summary");
+      summary.textContent = "進階派工 / 手動覆寫";
       const actions = document.createElement("div");
       actions.className = "fleet-actions";
       actions.append(...FLEET_ACTIONS.map((action) => fleetAssignmentButton(action, card, onAssignmentCommand, ship.name)));
-      row.append(actions);
+      details.append(summary, actions);
+      row.append(details);
     }
     return row;
   }));

@@ -171,7 +171,7 @@ function wireMobileSheet() {
     const sheet = document.querySelector("#mobile-sheet");
     setMobileSheetCollapsed(sheet?.dataset.collapsed !== "true");
   });
-  setMobileSheetTab(document.querySelector("#mobile-sheet")?.dataset.activeTab || "ships");
+  setMobileSheetTab(document.querySelector("#mobile-sheet")?.dataset.activeTab || "command");
   setMobileSheetCollapsed(document.querySelector("#mobile-sheet")?.dataset.collapsed === "true");
 }
 

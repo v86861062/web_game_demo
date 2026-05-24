@@ -17,25 +17,28 @@
         <div class="hud-row event-row"><strong>Event</strong><span id="latest-event">--</span></div>
         <div id="command-status">啟動中...</div>
       </section>
-      <section id="mobile-sheet" data-active-tab="ships" data-collapsed="false" aria-label="戰術抽屜">
+      <section id="mobile-sheet" class="idle-operations-deck" data-active-tab="command" data-collapsed="false" aria-label="艦隊營運面板">
         <div id="mobile-sheet-grip">
           <button id="mobile-sheet-toggle" type="button" aria-expanded="true">收合</button>
         </div>
-        <div id="mobile-sheet-tabs" role="tablist" aria-label="戰術面板">
-          <button type="button" data-sheet-tab="ships" aria-selected="true">艦船</button>
+        <div id="mobile-sheet-tabs" role="tablist" aria-label="艦隊營運面板">
+          <button type="button" data-sheet-tab="command" aria-selected="true">指揮</button>
+          <button type="button" data-sheet-tab="fleet" aria-selected="false">艦隊</button>
           <button type="button" data-sheet-tab="market" aria-selected="false">市場</button>
-          <button type="button" data-sheet-tab="chrono" aria-selected="false">Chrono</button>
-          <button type="button" data-sheet-tab="missions" aria-selected="false">任務</button>
+          <button type="button" data-sheet-tab="tools" aria-selected="false">工具</button>
         </div>
-        <section id="ship-panel" class="drawer-panel" data-sheet-panel="ships" aria-label="艦船">
-          <h2>艦隊營運</h2>
+        <section id="command-panel" class="drawer-panel idle-command-panel" data-sheet-panel="command" aria-label="艦隊指揮">
+          <h2>營運首頁</h2>
           <div id="fleet-command-center" class="fleet-command-center" aria-label="艦隊指揮中心"></div>
           <div id="fleet-summary" class="fleet-summary"></div>
           <div id="fleet-alerts" class="fleet-alerts"></div>
+        </section>
+        <section id="fleet-panel" class="drawer-panel" data-sheet-panel="fleet" aria-label="艦隊詳情">
+          <h2>艦隊詳情</h2>
           <div id="ship-list"></div>
         </section>
         <section id="market-panel" class="drawer-panel" data-sheet-panel="market" data-market-tab="overview" aria-label="市場">
-          <h2>市場</h2>
+          <h2>市場 / 合約 / 升級</h2>
           <div id="market-tabs" role="tablist" aria-label="市場面板">
             <button type="button" data-market-tab="overview" aria-selected="true">總覽</button>
             <button type="button" data-market-tab="trade" aria-selected="false">交易</button>
@@ -48,19 +51,22 @@
           </div>
           <div id="market-list"></div>
         </section>
-        <section id="chronocam-panel" class="drawer-panel" data-sheet-panel="chrono" aria-label="ChronoCam">
-          <h2>ChronoCam</h2>
-          <div class="chrono-row"><strong>Mode</strong><span id="chronocam-mode">--</span></div>
-          <div class="chrono-row"><strong>View</strong><span id="chronocam-view-time">--</span></div>
-          <div class="chrono-row"><strong>Follow</strong><span id="chronocam-follow">--</span></div>
-          <div class="chrono-actions">
-            <button data-command="chrono_rewind_5">回看 5s</button>
-            <button data-command="chrono_live">回到 Live</button>
-          </div>
-        </section>
-        <section id="mission-panel" class="drawer-panel" data-sheet-panel="missions" aria-label="任務">
-          <h2>任務</h2>
-          <div id="mission-list"></div>
+        <section id="tools-panel" class="drawer-panel" data-sheet-panel="tools" aria-label="工具">
+          <h2>工具 / 回放</h2>
+          <section id="chronocam-panel" class="tool-card" aria-label="ChronoCam">
+            <h3>ChronoCam</h3>
+            <div class="chrono-row"><strong>Mode</strong><span id="chronocam-mode">--</span></div>
+            <div class="chrono-row"><strong>View</strong><span id="chronocam-view-time">--</span></div>
+            <div class="chrono-row"><strong>Follow</strong><span id="chronocam-follow">--</span></div>
+            <div class="chrono-actions">
+              <button data-command="chrono_rewind_5">回看 5s</button>
+              <button data-command="chrono_live">回到 Live</button>
+            </div>
+          </section>
+          <section id="mission-panel" class="tool-card" aria-label="任務">
+            <h3>任務紀錄</h3>
+            <div id="mission-list"></div>
+          </section>
         </section>
       </section>
       <nav id="controls" aria-label="控制">
