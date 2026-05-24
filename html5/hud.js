@@ -257,6 +257,29 @@ function returnHarvestCard(report = {}, onAcknowledgeOfflineReport, className = 
   return card;
 }
 
+function returnHarvestHandoffCard(action, card, dashboard = {}, reportHistory = [], onAssignmentCommand) {
+  const handoff = document.createElement("article");
+  handoff.className = "return-harvest-handoff";
+  handoff.setAttribute("aria-label", "成果已收取後的下一步");
+  const latestHistory = reportHistory[reportHistory.length - 1] || {};
+  const bottleneck = dashboard.current_bottleneck || (dashboard.bottlenecks || [])[0] || "目前瓶頸待確認";
+  const expectedEffect = action?.expected_effect || "把剛收回來的資源轉成瓶頸處理，維持離線收益成長。";
+  const assignmentAction = action || { ...fleetActionByAssignment("supply_shipyard"), label: "補船塢", assignment: "supply_shipyard", risk_policy: "balanced" };
+
+  const copy = document.createElement("span");
+  copy.innerHTML = `
+    <strong>成果已收取 · 下一步：修瓶頸</strong>
+    <small>剛剛的離線報告已收進紀錄${latestHistory?.net_credits !== undefined ? ` · ${formatSignedCredits(latestHistory.net_credits)}` : ""}</small>
+    <small>瓶頸：${bottleneck}</small>
+    <small>預期效果：${expectedEffect}</small>
+  `;
+
+  const button = fleetAssignmentButton(assignmentAction, card, onAssignmentCommand, "成果已收取後修瓶頸");
+  button.textContent = `修瓶頸：${assignmentAction.label || "補船塢"}`;
+  handoff.append(copy, button);
+  return handoff;
+}
+
 export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssignmentCommand, onAcknowledgeOfflineReport } = {}) {
   if (!snapshot) return;
   document.querySelector("#credits").textContent = String(snapshot.hud.credits);
@@ -387,10 +410,21 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       const card = fleetCards.find((fleetCard) => idValue(fleetCard.ship_id, "ship") === idValue(action.target_ship_id, "ship")) || fleetCards[0];
       return commandActionRow(action, card, onAssignmentCommand, "建議行動");
     });
-    const primaryActionRows = (dashboard.recommended_actions || []).slice(0, 1).map((action) => {
-      const card = fleetCards.find((fleetCard) => idValue(fleetCard.ship_id, "ship") === idValue(action.target_ship_id, "ship")) || fleetCards[0];
-      return commandActionRow(action, card, onAssignmentCommand, "建議行動", "command-center-action idle-primary-action");
-    });
+    const primaryRecommendedAction = (dashboard.recommended_actions || [])[0];
+    const primaryRecommendedCard = primaryRecommendedAction
+      ? fleetCards.find((fleetCard) => idValue(fleetCard.ship_id, "ship") === idValue(primaryRecommendedAction.target_ship_id, "ship")) || fleetCards[0]
+      : fleetCards[0];
+    const bottleneckHandoffAction = (dashboard.recommended_actions || []).find((action) => {
+      const assignment = commandAssignment(action.assignment);
+      const label = String(action.label || "");
+      return ["supply_shipyard", "auto_mine_and_sell"].includes(assignment) || label.includes("補船塢") || label.includes("採礦");
+    }) || primaryRecommendedAction;
+    const bottleneckHandoffCard = bottleneckHandoffAction
+      ? fleetCards.find((fleetCard) => idValue(fleetCard.ship_id, "ship") === idValue(bottleneckHandoffAction.target_ship_id, "ship")) || fleetCards[0]
+      : fleetCards[0];
+    const primaryActionRows = primaryRecommendedAction
+      ? [commandActionRow(primaryRecommendedAction, primaryRecommendedCard, onAssignmentCommand, "建議行動", "command-center-action idle-primary-action")]
+      : [];
     const briefItems = [
       ["收益", `估計 ${Math.round(dashboard.credits_per_hour_estimate || 0)}cr/h`],
       ["瓶頸", (dashboard.bottlenecks || [])[0] || "目前順暢"],
@@ -462,6 +496,9 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         return title;
       })(),
       ...(latestReport ? [returnHarvestCard(latestReport, onAcknowledgeOfflineReport, "command-return-harvest")] : []),
+      ...(!latestReport && (snapshot.report_history || []).length
+        ? [returnHarvestHandoffCard(bottleneckHandoffAction, bottleneckHandoffCard, dashboard, snapshot.report_history, onAssignmentCommand)]
+        : []),
       idleBrief,
       primaryActionsSection,
       ...(investmentQuickRow ? [investmentQuickRow] : []),
