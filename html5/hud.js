@@ -342,6 +342,23 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       const card = fleetCards.find((fleetCard) => idValue(fleetCard.ship_id, "ship") === idValue(action.target_ship_id, "ship")) || fleetCards[0];
       return commandActionRow(action, card, onAssignmentCommand, "建議行動", "command-center-action idle-primary-action");
     });
+    const briefItems = [
+      ["收益", `估計 ${Math.round(dashboard.credits_per_hour_estimate || 0)}cr/h`],
+      ["瓶頸", (dashboard.bottlenecks || [])[0] || "目前順暢"],
+      ["下一步", `建議行動：${(dashboard.recommended_actions || [])[0]?.label || "等待建議"}`],
+      ["目標", dashboard.next_goal || "+1 Trader"],
+    ];
+    const idleBrief = (() => {
+      const brief = document.createElement("section");
+      brief.className = "idle-command-brief";
+      brief.append(...briefItems.map(([label, value]) => {
+        const pill = document.createElement("div");
+        pill.className = "idle-brief-pill";
+        pill.innerHTML = `<strong>${label}</strong><span>${value}</span>`;
+        return pill;
+      }));
+      return brief;
+    })();
     const idleHero = (() => {
       const hero = document.createElement("section");
       hero.className = "idle-command-hero";
@@ -385,10 +402,6 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       const section = document.createElement("section");
       section.className = "idle-primary-actions";
       section.append(
-        textRow(
-          `現在按哪個：建議行動 · 預期效果：${(dashboard.recommended_actions || [])[0]?.expected_effect || "等待下一個高槓桿行動"}`,
-          "command-center-kpi",
-        ),
         ...(primaryActionRows.length ? primaryActionRows : [textRow("建議行動：暫無可執行策略")]),
       );
       return section;
@@ -396,9 +409,10 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
     commandCenter.replaceChildren(
       (() => {
         const title = document.createElement("h2");
-        title.textContent = "艦隊指揮中心";
+        title.textContent = "艦隊指揮中心 · 現在按哪個";
         return title;
       })(),
+      idleBrief,
       primaryActionsSection,
       ...(investmentQuickRow ? [investmentQuickRow] : []),
       idleHero,
