@@ -208,6 +208,55 @@ function commandActionRow(action, card, onAssignmentCommand, labelPrefix, classN
   return row;
 }
 
+function returnHarvestCard(report = {}, onAcknowledgeOfflineReport, className = "") {
+  const returnSummary = report.return_summary || {};
+  const card = document.createElement("article");
+  card.className = `return-harvest-card ${className}`.trim();
+  card.setAttribute("aria-label", "回來收成果");
+
+  const header = document.createElement("div");
+  header.className = "return-harvest-header";
+  header.innerHTML = `
+    <span>回來收成果 · 離線收益報告</span>
+    <strong>${formatSignedCredits(report.net_credits)} · 貨物 ${formatInventory(report.delivered_cargo)}</strong>
+  `;
+
+  const metrics = document.createElement("div");
+  metrics.className = "return-harvest-metrics";
+  const metricItems = [
+    ["營運結算", `${formatSeconds(report.simulated_seconds)} · ${formatSignedCredits(report.net_credits)} · 貨物 ${formatInventory(report.delivered_cargo)}`],
+    ["最大收益", returnSummary.top_gain || formatReportBestShip(report)],
+    ["瓶頸", returnSummary.bottleneck_change || formatReportBottleneck(report)],
+    ["下一步", returnSummary.next_best_action || formatReportRecommendation(report)],
+  ];
+  metrics.append(...metricItems.map(([label, value]) => {
+    const metric = document.createElement("div");
+    metric.className = "return-harvest-metric";
+    metric.innerHTML = `<strong>${label}</strong><span>${value}</span>`;
+    return metric;
+  }));
+
+  const footnote = document.createElement("small");
+  footnote.className = "return-harvest-footnote";
+  footnote.textContent = [
+    returnSummary.top_loss || "最大損失：無貨損",
+    returnSummary.unlock_progress || formatReportShipyard(report),
+    returnSummary.risk_summary || `風險摘要：${report.pirate_incidents?.length || 0} 起事件`,
+    formatReportBestShip(report),
+    formatReportShipyard(report),
+    formatReportRecommendation(report),
+    `風險事件:${report.pirate_incidents?.length || 0} · capped:${formatSeconds(report.capped_seconds)}`,
+  ].filter(Boolean).join(" · ");
+
+  const claim = document.createElement("button");
+  claim.type = "button";
+  claim.textContent = "收取成果";
+  claim.addEventListener("click", () => onAcknowledgeOfflineReport?.({ type: "AcknowledgeOfflineReport" }, "Acknowledge offline report"));
+
+  card.append(header, metrics, footnote, claim);
+  return card;
+}
+
 export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssignmentCommand, onAcknowledgeOfflineReport } = {}) {
   if (!snapshot) return;
   document.querySelector("#credits").textContent = String(snapshot.hud.credits);
@@ -412,6 +461,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         title.textContent = "艦隊指揮中心 · 現在按哪個";
         return title;
       })(),
+      ...(latestReport ? [returnHarvestCard(latestReport, onAcknowledgeOfflineReport, "command-return-harvest")] : []),
       idleBrief,
       primaryActionsSection,
       ...(investmentQuickRow ? [investmentQuickRow] : []),
@@ -652,28 +702,16 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
     const report = snapshot.latest_offline_report;
     const reportRows = [];
     if (report) {
-      const row = document.createElement("div");
-      row.className = "market-row report-row offline-report-row";
-      const ack = document.createElement("button");
-      ack.type = "button";
-      ack.textContent = "收起報告";
-      ack.addEventListener("click", () => onAcknowledgeOfflineReport?.({ type: "AcknowledgeOfflineReport" }, "Acknowledge offline report"));
-      const returnSummary = report.return_summary || {};
-      row.innerHTML = `
-        <strong>離線收益報告</strong>
-        <span>營運結算：${formatSeconds(report.simulated_seconds)} · ${formatSignedCredits(report.net_credits)} · 貨物 ${formatInventory(report.delivered_cargo)}</span>
-        <small>${returnSummary.top_gain || formatReportBestShip(report)}</small>
-        <small>${returnSummary.top_loss || "最大損失：無貨損"}</small>
-        <small>${returnSummary.bottleneck_change || formatReportBottleneck(report)}</small>
-        <small>${returnSummary.unlock_progress || formatReportShipyard(report)}</small>
-        <small>${returnSummary.risk_summary || `風險摘要：${report.pirate_incidents?.length || 0} 起事件`}</small>
-        <small>${returnSummary.next_best_action || formatReportRecommendation(report)}</small>
-        <small>${formatReportBestShip(report)}</small>
-        <small>${formatReportBottleneck(report)}</small>
-        <small>風險事件:${report.pirate_incidents?.length || 0} · capped:${formatSeconds(report.capped_seconds)}</small>
-      `;
-      row.append(ack);
-      reportRows.push(row);
+      reportRows.push(returnHarvestCard(
+        report,
+        onAcknowledgeOfflineReport,
+        "market-row report-row offline-report-row",
+      ));
+    } else {
+      reportRows.push(Object.assign(document.createElement("div"), {
+        className: "market-row report-row offline-report-empty",
+        textContent: "目前沒有未讀離線報告。最近收益紀錄如下。",
+      }));
     }
     for (const summary of snapshot.report_history || []) {
       const row = document.createElement("div");
