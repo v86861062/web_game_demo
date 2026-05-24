@@ -258,16 +258,26 @@ function returnHarvestCard(report = {}, onAcknowledgeOfflineReport, className = 
 }
 
 function returnHarvestHandoffCard(action, card, dashboard = {}, reportHistory = [], onAssignmentCommand) {
+  const assignmentAction = action || { ...fleetActionByAssignment("supply_shipyard"), label: "補船塢", assignment: "supply_shipyard", risk_policy: "balanced" };
+  const assignment = commandAssignment(assignmentAction.assignment);
+  const isAssigned = commandAssignment(card?.assignment) === assignment;
+  const hasProgress = Number(dashboard.bottlenecks_in_progress || 0) > 0;
+  const isProcessing = isAssigned && hasProgress;
   const handoff = document.createElement("article");
-  handoff.className = "return-harvest-handoff";
+  handoff.className = `return-harvest-handoff ${isProcessing ? "processing" : ""}`.trim();
   handoff.setAttribute("aria-label", "成果已收取後的下一步");
   const latestHistory = reportHistory[reportHistory.length - 1] || {};
   const bottleneck = dashboard.current_bottleneck || (dashboard.bottlenecks || [])[0] || "目前瓶頸待確認";
-  const expectedEffect = action?.expected_effect || "把剛收回來的資源轉成瓶頸處理，維持離線收益成長。";
-  const assignmentAction = action || { ...fleetActionByAssignment("supply_shipyard"), label: "補船塢", assignment: "supply_shipyard", risk_policy: "balanced" };
+  const expectedEffect = assignmentAction?.expected_effect || "把剛收回來的資源轉成瓶頸處理，維持離線收益成長。";
+  const relief = dashboard.bottleneck_relief_summary || `瓶頸處理中 ${Math.max(1, Number(dashboard.bottlenecks_in_progress || 0))}/${(dashboard.bottlenecks || []).length || 1}`;
 
   const copy = document.createElement("span");
-  copy.innerHTML = `
+  copy.innerHTML = isProcessing ? `
+    <strong>瓶頸處理中 · 已派工</strong>
+    <small>剛剛的離線報告已收進紀錄${latestHistory?.net_credits !== undefined ? ` · ${formatSignedCredits(latestHistory.net_credits)}` : ""}</small>
+    <small>已派工：${card?.name || "艦隊"} → ${assignmentAction.label || "補船塢"} · ${relief}</small>
+    <small>預計改善：${expectedEffect}</small>
+  ` : `
     <strong>成果已收取 · 下一步：修瓶頸</strong>
     <small>剛剛的離線報告已收進紀錄${latestHistory?.net_credits !== undefined ? ` · ${formatSignedCredits(latestHistory.net_credits)}` : ""}</small>
     <small>瓶頸：${bottleneck}</small>
@@ -275,7 +285,7 @@ function returnHarvestHandoffCard(action, card, dashboard = {}, reportHistory = 
   `;
 
   const button = fleetAssignmentButton(assignmentAction, card, onAssignmentCommand, "成果已收取後修瓶頸");
-  button.textContent = `修瓶頸：${assignmentAction.label || "補船塢"}`;
+  button.textContent = `${isProcessing ? "調整瓶頸" : "修瓶頸"}：${assignmentAction.label || "補船塢"}`;
   handoff.append(copy, button);
   return handoff;
 }
