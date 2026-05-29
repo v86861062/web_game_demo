@@ -34,7 +34,7 @@ body { min-height: 100vh; touch-action: none; }
   left: 10px;
   right: 10px;
   bottom: calc(96px + env(safe-area-inset-bottom));
-  max-height: min(430px, 54vh);
+  max-height: min(430px, 66vh);
   padding: 8px;
   border: 1px solid rgba(128, 171, 255, 0.28);
   border-radius: 22px;
@@ -74,7 +74,7 @@ body { min-height: 100vh; touch-action: none; }
 #mobile-sheet[data-collapsed="true"] .drawer-panel { display: none; }
 
 .drawer-panel {
-  max-height: calc(min(430px, 54vh) - 76px);
+  max-height: calc(min(430px, 66vh) - 76px);
   overflow: auto;
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 17px;
@@ -211,12 +211,12 @@ body { min-height: 100vh; touch-action: none; }
   line-height: 1;
 }
 .idle-brief-pill span {
-  overflow: hidden;
   color: rgba(238,244,255,0.78);
   font-size: 10px;
   line-height: 1.18;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: anywhere;
 }
 .idle-command-hero {
   display: grid;
