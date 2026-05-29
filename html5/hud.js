@@ -369,6 +369,25 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       `${contract.label || "週期合約"} · ${contract.reward_summary || "週期獎勵：待估"} · ${contract.cadence_summary || "等待合約節奏"} · ${contract.milestone_summary || "合約里程碑：等待第一趟"} · ${contract.streak_bonus_summary || "連跑 bonus：待建立"} · ${contract.expected_effect || "預期效果：累積擴張資金"}`,
       "command-center-row expansion-contract",
     ));
+    const availableContractRows = (expansionCadence.available_contracts || []).slice(0, 3).map((contract) => {
+      const row = document.createElement("div");
+      row.className = "command-center-row available-contract-row";
+      const copy = document.createElement("span");
+      copy.innerHTML = `<strong>${contract.label || "可承接合約"}</strong><small>${contract.contract_type || "合約"} · ${contract.route || "待選航線"} · ${contract.reward_preview || "獎勵待估"}</small><small>${contract.cadence_summary || "等待節奏"} · ${contract.risk_summary || "風險待評估"}</small><small>${contract.expected_effect || "預期效果：累積擴張資金"}</small>`;
+      const assignment = commandAssignment(contract.recommended_assignment);
+      const card = fleetCards.find((fleetCard) => idValue(fleetCard.ship_id, "ship") === idValue(contract.target_ship_id, "ship")) || fleetCards[0];
+      const button = fleetAssignmentButton({
+        label: contract.action_label || "承接合約",
+        assignment,
+        target_ship_id: contract.target_ship_id,
+        detail: contract.expected_effect,
+        hint: `${contract.contract_type || "合約"} · ${contract.route || "待選航線"}`,
+        risk_policy: assignment === "escort_high_value_trade" ? "safe" : "balanced",
+      }, card, onAssignmentCommand, "承接合約");
+      button.classList.add("available-contract-button");
+      row.append(copy, button);
+      return row;
+    });
     const contractMilestoneRows = (expansionCadence.contract_milestones || []).slice(0, 3).map((milestone) => {
       const row = document.createElement("div");
       row.className = "command-center-row expansion-milestone";
@@ -449,6 +468,8 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       textRow(expansionCadence.station_investment || "站點投資：補 Forge / Shipyard 材料，把收益轉成艦隊規模"),
       textRow(expansionCadence.expected_unlock || "預期解鎖：更多航線、合約入口與艦隊容量"),
       ...(recurringContractRows.length ? recurringContractRows : [textRow("週期合約：等待正利潤航線，先補 Energy / Ore 供應")]),
+      textRow("可承接合約池：交易 / 採礦 / 護航", "command-center-row available-contract-summary"),
+      ...(availableContractRows.length ? availableContractRows : [textRow("可承接合約池：等待市場、礦區或風險航線資料", "command-center-row available-contract-row")]),
       ...(contractMilestoneRows.length ? contractMilestoneRows : [textRow("合約里程碑：連跑 3 趟後解鎖 streak bonus")]),
       ...(investmentChoiceRows.length ? investmentChoiceRows : [textRow("投資選擇：等待站點材料缺口或船塢佇列")]),
       textRow("中期目標鏈：+1 Trader → 雙線合約 → Cargo Hold → 下一星區", "command-center-row midgame-chain-summary"),
