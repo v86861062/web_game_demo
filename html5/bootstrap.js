@@ -136,6 +136,7 @@ function frame(now) {
       onAssignmentCommand: applyCommand,
       onAcknowledgeOfflineReport: applyCommand,
       onContractMilestoneCommand: applyCommand,
+      onSeekChronoCam: seekChronoCam,
     });
     lastHudRenderAt = now;
   }
@@ -249,6 +250,7 @@ async function main() {
     onAssignmentCommand: applyCommand,
     onAcknowledgeOfflineReport: applyCommand,
     onContractMilestoneCommand: applyCommand,
+    onSeekChronoCam: seekChronoCam,
   });
   lastHudRenderAt = performance.now();
   renderer.render(latestSnapshot);
@@ -257,6 +259,7 @@ async function main() {
   window.__starboundHtml5SaveNow = saveToLocalStorage;
   window.__starboundHtml5LoadSaveAndCatchUpOffline = loadSaveAndCatchUpOffline;
   window.__starboundHtml5SimulateOffline = simulateOffline;
+  window.__starboundHtml5ReturnChronoCamLive = returnChronoCamLive;
   status("HTML5 frontend 已連線 Rust headless engine");
   requestAnimationFrame(frame);
 }

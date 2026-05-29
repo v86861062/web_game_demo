@@ -208,7 +208,7 @@ function commandActionRow(action, card, onAssignmentCommand, labelPrefix, classN
   return row;
 }
 
-function returnHarvestCard(report = {}, onAcknowledgeOfflineReport, className = "") {
+function returnHarvestCard(report = {}, onAcknowledgeOfflineReport, className = "", onSeekChronoCam) {
   const returnSummary = report.return_summary || {};
   const card = document.createElement("article");
   card.className = `return-harvest-card ${className}`.trim();
@@ -239,6 +239,20 @@ function returnHarvestCard(report = {}, onAcknowledgeOfflineReport, className = 
   const bookmarkSummary = (report.chronocam_bookmarks || []).length
     ? `ChronoCam 書籤：${(report.chronocam_bookmarks || []).slice(0, 2).map((bookmark) => `${bookmark.label} @ ${formatSeconds(bookmark.time_seconds)} · ${bookmark.summary}`).join(" ｜ ")}`
     : "";
+  const bookmarkActions = document.createElement("div");
+  bookmarkActions.className = "chronocam-bookmark-actions";
+  for (const bookmark of (report.chronocam_bookmarks || []).slice(0, 2)) {
+    const seconds = Number(bookmark.time_seconds || 0);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "chronocam-bookmark-button";
+    button.dataset.seekSeconds = String(seconds);
+    button.textContent = `回看${bookmark.label?.includes("收益") ? "離線收益" : "書籤"}`;
+    button.disabled = !Number.isFinite(seconds) || seconds < 0;
+    button.title = `${bookmark.label || "ChronoCam 書籤"} @ ${formatSeconds(seconds)}`;
+    button.addEventListener("click", () => onSeekChronoCam?.(seconds, bookmark));
+    bookmarkActions.append(button);
+  }
 
   const footnote = document.createElement("small");
   footnote.className = "return-harvest-footnote";
@@ -255,10 +269,11 @@ function returnHarvestCard(report = {}, onAcknowledgeOfflineReport, className = 
 
   const claim = document.createElement("button");
   claim.type = "button";
+  claim.className = "return-harvest-claim-button";
   claim.textContent = "收取成果";
   claim.addEventListener("click", () => onAcknowledgeOfflineReport?.({ type: "AcknowledgeOfflineReport" }, "Acknowledge offline report"));
 
-  card.append(header, metrics, footnote, claim);
+  card.append(header, metrics, ...(bookmarkActions.childElementCount ? [bookmarkActions] : []), footnote, claim);
   return card;
 }
 
@@ -300,7 +315,7 @@ function returnHarvestHandoffCard(action, card, dashboard = {}, reportHistory = 
   return handoff;
 }
 
-export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssignmentCommand, onAcknowledgeOfflineReport, onContractMilestoneCommand } = {}) {
+export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssignmentCommand, onAcknowledgeOfflineReport, onContractMilestoneCommand, onSeekChronoCam } = {}) {
   if (!snapshot) return;
   document.querySelector("#credits").textContent = String(snapshot.hud.credits);
   document.querySelector("#resource-summary").textContent = formatInventory(snapshot.hud.resources);
@@ -530,7 +545,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         title.textContent = "艦隊指揮中心 · 現在按哪個";
         return title;
       })(),
-      ...(latestReport ? [returnHarvestCard(latestReport, onAcknowledgeOfflineReport, "command-return-harvest")] : []),
+      ...(latestReport ? [returnHarvestCard(latestReport, onAcknowledgeOfflineReport, "command-return-harvest", onSeekChronoCam)] : []),
       ...(!latestReport && (snapshot.report_history || []).length
         ? [returnHarvestHandoffCard(bottleneckHandoffAction, bottleneckHandoffCard, dashboard, snapshot.report_history, onAssignmentCommand)]
         : []),
@@ -778,6 +793,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         report,
         onAcknowledgeOfflineReport,
         "market-row report-row offline-report-row",
+        onSeekChronoCam,
       ));
     } else {
       reportRows.push(Object.assign(document.createElement("div"), {

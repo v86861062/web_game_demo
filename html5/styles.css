@@ -144,6 +144,11 @@ body { min-height: 100vh; touch-action: none; }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.chronocam-bookmark-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
 .return-harvest-card button,
 .return-harvest-handoff button {
   justify-self: start;
@@ -151,6 +156,11 @@ body { min-height: 100vh; touch-action: none; }
   border-color: rgba(255, 209, 102, 0.52);
   background: linear-gradient(180deg, rgba(255, 209, 102, 0.30), rgba(116, 70, 18, 0.62));
   font-size: 11px;
+}
+.return-harvest-card .chronocam-bookmark-button {
+  border-color: rgba(155, 231, 255, 0.52);
+  background: linear-gradient(180deg, rgba(155, 231, 255, 0.26), rgba(19, 69, 104, 0.62));
+  color: #eef4ff;
 }
 .return-harvest-handoff {
   display: grid;
