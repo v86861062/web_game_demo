@@ -135,6 +135,7 @@ function frame(now) {
       onUpgradeCommand: applyCommand,
       onAssignmentCommand: applyCommand,
       onAcknowledgeOfflineReport: applyCommand,
+      onContractMilestoneCommand: applyCommand,
     });
     lastHudRenderAt = now;
   }
@@ -247,6 +248,7 @@ async function main() {
     onUpgradeCommand: applyCommand,
     onAssignmentCommand: applyCommand,
     onAcknowledgeOfflineReport: applyCommand,
+    onContractMilestoneCommand: applyCommand,
   });
   lastHudRenderAt = performance.now();
   renderer.render(latestSnapshot);

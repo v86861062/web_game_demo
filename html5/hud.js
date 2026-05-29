@@ -295,7 +295,7 @@ function returnHarvestHandoffCard(action, card, dashboard = {}, reportHistory = 
   return handoff;
 }
 
-export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssignmentCommand, onAcknowledgeOfflineReport } = {}) {
+export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssignmentCommand, onAcknowledgeOfflineReport, onContractMilestoneCommand } = {}) {
   if (!snapshot) return;
   document.querySelector("#credits").textContent = String(snapshot.hud.credits);
   document.querySelector("#resource-summary").textContent = formatInventory(snapshot.hud.resources);
@@ -349,10 +349,25 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       `${contract.label || "週期合約"} · ${contract.reward_summary || "週期獎勵：待估"} · ${contract.cadence_summary || "等待合約節奏"} · ${contract.milestone_summary || "合約里程碑：等待第一趟"} · ${contract.streak_bonus_summary || "連跑 bonus：待建立"} · ${contract.expected_effect || "預期效果：累積擴張資金"}`,
       "command-center-row expansion-contract",
     ));
-    const contractMilestoneRows = (expansionCadence.contract_milestones || []).slice(0, 3).map((milestone) => textRow(
-      `${milestone.label || "合約里程碑"} ${Math.round(milestone.current || 0)}/${Math.round(milestone.target || 0)} · ${milestone.milestone_reward || "獎勵預覽：待估"} · ${milestone.streak_bonus || "連跑 bonus：待建立"} · ${milestone.next_action || "派 Trader 跑週期合約"}`,
-      "command-center-row expansion-milestone",
-    ));
+    const contractMilestoneRows = (expansionCadence.contract_milestones || []).slice(0, 3).map((milestone) => {
+      const row = document.createElement("div");
+      row.className = "command-center-row expansion-milestone";
+      const copy = document.createElement("span");
+      copy.textContent = `${milestone.label || "合約里程碑"} ${Math.round(milestone.current || 0)}/${Math.round(milestone.target || 0)} · ${milestone.milestone_reward || "獎勵預覽：待估"} · ${milestone.streak_bonus || "連跑 bonus：待建立"} · ${milestone.next_action || "派 Trader 跑週期合約"}`;
+      row.append(copy);
+      if (String(milestone.next_action || "").includes("可領取")) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "contract-milestone-claim-button";
+        button.textContent = "領取合約獎勵";
+        button.addEventListener("click", () => onContractMilestoneCommand?.({
+          type: "ClaimContractMilestone",
+          target: Math.round(milestone.target || 0),
+        }, `Claim contract milestone ${Math.round(milestone.target || 0)}`));
+        row.append(button);
+      }
+      return row;
+    });
     const midgameGoalRows = (expansionCadence.midgame_goal_chain || []).slice(0, 4).map((goal) => textRow(
       `${goal.label || "中期目標"} · ${goal.status || "等待狀態"} · ${goal.next_action || "等待下一步"} · ${goal.expected_effect || "預期效果：延續 midgame 節奏"}`,
       "command-center-row midgame-goal",
