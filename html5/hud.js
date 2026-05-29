@@ -236,9 +236,14 @@ function returnHarvestCard(report = {}, onAcknowledgeOfflineReport, className = 
     return metric;
   }));
 
+  const bookmarkSummary = (report.chronocam_bookmarks || []).length
+    ? `ChronoCam 書籤：${(report.chronocam_bookmarks || []).slice(0, 2).map((bookmark) => `${bookmark.label} @ ${formatSeconds(bookmark.time_seconds)} · ${bookmark.summary}`).join(" ｜ ")}`
+    : "";
+
   const footnote = document.createElement("small");
   footnote.className = "return-harvest-footnote";
   footnote.textContent = [
+    bookmarkSummary,
     returnSummary.top_loss || "最大損失：無貨損",
     returnSummary.unlock_progress || formatReportShipyard(report),
     returnSummary.risk_summary || `風險摘要：${report.pirate_incidents?.length || 0} 起事件`,
