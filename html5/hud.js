@@ -237,17 +237,17 @@ function returnHarvestCard(report = {}, onAcknowledgeOfflineReport, className = 
   }));
 
   const bookmarkSummary = (report.chronocam_bookmarks || []).length
-    ? `ChronoCam 書籤：${(report.chronocam_bookmarks || []).slice(0, 2).map((bookmark) => `${bookmark.label} @ ${formatSeconds(bookmark.time_seconds)} · ${bookmark.summary}`).join(" ｜ ")}`
+    ? `ChronoCam 書籤：${(report.chronocam_bookmarks || []).slice(0, 4).map((bookmark) => `${bookmark.label} @ ${formatSeconds(bookmark.time_seconds)} · ${bookmark.summary}`).join(" ｜ ")}`
     : "";
   const bookmarkActions = document.createElement("div");
   bookmarkActions.className = "chronocam-bookmark-actions";
-  for (const bookmark of (report.chronocam_bookmarks || []).slice(0, 2)) {
+  for (const bookmark of (report.chronocam_bookmarks || []).slice(0, 4)) {
     const seconds = Number(bookmark.time_seconds || 0);
     const button = document.createElement("button");
     button.type = "button";
     button.className = "chronocam-bookmark-button";
     button.dataset.seekSeconds = String(seconds);
-    button.textContent = `回看${bookmark.label?.includes("收益") ? "離線收益" : "書籤"}`;
+    button.textContent = chronocamBookmarkButtonLabel(bookmark);
     button.disabled = !Number.isFinite(seconds) || seconds < 0;
     button.title = `${bookmark.label || "ChronoCam 書籤"} @ ${formatSeconds(seconds)}`;
     button.addEventListener("click", () => onSeekChronoCam?.(seconds, bookmark));
@@ -275,6 +275,15 @@ function returnHarvestCard(report = {}, onAcknowledgeOfflineReport, className = 
 
   card.append(header, metrics, ...(bookmarkActions.childElementCount ? [bookmarkActions] : []), footnote, claim);
   return card;
+}
+
+function chronocamBookmarkButtonLabel(bookmark = {}) {
+  const label = String(bookmark.label || "");
+  if (label.includes("收益")) return "回看離線收益";
+  if (label.includes("瓶頸")) return "回看瓶頸";
+  if (label.includes("風險")) return "回看風險";
+  if (label.includes("解鎖")) return "回看解鎖";
+  return "回看書籤";
 }
 
 function returnHarvestHandoffCard(action, card, dashboard = {}, reportHistory = [], onAssignmentCommand) {
