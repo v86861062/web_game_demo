@@ -409,7 +409,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       const row = document.createElement("div");
       row.className = "command-center-action contract-type-unlock-row";
       const copy = document.createElement("span");
-      copy.innerHTML = `<strong>${unlock.contract_type || "合約專精解鎖"} · ${unlock.status || "蒐集資料中"}</strong><small>${unlock.unlock_summary || "等待更多 payoff data"} · ${Math.round(unlock.progress_percent || 0)}%</small><small>${unlock.expected_effect || "預期效果：依合約類型解鎖投資分支"}</small>`;
+      copy.innerHTML = `<strong>${unlock.contract_type || "合約專精解鎖"} · ${unlock.status || "蒐集資料中"}</strong><small>${unlock.unlock_summary || "等待更多 payoff data"} · ${Math.round(unlock.progress_percent || 0)}%</small><small>${unlock.expected_effect || "預期效果：依合約類型解鎖投資分支"}</small><small>${unlock.active_modifier || "實際效果：等待專精 evidence 啟用"}</small>`;
       const assignment = commandAssignment(unlock.recommended_assignment);
       const card = fleetCards.find((fleetCard) => idValue(fleetCard.ship_id, "ship") === idValue(unlock.target_ship_id, "ship")) || fleetCards[0];
       const button = fleetAssignmentButton({
