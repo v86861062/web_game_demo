@@ -326,6 +326,54 @@ function returnHarvestCard(report = {}, onAcknowledgeOfflineReport, className = 
   return card;
 }
 
+function reportHistoryRow(summary = {}) {
+  const row = document.createElement("div");
+  row.className = "market-row report-row report-history-row";
+  const returnSummary = summary.return_summary || {};
+  const bookmarks = summary.chronocam_bookmarks || [];
+  const bookmarkSummary = bookmarks.length
+    ? `ChronoCam 書籤：${bookmarks.slice(0, 4).map((bookmark) => `${bookmark.label} @ ${formatSeconds(bookmark.time_seconds)} · ${bookmark.summary}`).join(" ｜ ")}`
+    : "ChronoCam 書籤：本筆歷史紀錄沒有可回看書籤";
+  row.innerHTML = `
+    <strong>${summary.headline || "離線收益紀錄"}</strong>
+    <span>${formatSeconds(summary.simulated_seconds)} · ${formatSignedCredits(summary.net_credits || 0)}</span>
+  `;
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "report-history-detail-button";
+  button.textContent = "查看紀錄摘要";
+  const panel = document.createElement("div");
+  const openHistoryId = globalThis.__starboundReportHistoryDetailOpenId;
+  const historyId = String(summary.id || summary.headline || "latest-history");
+  panel.className = `report-history-detail-panel ${openHistoryId === historyId ? "open" : ""}`.trim();
+  panel.dataset.reportHistoryId = historyId;
+  panel.innerHTML = `
+    <div class="report-history-detail-header">
+      <strong>歷史離線報告</strong>
+      <button type="button" class="report-history-detail-close">收合</button>
+    </div>
+    <p><strong>最大收益</strong>${returnSummary.top_gain || summary.headline || "最大收益：等待紀錄"}</p>
+    <p><strong>最大損失</strong>${returnSummary.top_loss || "最大損失：歷史摘要未保留細項"}</p>
+    <p><strong>瓶頸變化</strong>${returnSummary.bottleneck_change || "瓶頸變化：歷史摘要未保留細項"}</p>
+    <p><strong>下一步</strong>${returnSummary.next_best_action || "建議下一步：查看當前瓶頸"}</p>
+    <p><strong>船塢解鎖進度</strong>${returnSummary.unlock_progress || "船塢解鎖進度：歷史摘要未保留細項"}</p>
+    <p><strong>風險摘要</strong>${returnSummary.risk_summary || "風險摘要：歷史摘要未保留細項"}</p>
+    <p><strong>ChronoCam 書籤</strong>${bookmarkSummary}</p>
+  `;
+  button.addEventListener("click", () => {
+    globalThis.__starboundReportHistoryDetailOpenId = historyId;
+    panel.classList.add("open");
+  });
+  panel.querySelector(".report-history-detail-close")?.addEventListener("click", () => {
+    if (globalThis.__starboundReportHistoryDetailOpenId === historyId) {
+      globalThis.__starboundReportHistoryDetailOpenId = null;
+    }
+    panel.classList.remove("open");
+  });
+  row.append(button, panel);
+  return row;
+}
+
 function chronocamBookmarkButtonLabel(bookmark = {}) {
   const label = String(bookmark.label || "");
   if (label.includes("收益")) return "回看離線收益";
@@ -967,10 +1015,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       }));
     }
     for (const summary of snapshot.report_history || []) {
-      const row = document.createElement("div");
-      row.className = "market-row report-row";
-      row.innerHTML = `<strong>${summary.headline}</strong><span>${formatSeconds(summary.simulated_seconds)} · ${summary.net_credits}cr</span>`;
-      reportRows.push(row);
+      reportRows.push(reportHistoryRow(summary));
     }
 
     const upgradeRows = (snapshot.available_upgrades || []).map((upgrade) => {

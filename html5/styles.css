@@ -196,6 +196,47 @@ body { min-height: 100vh; touch-action: none; }
   padding: 4px 8px;
   font-size: 10px;
 }
+.report-history-detail-button {
+  align-self: flex-start;
+  border: 1px solid rgba(244, 197, 94, 0.55);
+  background: rgba(244, 197, 94, 0.13);
+  color: #f9e4a8;
+}
+.report-history-detail-panel {
+  display: none;
+  margin-top: 6px;
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(244, 197, 94, 0.26);
+  background: rgba(15, 20, 34, 0.76);
+  color: #f8f1df;
+}
+.report-history-detail-panel.open {
+  display: block;
+}
+.report-history-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.report-history-detail-panel p {
+  margin: 4px 0;
+  font-size: 0.78rem;
+  line-height: 1.25;
+}
+.report-history-detail-panel strong {
+  display: block;
+  color: #f4c55e;
+}
+.report-history-detail-close {
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.08);
+  color: #f7f1df;
+}
 .chronocam-bookmark-actions {
   display: flex;
   flex-wrap: wrap;
