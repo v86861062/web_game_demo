@@ -410,18 +410,29 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       const recommendations = payoffStats
         .map((stat) => stat.tuning_recommendation || "")
         .filter(Boolean);
-      const riskPremiumLine = recommendations.find((line) => line.includes("風險溢價")) || "風險溢價：等待護航 payoff evidence";
-      const miningGapLine = recommendations.find((line) => line.includes("低於護航")) || "低於護航：等待採礦 payoff evidence";
+      const cleanSummaryFragment = (line, fallback) => String(line || fallback)
+        .replace(/^合約調校：/, "")
+        .replaceAll("payoff evidence", "樣本")
+        .replaceAll("payoff data", "樣本")
+        .replaceAll("payoff", "成果")
+        .replaceAll("等待護航 樣本", "等待護航樣本")
+        .replaceAll("等待採礦 樣本", "等待採礦樣本");
+      const compactRiskSummary = (line) => cleanSummaryFragment(line, "風險溢價：等待護航樣本")
+        .replace(/^風險溢價[：: ]*/, "");
+      const compactMiningSummary = (line) => cleanSummaryFragment(line, "低於護航：等待採礦樣本")
+        .replace(/^低於護航[：: ]*/, "");
+      const riskPremiumLine = recommendations.find((line) => line.includes("風險溢價"));
+      const miningGapLine = recommendations.find((line) => line.includes("低於護航"));
       const topTrade = payoffStats.find((stat) => String(stat.contract_type || "").includes("交易"));
       const tradeLine = topTrade
-        ? `交易 ${Math.round(topTrade.average_credits_per_trip || 0)}cr/趟`
-        : "交易等待 payoff";
+        ? `${Math.round(topTrade.average_credits_per_trip || 0)}cr/趟`
+        : "等待成果";
       const row = document.createElement("section");
       row.className = "command-center-kpi contract-tuning-summary";
       const title = document.createElement("strong");
       title.textContent = "合約調校摘要";
       const detail = document.createElement("small");
-      detail.textContent = `${tradeLine} · ${riskPremiumLine.replace(/^合約調校：/, "")} · ${miningGapLine.replace(/^合約調校：/, "")}`;
+      detail.textContent = `交易：${tradeLine} · 護航：風險溢價 ${compactRiskSummary(riskPremiumLine)} · 採礦：低於護航 ${compactMiningSummary(miningGapLine)}`;
       row.append(title, detail);
       return row;
     })();
