@@ -1,9 +1,9 @@
-function formatInventory(inventory = {}) {
+function formatInventory(inventory = {}, emptyLabel = "無貨物") {
   const parts = [];
   for (const [key, value] of Object.entries(inventory)) {
     if (value) parts.push(`${key}:${value}`);
   }
-  return parts.length ? parts.join(" · ") : "empty";
+  return parts.length ? parts.join(" · ") : emptyLabel;
 }
 
 function formatPriceLines(prefix, prices = {}) {
@@ -68,7 +68,7 @@ function formatReportBottleneck(report = {}) {
 function formatReportShipyard(report = {}) {
   const update = (report.shipyard_updates || [])[0];
   if (!update) return "船塢：目前沒有建造佇列";
-  const missing = formatInventory(update.missing || {});
+  const missing = formatInventory(update.missing || {}, "材料已備齊");
   return `船塢：${update.station} · ETA ${formatSeconds(update.eta_seconds)} · 缺 ${missing}`;
 }
 
@@ -80,7 +80,16 @@ function formatReportRecommendation(report = {}) {
 }
 
 function formatAssignment(value) {
-  return String(value || "Idle").replace(/([a-z])([A-Z])/g, "$1 $2");
+  const labels = {
+    Idle: "閒置",
+    AutoTradeBestProfit: "自動最佳交易",
+    AutoMineAndSell: "自動採礦補給",
+    PatrolRouteRisk: "巡邏風險",
+    SupplyShipyard: "補船塢",
+    EscortHighValueTrade: "護航高價交易",
+  };
+  const key = String(value || "Idle");
+  return labels[key] || key.replace(/([a-z])([A-Z])/g, "$1 $2");
 }
 
 function idValue(value, prefix) {
@@ -264,7 +273,7 @@ function returnHarvestCard(report = {}, onAcknowledgeOfflineReport, className = 
     formatReportBestShip(report),
     formatReportShipyard(report),
     formatReportRecommendation(report),
-    `風險事件:${report.pirate_incidents?.length || 0} · capped:${formatSeconds(report.capped_seconds)}`,
+    `風險事件:${report.pirate_incidents?.length || 0} · ${Number(report.capped_seconds || 0) > 0 ? `離線上限略過:${formatSeconds(report.capped_seconds)}` : "未受離線上限影響"}`,
   ].filter(Boolean).join(" · ");
 
   const claim = document.createElement("button");
@@ -737,7 +746,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       : "";
     row.innerHTML = `
       <strong>${ship.name}</strong>
-      <span>${ship.role} · ${formatAssignment(assignment)} · ${card?.risk_policy || "Balanced"}${cargo !== "empty" ? ` · cargo ${cargo}` : ""}</span>
+      <span>${ship.role} · ${formatAssignment(assignment)} · ${card?.risk_policy || "Balanced"}${cargo !== "無貨物" ? ` · cargo ${cargo}` : ""}</span>
       <small>${ship.sector}${ship.target ? ` → ${ship.target}` : ""}${plan ? ` · ${plan}` : ""}</small>
       ${card?.alert ? `<small>⚠ ${card.alert}</small>` : ""}
     `;
