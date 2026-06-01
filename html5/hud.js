@@ -401,10 +401,30 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       `${payoff.contract_type || "合約成果"} · ${payoff.route || "航線待補"} · ${payoff.payoff_summary || "+0cr"} · ${payoff.cadence_summary || "等待合約成果"} · ${payoff.risk_summary || "風險回顧：待評估"}`,
       "command-center-row contract-payoff-row",
     ));
-    const contractPayoffStatRows = (expansionCadence.contract_payoff_stats || []).slice(0, 4).map((stat) => textRow(
+    const payoffStats = expansionCadence.contract_payoff_stats || [];
+    const contractPayoffStatRows = payoffStats.slice(0, 4).map((stat) => textRow(
       `${stat.contract_type || "合約調校"} · 平均 ${Math.round(stat.average_credits_per_trip || 0)}cr/趟 · ${stat.completed_trips || 0} 趟 · ${stat.best_route || "航線待補"} · ${stat.tuning_recommendation || "合約調校：等待更多 payoff data"} · ${stat.next_action || "下一步：完成更多合約後調整 cadence"} · ${stat.risk_recap || "風險回顧：待評估"}`,
       "command-center-row contract-payoff-stat-row",
     ));
+    const contractTuningSummary = (() => {
+      const recommendations = payoffStats
+        .map((stat) => stat.tuning_recommendation || "")
+        .filter(Boolean);
+      const riskPremiumLine = recommendations.find((line) => line.includes("風險溢價")) || "風險溢價：等待護航 payoff evidence";
+      const miningGapLine = recommendations.find((line) => line.includes("低於護航")) || "低於護航：等待採礦 payoff evidence";
+      const topTrade = payoffStats.find((stat) => String(stat.contract_type || "").includes("交易"));
+      const tradeLine = topTrade
+        ? `交易 ${Math.round(topTrade.average_credits_per_trip || 0)}cr/趟`
+        : "交易等待 payoff";
+      const row = document.createElement("section");
+      row.className = "command-center-kpi contract-tuning-summary";
+      const title = document.createElement("strong");
+      title.textContent = "合約調校摘要";
+      const detail = document.createElement("small");
+      detail.textContent = `${tradeLine} · ${riskPremiumLine.replace(/^合約調校：/, "")} · ${miningGapLine.replace(/^合約調校：/, "")}`;
+      row.append(title, detail);
+      return row;
+    })();
     const contractTypeUnlockRows = (expansionCadence.contract_type_unlocks || []).slice(0, 3).map((unlock) => {
       const row = document.createElement("div");
       row.className = "command-center-action contract-type-unlock-row";
@@ -609,6 +629,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         title.textContent = "艦隊指揮中心 · 現在按哪個";
         return title;
       })(),
+      contractTuningSummary,
       ...(latestReport ? [returnHarvestCard(latestReport, onAcknowledgeOfflineReport, "command-return-harvest", onSeekChronoCam)] : []),
       ...(!latestReport && (snapshot.report_history || []).length
         ? [returnHarvestHandoffCard(bottleneckHandoffAction, bottleneckHandoffCard, dashboard, snapshot.report_history, onAssignmentCommand)]
