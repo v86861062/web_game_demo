@@ -276,13 +276,53 @@ function returnHarvestCard(report = {}, onAcknowledgeOfflineReport, className = 
     `風險事件:${report.pirate_incidents?.length || 0} · ${Number(report.capped_seconds || 0) > 0 ? `離線上限略過:${formatSeconds(report.capped_seconds)}` : "未受離線上限影響"}`,
   ].filter(Boolean).join(" · ");
 
+  const detailPanel = document.createElement("section");
+  detailPanel.className = `return-report-detail-panel ${globalThis.__starboundReturnReportDetailOpen ? "open" : ""}`.trim();
+  detailPanel.setAttribute("aria-label", "完整離線報告");
+  detailPanel.innerHTML = `
+    <div class="return-report-detail-header">
+      <strong>完整離線報告</strong>
+      <button type="button" class="return-report-detail-close">關閉</button>
+    </div>
+    <div class="return-report-detail-body">
+      <p><strong>營運結算</strong>${formatSeconds(report.simulated_seconds)} · ${formatSignedCredits(report.net_credits)} · 貨物 ${formatInventory(report.delivered_cargo)}</p>
+      <p><strong>最大收益</strong>${returnSummary.top_gain || formatReportBestShip(report)}</p>
+      <p><strong>最大損失</strong>${returnSummary.top_loss || "最大損失：無貨損"}</p>
+      <p><strong>瓶頸變化</strong>${returnSummary.bottleneck_change || formatReportBottleneck(report)}</p>
+      <p><strong>下一步</strong>${returnSummary.next_best_action || formatReportRecommendation(report)}</p>
+      <p><strong>船塢解鎖進度</strong>${returnSummary.unlock_progress || formatReportShipyard(report)}</p>
+      <p><strong>風險摘要</strong>${returnSummary.risk_summary || `風險摘要：${report.pirate_incidents?.length || 0} 起事件`}</p>
+      <p><strong>最佳艦</strong>${formatReportBestShip(report)}</p>
+      <p><strong>船塢</strong>${formatReportShipyard(report)}</p>
+      <p><strong>離線上限</strong>${Number(report.capped_seconds || 0) > 0 ? `離線上限略過 ${formatSeconds(report.capped_seconds)}` : "未受離線上限影響"}</p>
+      <p><strong>ChronoCam 書籤</strong>${bookmarkSummary || "ChronoCam 書籤：本輪沒有可回看書籤"}</p>
+    </div>
+  `;
+
+  const detailButton = document.createElement("button");
+  detailButton.type = "button";
+  detailButton.className = "return-report-detail-button";
+  detailButton.textContent = "查看完整報告";
+  detailButton.addEventListener("click", () => {
+    globalThis.__starboundReturnReportDetailOpen = true;
+    detailPanel.classList.add("open");
+  });
+  detailPanel.querySelector(".return-report-detail-close")?.addEventListener("click", () => {
+    globalThis.__starboundReturnReportDetailOpen = false;
+    detailPanel.classList.remove("open");
+  });
+
   const claim = document.createElement("button");
   claim.type = "button";
   claim.className = "return-harvest-claim-button";
   claim.textContent = "收取成果";
   claim.addEventListener("click", () => onAcknowledgeOfflineReport?.({ type: "AcknowledgeOfflineReport" }, "Acknowledge offline report"));
 
-  card.append(header, metrics, ...(bookmarkActions.childElementCount ? [bookmarkActions] : []), footnote, claim);
+  const actions = document.createElement("div");
+  actions.className = "return-harvest-actions";
+  actions.append(detailButton, claim);
+
+  card.append(header, metrics, ...(bookmarkActions.childElementCount ? [bookmarkActions] : []), footnote, actions, detailPanel);
   return card;
 }
 
