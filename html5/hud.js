@@ -488,7 +488,8 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       button.classList.add("investment-choice-button");
       return button;
     };
-    const investmentQuickRow = investmentChoices.length ? (() => {
+    const makeInvestmentQuickRow = () => {
+      if (!investmentChoices.length) return null;
       const row = document.createElement("div");
       row.className = "expansion-investment-quick";
       const copy = document.createElement("span");
@@ -498,7 +499,8 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       buttons.append(...investmentChoices.map((choice) => investmentButtonForChoice(choice, true)));
       row.append(copy, buttons);
       return row;
-    })() : null;
+    };
+    const investmentQuickRow = makeInvestmentQuickRow();
     const investmentChoiceRows = investmentChoices.map((choice) => {
       const row = document.createElement("div");
       row.className = "command-center-action expansion-investment-action";
@@ -623,6 +625,23 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       );
       return section;
     })();
+    const returnHarvestNextActions = latestReport ? (() => {
+      const strip = document.createElement("section");
+      strip.className = "return-harvest-next-actions";
+      strip.setAttribute("aria-label", "回來收成果後可立即接續的操作");
+      if (primaryRecommendedAction) {
+        strip.append(commandActionRow(
+          primaryRecommendedAction,
+          primaryRecommendedCard,
+          onAssignmentCommand,
+          "建議行動",
+          "command-center-action idle-primary-action",
+        ));
+      }
+      const quickRow = makeInvestmentQuickRow();
+      if (quickRow) strip.append(quickRow);
+      return strip.childElementCount ? strip : null;
+    })() : null;
     commandCenter.replaceChildren(
       (() => {
         const title = document.createElement("h2");
@@ -631,12 +650,13 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       })(),
       contractTuningSummary,
       ...(latestReport ? [returnHarvestCard(latestReport, onAcknowledgeOfflineReport, "command-return-harvest", onSeekChronoCam)] : []),
+      ...(returnHarvestNextActions ? [returnHarvestNextActions] : []),
       ...(!latestReport && (snapshot.report_history || []).length
         ? [returnHarvestHandoffCard(bottleneckHandoffAction, bottleneckHandoffCard, dashboard, snapshot.report_history, onAssignmentCommand)]
         : []),
       idleBrief,
-      primaryActionsSection,
-      ...(investmentQuickRow ? [investmentQuickRow] : []),
+      ...(!latestReport ? [primaryActionsSection] : []),
+      ...(!latestReport && investmentQuickRow ? [investmentQuickRow] : []),
       idleHero,
       textRow(`第一航線：${firstSessionRoute.replace(/^第一航線：/, "")}`, "command-center-row first-route"),
       textRow("進度路線：Energy → Ore → Metal → 下一艘 Trader", "command-center-kpi progression-path"),
