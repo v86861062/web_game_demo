@@ -82,7 +82,7 @@ function formatMissionDescription(description = "") {
     "Explore 3 sectors": "探索 3 個星區",
     "Complete first ore sale": "完成第一筆礦石 Ore 銷售",
     "Deliver energy to mine": "運送能源 Energy 到採礦站 Mine",
-    "Reach 900 credits": "累積 900 credits 資金",
+    "Reach 900 credits": "累積 900 銀河幣 credits 資金",
   };
   return labels[description] || description;
 }
@@ -610,7 +610,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
   document.querySelector("#credits").textContent = formatCredits(snapshot.hud.credits);
   document.querySelector("#resource-summary").textContent = formatInventory(snapshot.hud.resources);
   document.querySelector("#time-summary").textContent = `${snapshot.time.toFixed(1)}秒 · ${snapshot.hud.paused ? "暫停" : `${snapshot.hud.speed}x`}`;
-  document.querySelector("#latest-event").textContent = snapshot.hud.latest_event || "--";
+  document.querySelector("#latest-event").textContent = snapshot.hud.latest_event || "尚無事件";
 
   const ships = document.querySelector("#ship-list");
   const dashboard = snapshot.fleet_dashboard || {};
