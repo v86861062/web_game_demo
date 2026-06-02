@@ -472,7 +472,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       `command-center-row expansion ${step.complete ? "complete" : "pending"}`,
     ));
     const recurringContractRows = (expansionCadence.recurring_contract_rewards || []).slice(0, 3).map((contract) => textRow(
-      `${contract.label || "週期合約"} · ${contract.reward_summary || "週期獎勵：待估"} · ${contract.cadence_summary || "等待合約節奏"} · ${contract.milestone_summary || "合約里程碑：等待第一趟"} · ${contract.streak_bonus_summary || "連跑 bonus：待建立"} · ${contract.expected_effect || "預期效果：累積擴張資金"}`,
+      `${contract.label || "週期合約"} · ${contract.reward_summary || "週期獎勵：待估"} · ${contract.cadence_summary || "等待合約節奏"} · ${contract.milestone_summary || "合約里程碑：等待第一趟"} · ${contract.streak_bonus_summary || "連跑加成：待建立"} · ${contract.expected_effect || "預期效果：累積擴張資金"}`,
       "command-center-row expansion-contract",
     ));
     const availableContractRows = (expansionCadence.available_contracts || []).slice(0, 3).map((contract) => {
@@ -500,7 +500,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
     ));
     const payoffStats = expansionCadence.contract_payoff_stats || [];
     const contractPayoffStatRows = payoffStats.slice(0, 4).map((stat) => textRow(
-      `${stat.contract_type || "合約調校"} · 平均 ${Math.round(stat.average_credits_per_trip || 0)}cr/趟 · ${stat.completed_trips || 0} 趟 · ${stat.best_route || "航線待補"} · ${stat.tuning_recommendation || "合約調校：等待更多 payoff data"} · ${stat.next_action || "下一步：完成更多合約後調整 cadence"} · ${stat.risk_recap || "風險回顧：待評估"}`,
+      `${stat.contract_type || "合約調校"} · 平均 ${Math.round(stat.average_credits_per_trip || 0)}cr/趟 · ${stat.completed_trips || 0} 趟 · ${stat.best_route || "航線待補"} · ${stat.tuning_recommendation || "合約調校：等待更多成果樣本"} · ${stat.next_action || "下一步：完成更多合約後調整節奏"} · ${stat.risk_recap || "風險回顧：待評估"}`,
       "command-center-row contract-payoff-stat-row",
     ));
     const contractTuningSummary = (() => {
@@ -537,7 +537,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       const row = document.createElement("div");
       row.className = "command-center-action contract-type-unlock-row";
       const copy = document.createElement("span");
-      copy.innerHTML = `<strong>${unlock.contract_type || "合約專精解鎖"} · ${unlock.status || "蒐集資料中"}</strong><small>${unlock.unlock_summary || "等待更多 payoff data"} · ${Math.round(unlock.progress_percent || 0)}%</small><small>${unlock.expected_effect || "預期效果：依合約類型解鎖投資分支"}</small><small>${unlock.active_modifier || "實際效果：等待專精 evidence 啟用"}</small>`;
+      copy.innerHTML = `<strong>${unlock.contract_type || "合約專精解鎖"} · ${unlock.status || "蒐集資料中"}</strong><small>${unlock.unlock_summary || "等待更多成果樣本"} · ${Math.round(unlock.progress_percent || 0)}%</small><small>${unlock.expected_effect || "預期效果：依合約類型解鎖投資分支"}</small><small>${unlock.active_modifier || "實際效果：等待專精樣本啟用"}</small>`;
       const assignment = commandAssignment(unlock.recommended_assignment);
       const card = fleetCards.find((fleetCard) => idValue(fleetCard.ship_id, "ship") === idValue(unlock.target_ship_id, "ship")) || fleetCards[0];
       const button = fleetAssignmentButton({
@@ -557,7 +557,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       const row = document.createElement("div");
       row.className = "command-center-row expansion-milestone";
       const copy = document.createElement("span");
-      copy.textContent = `${milestone.label || "合約里程碑"} ${Math.round(milestone.current || 0)}/${Math.round(milestone.target || 0)} · ${milestone.milestone_reward || "獎勵預覽：待估"} · ${milestone.streak_bonus || "連跑 bonus：待建立"} · ${milestone.next_action || "派 Trader 跑週期合約"}`;
+      copy.textContent = `${milestone.label || "合約里程碑"} ${Math.round(milestone.current || 0)}/${Math.round(milestone.target || 0)} · ${milestone.milestone_reward || "獎勵預覽：待估"} · ${milestone.streak_bonus || "連跑加成：待建立"} · ${milestone.next_action || "派 Trader 跑週期合約"}`;
       row.append(copy);
       if (String(milestone.next_action || "").includes("可領取")) {
         const button = document.createElement("button");
@@ -567,7 +567,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         button.addEventListener("click", () => onContractMilestoneCommand?.({
           type: "ClaimContractMilestone",
           target: Math.round(milestone.target || 0),
-        }, `Claim contract milestone ${Math.round(milestone.target || 0)}`));
+        }, `領取合約獎勵 ${Math.round(milestone.target || 0)} 趟`));
         row.append(button);
       }
       return row;
@@ -637,13 +637,13 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       ...(recurringContractRows.length ? recurringContractRows : [textRow("週期合約：等待正利潤航線，先補 Energy / Ore 供應")]),
       textRow("可承接合約池：交易 / 採礦 / 護航", "command-center-row available-contract-summary"),
       ...(availableContractRows.length ? availableContractRows : [textRow("可承接合約池：等待市場、礦區或風險航線資料", "command-center-row available-contract-row")]),
-      textRow("合約成果履歷：交易 / 採礦 / 護航 payoff", "command-center-row contract-payoff-summary"),
+      textRow("合約成果履歷：交易 / 採礦 / 護航收益", "command-center-row contract-payoff-summary"),
       ...(contractPayoffRows.length ? contractPayoffRows : [textRow("合約成果履歷：完成承接合約後會記錄收益、貨物與風險回顧", "command-center-row contract-payoff-row")]),
-      textRow("合約調校：依 payoff history 比較平均收益、最佳航線與風險下一步", "command-center-row contract-payoff-stat-summary"),
-      ...(contractPayoffStatRows.length ? contractPayoffStatRows : [textRow("合約調校：等待交易 / 採礦 / 護航 payoff data，完成合約後會顯示平均收益與下一步", "command-center-row contract-payoff-stat-row")]),
-      textRow("合約專精解鎖：交易 / 採礦 / 護航 payoff 會開出投資分支", "command-center-row contract-type-unlock-summary"),
-      ...(contractTypeUnlockRows.length ? contractTypeUnlockRows : [textRow("合約專精解鎖：等待更多 payoff data", "command-center-row contract-type-unlock-row")]),
-      ...(contractMilestoneRows.length ? contractMilestoneRows : [textRow("合約里程碑：連跑 3 趟後解鎖 streak bonus")]),
+      textRow("合約調校：依成果履歷比較平均收益、最佳航線與風險下一步", "command-center-row contract-payoff-stat-summary"),
+      ...(contractPayoffStatRows.length ? contractPayoffStatRows : [textRow("合約調校：等待交易 / 採礦 / 護航成果樣本，完成合約後會顯示平均收益與下一步", "command-center-row contract-payoff-stat-row")]),
+      textRow("合約專精解鎖：交易 / 採礦 / 護航成果會開出投資分支", "command-center-row contract-type-unlock-summary"),
+      ...(contractTypeUnlockRows.length ? contractTypeUnlockRows : [textRow("合約專精解鎖：等待更多成果樣本", "command-center-row contract-type-unlock-row")]),
+      ...(contractMilestoneRows.length ? contractMilestoneRows : [textRow("合約里程碑：連跑 3 趟後解鎖連跑加成")]),
       ...(investmentChoiceRows.length ? investmentChoiceRows : [textRow("投資選擇：等待站點材料缺口或船塢佇列")]),
       textRow("中期目標鏈：+1 Trader → 雙線合約 → Cargo Hold → 下一星區", "command-center-row midgame-chain-summary"),
       ...(midgameGoalRows.length ? midgameGoalRows : [textRow("中期目標鏈：+1 Trader → 雙線合約 → Cargo Hold → 下一星區")]),
