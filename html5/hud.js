@@ -29,6 +29,29 @@ function formatBlueprintLabel(blueprint = "") {
   return labels[blueprint] || blueprint;
 }
 
+function formatShipRoleLabel(role = "") {
+  const labels = {
+    Trader: "交易船 Trader",
+    Miner: "採礦船 Miner",
+    Scout: "偵察船 Scout",
+    Patrol: "巡邏艦 Patrol",
+    Pirate: "海盜船 Pirate",
+  };
+  return labels[role] || role;
+}
+
+function formatRiskPolicyLabel(policy = "") {
+  const labels = {
+    Balanced: "均衡",
+    Safe: "保守",
+    Aggressive: "積極",
+    safe: "保守",
+    balanced: "均衡",
+    aggressive: "積極",
+  };
+  return labels[policy] || policy;
+}
+
 function formatInventory(inventory = {}, emptyLabel = "無貨物") {
   const parts = [];
   for (const [key, value] of Object.entries(inventory)) {
@@ -869,7 +892,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       : "";
     row.innerHTML = `
       <strong>${ship.name}</strong>
-      <span>${ship.role} · ${formatAssignment(assignment)} · ${card?.risk_policy || "Balanced"}${cargo !== "無貨物" ? ` · cargo ${cargo}` : ""}</span>
+      <span>${formatShipRoleLabel(ship.role)} · ${formatAssignment(assignment)} · ${formatRiskPolicyLabel(card?.risk_policy || "Balanced")}${cargo !== "無貨物" ? ` · 貨物 ${cargo}` : ""}</span>
       <small>${ship.sector}${ship.target ? ` → ${ship.target}` : ""}${plan ? ` · ${plan}` : ""}</small>
       ${card?.alert ? `<small>⚠ ${card.alert}</small>` : ""}
     `;
