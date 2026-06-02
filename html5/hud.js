@@ -52,6 +52,29 @@ function formatRiskPolicyLabel(policy = "") {
   return labels[policy] || policy;
 }
 
+function formatAlertKind(kind = "") {
+  const labels = {
+    Production: "生產",
+    Market: "市場",
+    Risk: "風險",
+    production: "生產",
+    market: "市場",
+    risk: "風險",
+  };
+  return labels[kind] || kind;
+}
+
+function formatFactionStanceLabel(stance = "") {
+  const labels = {
+    Player: "玩家",
+    Competitive: "競爭勢力",
+    Authority: "權威勢力",
+    Protective: "保護勢力",
+    Hostile: "敵對勢力",
+  };
+  return labels[stance] || stance;
+}
+
 function formatInventory(inventory = {}, emptyLabel = "無貨物") {
   const parts = [];
   for (const [key, value] of Object.entries(inventory)) {
@@ -869,7 +892,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       const row = document.createElement("div");
       row.className = "fleet-alert";
       const message = document.createElement("span");
-      message.textContent = `${alert.kind}: ${alert.message}`;
+      message.textContent = `${formatAlertKind(alert.kind)}：${alert.message}`;
       row.append(message);
       const suggested = chooseAlertAction(alert, fleetCards);
       if (suggested.card) {
@@ -941,8 +964,8 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       const row = document.createElement("div");
       row.className = "market-row faction-pressure-row";
       row.innerHTML = `
-        <strong>${pressure.name || pressure.faction} · ${pressure.stance}</strong>
-        <span>勢力壓力 ${formatPercent(pressure.pressure_score)} · trade ${formatPercent(pressure.trade_activity)} · security ${formatPercent(pressure.security_coverage)} · pirate ${formatPercent(pressure.pirate_pressure)}</span>
+        <strong>${pressure.name || pressure.faction} · ${formatFactionStanceLabel(pressure.stance)}</strong>
+        <span>勢力壓力 ${formatPercent(pressure.pressure_score)} · 交易 ${formatPercent(pressure.trade_activity)} · 治安 ${formatPercent(pressure.security_coverage)} · 海盜 ${formatPercent(pressure.pirate_pressure)}</span>
         <small>${pressure.doctrine}</small>
         <small>${pressure.headline}</small>
       `;
