@@ -10,6 +10,25 @@ function formatWareLabel(key = "") {
   return labels[key] || key;
 }
 
+function formatOfferSide(side = "") {
+  const labels = {
+    Buy: "買入",
+    Sell: "賣出",
+    buy: "買入",
+    sell: "賣出",
+  };
+  return labels[side] || side;
+}
+
+function formatBlueprintLabel(blueprint = "") {
+  const labels = {
+    Trader: "交易船 Trader",
+    CoreMiner: "核心採礦船 Core Miner",
+    "Core Miner": "核心採礦船 Core Miner",
+  };
+  return labels[blueprint] || blueprint;
+}
+
 function formatInventory(inventory = {}, emptyLabel = "無貨物") {
   const parts = [];
   for (const [key, value] of Object.entries(inventory)) {
@@ -911,9 +930,9 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       const row = document.createElement("div");
       row.className = "market-row offer-row";
       row.innerHTML = `
-        <strong>${offer.side} ${offer.ware}</strong>
-        <span>${offer.station} · ${offer.price}cr · amt:${offer.amount}</span>
-        <small>${offer.owner} · reserved:${offer.reserved || 0}</small>
+        <strong>${formatOfferSide(offer.side)} ${formatWareLabel(offer.ware)}</strong>
+        <span>${offer.station} · ${offer.price}cr · 數量:${offer.amount}</span>
+        <small>${offer.owner} · 已保留:${offer.reserved || 0}</small>
       `;
       return row;
     });
@@ -922,9 +941,9 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       const row = document.createElement("div");
       row.className = "market-row competition-row";
       row.innerHTML = `
-        <strong>${competition.ware} 競價</strong>
+        <strong>${formatWareLabel(competition.ware)} 競價</strong>
         <span>買 ${competition.best_buy_price || "--"} @ ${competition.best_buy_station || "--"} · 賣 ${competition.best_sell_price || "--"} @ ${competition.best_sell_station || "--"}</span>
-        <small>spread:${competition.spread} · buyers:${competition.competing_buyers} · sellers:${competition.competing_sellers}</small>
+        <small>價差:${competition.spread} · 買方:${competition.competing_buyers} · 賣方:${competition.competing_sellers}</small>
       `;
       return row;
     });
@@ -934,7 +953,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       row.className = "market-row build-row";
       row.innerHTML = `
         <strong>${queue.station}</strong>
-        <span>${queue.owner} building ${queue.blueprint} · ${formatPercent(queue.progress)}</span>
+        <span>${queue.owner} 正在建造 ${formatBlueprintLabel(queue.blueprint)} · ${formatPercent(queue.progress)}</span>
         <small>需要 ${formatInventory(queue.required)} · 缺 ${formatInventory(queue.missing || {})} · ETA ${Number(queue.remaining_seconds || 0).toFixed(0)}s</small>
         <small>${queue.ready ? "材料已就緒" : "等待物流補料"}</small>
       `;
@@ -969,8 +988,8 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       row.className = "market-row pirate-impact-row";
       row.innerHTML = `
         <strong>${impact.route}</strong>
-        <span>pirate impact ${formatPercent(impact.risk)} · raids:${impact.recent_raids}</span>
-        <small>affected offers:${impact.affected_offers} · premium:${impact.buy_price_premium}%</small>
+        <span>海盜衝擊 ${formatPercent(impact.risk)} · 襲擊:${impact.recent_raids}</span>
+        <small>受影響報價:${impact.affected_offers} · 風險溢價:${impact.buy_price_premium}%</small>
       `;
       return row;
     });
@@ -979,9 +998,9 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       const row = document.createElement("div");
       row.className = "market-row history-row";
       row.innerHTML = `
-        <strong>${sample.station} · ${sample.ware}</strong>
-        <span>inv:${sample.inventory} · buy:${sample.buy_price} · sell:${sample.sell_price}</span>
-        <small>shortage ticks:${sample.shortage_ticks}</small>
+        <strong>${sample.station} · ${formatWareLabel(sample.ware)}</strong>
+        <span>庫存:${sample.inventory} · 買價:${sample.buy_price} · 賣價:${sample.sell_price}</span>
+        <small>短缺 tick:${sample.shortage_ticks}</small>
       `;
       return row;
     });
@@ -998,7 +1017,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       row.className = "market-row trade-command-row";
       const button = document.createElement("button");
       button.type = "button";
-      button.textContent = `下單 ${option.ware} ${option.amount}`;
+      button.textContent = `下單 ${formatWareLabel(option.ware)} ${option.amount}`;
       button.addEventListener("click", () => onTradeCommand?.({
         type: "AssignTrade",
         ship_id: idValue(option.ship_id, "ship"),
@@ -1009,7 +1028,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       }, `Manual trade ${option.ware} @ ${option.station}`));
       row.innerHTML = `
         <strong>${option.station}</strong>
-        <span>${option.action} ${option.ware} · amt:${option.amount} · profit:${option.expected_profit}</span>
+        <span>${formatOfferSide(option.action)} ${formatWareLabel(option.ware)} · 數量:${option.amount} · 預期利潤:${option.expected_profit}cr</span>
       `;
       row.append(button);
       return row;
@@ -1085,7 +1104,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       marketSection("派系錢包", factionRows, "overview"),
       marketSection("市場競爭", competitionRows, "overview"),
       marketSection("手動交易", tradeRows.length ? tradeRows : [Object.assign(document.createElement("div"), { className: "market-row", textContent: "先選取玩家艦船以顯示可下單交易。" })], "trade"),
-      marketSection("Order Book", offerRows, "orders"),
+      marketSection("訂單簿", offerRows, "orders"),
       marketSection("造船佇列", queueRows, "production"),
       marketSection("航線風險", riskRows, "risk"),
       marketSection("海盜衝擊", pirateImpactRows, "risk"),
