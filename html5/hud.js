@@ -87,6 +87,24 @@ function formatMissionDescription(description = "") {
   return labels[description] || description;
 }
 
+function formatMissionReward(reward = 0) {
+  return `獎勵 ${reward} 銀河幣 credits`;
+}
+
+function formatFactionName(name = "") {
+  const labels = {
+    Player: "玩家 Player",
+    FreeTradersGuild: "自由商會 Free Traders Guild",
+    "Free Traders Guild": "自由商會 Free Traders Guild",
+    CoreAuthority: "核心政權 Core Authority",
+    "Core Authority": "核心政權 Core Authority",
+    CivilianSecurity: "民防巡邏 Civilian Security",
+    "Civilian Security": "民防巡邏 Civilian Security",
+    Pirates: "海盜 Pirates",
+  };
+  return labels[name] || name;
+}
+
 function formatFactionStanceLabel(stance = "") {
   const labels = {
     Player: "玩家",
@@ -988,7 +1006,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
   missions.replaceChildren(...snapshot.hud.missions.map((mission) => {
     const row = document.createElement("div");
     row.className = `mission ${mission.completed ? "completed" : ""}`;
-    row.innerHTML = `<span>${mission.completed ? "✓" : "○"}</span><strong>${formatMissionDescription(mission.description)}</strong><small>獎勵 ${mission.reward} credits</small>`;
+    row.innerHTML = `<span>${mission.completed ? "✓" : "○"}</span><strong>${formatMissionDescription(mission.description)}</strong><small>${formatMissionReward(mission.reward)}</small>`;
     return row;
   }));
 
@@ -1005,7 +1023,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       const row = document.createElement("div");
       row.className = "market-row faction-row";
       row.innerHTML = `
-        <strong>${faction.name || faction.faction}</strong>
+        <strong>${formatFactionName(faction.name || faction.faction)}</strong>
         <span>${faction.credits}cr · 站點:${faction.owned_stations} · 艦船:${faction.owned_ships}</span>
       `;
       return row;
@@ -1015,7 +1033,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       const row = document.createElement("div");
       row.className = "market-row faction-pressure-row";
       row.innerHTML = `
-        <strong>${pressure.name || pressure.faction} · ${formatFactionStanceLabel(pressure.stance)}</strong>
+        <strong>${formatFactionName(pressure.name || pressure.faction)} · ${formatFactionStanceLabel(pressure.stance)}</strong>
         <span>勢力壓力 ${formatPercent(pressure.pressure_score)} · 交易 ${formatPercent(pressure.trade_activity)} · 治安 ${formatPercent(pressure.security_coverage)} · 海盜 ${formatPercent(pressure.pirate_pressure)}</span>
         <small>${pressure.doctrine}</small>
         <small>${pressure.headline}</small>
@@ -1029,7 +1047,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       row.innerHTML = `
         <strong>${formatOfferSide(offer.side)} ${formatWareLabel(offer.ware)}</strong>
         <span>${offer.station} · ${offer.price}cr · 數量:${offer.amount}</span>
-        <small>${offer.owner} · 已保留:${offer.reserved || 0}</small>
+        <small>${formatFactionName(offer.owner)} · 已保留:${offer.reserved || 0}</small>
       `;
       return row;
     });
@@ -1050,7 +1068,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       row.className = "market-row build-row";
       row.innerHTML = `
         <strong>${queue.station}</strong>
-        <span>${queue.owner} 正在建造 ${formatBlueprintLabel(queue.blueprint)} · ${formatPercent(queue.progress)}</span>
+        <span>${formatFactionName(queue.owner)} 正在建造 ${formatBlueprintLabel(queue.blueprint)} · ${formatPercent(queue.progress)}</span>
         <small>需要 ${formatInventory(queue.required)} · 缺 ${formatInventory(queue.missing || {})} · 剩餘 ${formatSeconds(queue.remaining_seconds)}</small>
         <small>${queue.ready ? "材料已就緒" : "等待物流補料"}</small>
       `;
@@ -1185,7 +1203,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       ].filter(Boolean).join(" ｜ ");
       row.innerHTML = `
         <strong>${station.name}</strong>
-        <span>${formatStationKindLabel(station.kind)} · ${station.owner} · 現金:${station.credits}cr</span>
+        <span>${formatStationKindLabel(station.kind)} · ${formatFactionName(station.owner)} · 現金:${station.credits}cr</span>
         <small>模組 ${formatModuleList(station.modules || [])}</small>
         <small>庫存 ${formatInventory(station.inventory)} / 容量 ${formatInventory(station.capacity)}</small>
         <small>保留 入:${reservedIn} · 出:${reservedOut}</small>
