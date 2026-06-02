@@ -292,15 +292,21 @@ body { min-height: 100vh; touch-action: none; }
   padding: 6px;
 }
 .command-return-harvest .return-harvest-header {
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 6px;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 2px;
 }
-.command-return-harvest .return-harvest-header span,
+.command-return-harvest .return-harvest-header span {
+  overflow: visible;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  text-overflow: clip;
+}
 .command-return-harvest .return-harvest-header strong {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  text-overflow: clip;
 }
 .command-return-harvest .return-harvest-metrics { gap: 4px; }
 .command-return-harvest .return-harvest-metric { padding: 3px 5px; }

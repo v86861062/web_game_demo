@@ -1,7 +1,19 @@
+function formatWareLabel(key = "") {
+  const labels = {
+    energy: "能源 Energy",
+    ore: "礦石 Ore",
+    metal: "金屬 Metal",
+    Energy: "能源 Energy",
+    Ore: "礦石 Ore",
+    Metal: "金屬 Metal",
+  };
+  return labels[key] || key;
+}
+
 function formatInventory(inventory = {}, emptyLabel = "無貨物") {
   const parts = [];
   for (const [key, value] of Object.entries(inventory)) {
-    if (value) parts.push(`${key}:${value}`);
+    if (value) parts.push(`${formatWareLabel(key)}:${value}`);
   }
   return parts.length ? parts.join(" · ") : emptyLabel;
 }
@@ -9,7 +21,7 @@ function formatInventory(inventory = {}, emptyLabel = "無貨物") {
 function formatPriceLines(prefix, prices = {}) {
   return Object.entries(prices)
     .filter(([, value]) => value)
-    .map(([ware, value]) => `${prefix} ${ware}:${value}`)
+    .map(([ware, value]) => `${prefix} ${formatWareLabel(ware)}:${value}`)
     .join(" · ");
 }
 
@@ -19,7 +31,11 @@ function formatTags(label, values = []) {
 
 function formatTradePlan(plan) {
   if (!plan) return "";
-  return `${plan.ware} ${plan.amount} · ${plan.source} → ${plan.destination} · +${plan.profit}cr`;
+  return `${formatWareLabel(plan.ware)} ${plan.amount} · ${plan.source} → ${plan.destination} · +${plan.profit}cr`;
+}
+
+function formatResourceRate(value, key) {
+  return `${Math.round(value || 0)} ${formatWareLabel(key)}/h`;
 }
 
 function formatPercent(value) {
@@ -397,7 +413,7 @@ function returnHarvestHandoffCard(action, card, dashboard = {}, reportHistory = 
   const expectedEffect = assignmentAction?.expected_effect || "把剛收回來的資源轉成瓶頸處理，維持離線收益成長。";
   const relief = dashboard.bottleneck_relief_summary || `瓶頸處理中 ${Math.max(1, Number(dashboard.bottlenecks_in_progress || 0))}/${(dashboard.bottlenecks || []).length || 1}`;
   const rates = dashboard.resource_rates || {};
-  const incomeLine = `收益預估：${Math.round(dashboard.credits_per_hour_estimate || 0)}cr/h · ${Math.round(rates.ore_per_hour || 0)}ore/h · ${Math.round(rates.metal_per_hour || 0)}metal/h`;
+  const incomeLine = `收益預估：${Math.round(dashboard.credits_per_hour_estimate || 0)}cr/h · ${formatResourceRate(rates.ore_per_hour, "ore")} · ${formatResourceRate(rates.metal_per_hour, "metal")}`;
   const nextGoalLine = `下一個升級：${dashboard.next_goal || "累積資源，準備下一輪擴張"}`;
 
   const copy = document.createElement("span");
@@ -441,7 +457,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
     const firstSessionReward = (firstSessionGoal.reward_summary || "下一個獎勵：+1 Trader").split("，")[0];
     const firstSessionRoute = firstSessionGoal.route_summary || "第一航線：等待最佳 Energy 航線";
     const incomeRows = [
-      textRow(`${Math.round(dashboard.credits_per_hour_estimate || 0)} cr/h · ${Math.round(rates.ore_per_hour || 0)} ore/h · ${Math.round(rates.metal_per_hour || 0)} metal/h`, "command-center-kpi"),
+      textRow(`${Math.round(dashboard.credits_per_hour_estimate || 0)} cr/h · ${formatResourceRate(rates.ore_per_hour, "ore")} · ${formatResourceRate(rates.metal_per_hour, "metal")}`, "command-center-kpi"),
       textRow(dashboard.top_route ? `最佳物流：${dashboard.top_route}` : "最佳物流：等待正利潤路線"),
     ];
     const resultRows = (dashboard.recent_results || []).slice(0, 3).map((result) => textRow(result));
@@ -702,7 +718,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         idleHomeCard(
           "收益",
           `估計收益 ${Math.round(dashboard.credits_per_hour_estimate || 0)}cr/h`,
-          `${Math.round(rates.ore_per_hour || 0)} ore/h · ${Math.round(rates.metal_per_hour || 0)} metal/h · ${dashboard.income_estimate_basis || "等待第一筆交易"}`,
+          `${formatResourceRate(rates.ore_per_hour, "ore")} · ${formatResourceRate(rates.metal_per_hour, "metal")} · ${dashboard.income_estimate_basis || "等待第一筆交易"}`,
         ),
         idleHomeCard(
           "最近成果",
@@ -919,7 +935,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       row.innerHTML = `
         <strong>${queue.station}</strong>
         <span>${queue.owner} building ${queue.blueprint} · ${formatPercent(queue.progress)}</span>
-        <small>needs ${formatInventory(queue.required)} · missing ${formatInventory(queue.missing || {})} · ETA ${Number(queue.remaining_seconds || 0).toFixed(0)}s</small>
+        <small>需要 ${formatInventory(queue.required)} · 缺 ${formatInventory(queue.missing || {})} · ETA ${Number(queue.remaining_seconds || 0).toFixed(0)}s</small>
         <small>${queue.ready ? "材料已就緒" : "等待物流補料"}</small>
       `;
       return row;
