@@ -151,10 +151,21 @@ function formatInventory(inventory = {}, emptyLabel = "無貨物") {
   return parts.length ? parts.join(" · ") : emptyLabel;
 }
 
+function formatCredits(value, { signed = false } = {}) {
+  const credits = Math.round(Number(value || 0));
+  const sign = signed && credits >= 0 ? "+" : "";
+  return `${sign}${credits} 銀河幣 credits`;
+}
+
+function formatUnitPrice(value) {
+  if (value === undefined || value === null || value === "" || value === "--") return "--";
+  return `${Math.round(Number(value || 0))} 銀河幣 credits`;
+}
+
 function formatPriceLines(prefix, prices = {}) {
   return Object.entries(prices)
     .filter(([, value]) => value)
-    .map(([ware, value]) => `${prefix} ${formatWareLabel(ware)}:${value}`)
+    .map(([ware, value]) => `${prefix} ${formatWareLabel(ware)}:${formatUnitPrice(value)}`)
     .join(" · ");
 }
 
@@ -187,8 +198,7 @@ function inventoryTotal(inventory = {}) {
 }
 
 function formatSignedCredits(value) {
-  const credits = Math.round(Number(value || 0));
-  return `${credits >= 0 ? "+" : ""}${credits}cr`;
+  return formatCredits(value, { signed: true });
 }
 
 function bestReportShip(report = {}) {
@@ -568,11 +578,11 @@ function returnHarvestHandoffCard(action, card, dashboard = {}, reportHistory = 
   handoff.setAttribute("aria-label", "成果已收取後的下一步");
   const latestHistory = reportHistory[reportHistory.length - 1] || {};
   const bottleneck = dashboard.current_bottleneck || (dashboard.bottlenecks || [])[0] || "目前瓶頸待確認";
-  const expectedEffect = assignmentAction?.expected_effect || "把剛收回來的資源轉成瓶頸處理，維持離線收益成長。";
-  const relief = dashboard.bottleneck_relief_summary || `瓶頸處理中 ${Math.max(1, Number(dashboard.bottlenecks_in_progress || 0))}/${(dashboard.bottlenecks || []).length || 1}`;
+  const expectedEffect = localizeCommandCopy(assignmentAction?.expected_effect || "把剛收回來的資源轉成瓶頸處理，維持離線收益成長。");
+  const relief = localizeCommandCopy(dashboard.bottleneck_relief_summary || `瓶頸處理中 ${Math.max(1, Number(dashboard.bottlenecks_in_progress || 0))}/${(dashboard.bottlenecks || []).length || 1}`);
   const rates = dashboard.resource_rates || {};
-  const incomeLine = `收益預估：${Math.round(dashboard.credits_per_hour_estimate || 0)}cr/h · ${formatResourceRate(rates.ore_per_hour, "ore")} · ${formatResourceRate(rates.metal_per_hour, "metal")}`;
-  const nextGoalLine = `下一個升級：${dashboard.next_goal || "累積資源，準備下一輪擴張"}`;
+  const incomeLine = localizeCommandCopy(`收益預估：${Math.round(dashboard.credits_per_hour_estimate || 0)}cr/h · ${formatResourceRate(rates.ore_per_hour, "ore")} · ${formatResourceRate(rates.metal_per_hour, "metal")}`);
+  const nextGoalLine = localizeCommandCopy(`下一個升級：${dashboard.next_goal || "累積資源，準備下一輪擴張"}`);
 
   const copy = document.createElement("span");
   copy.innerHTML = isProcessing ? `
@@ -1049,7 +1059,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       row.className = "market-row faction-row";
       row.innerHTML = `
         <strong>${formatFactionName(faction.name || faction.faction)}</strong>
-        <span>${faction.credits}cr · 站點:${faction.owned_stations} · 艦船:${faction.owned_ships}</span>
+        <span>${formatCredits(faction.credits)} · 站點:${faction.owned_stations} · 艦船:${faction.owned_ships}</span>
       `;
       return row;
     });
@@ -1071,7 +1081,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       row.className = "market-row offer-row";
       row.innerHTML = `
         <strong>${formatOfferSide(offer.side)} ${formatWareLabel(offer.ware)}</strong>
-        <span>${offer.station} · ${offer.price}cr · 數量:${offer.amount}</span>
+        <span>${offer.station} · ${formatUnitPrice(offer.price)} · 數量:${offer.amount}</span>
         <small>${formatFactionName(offer.owner)} · 已保留:${offer.reserved || 0}</small>
       `;
       return row;
@@ -1082,8 +1092,8 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       row.className = "market-row competition-row";
       row.innerHTML = `
         <strong>${formatWareLabel(competition.ware)} 競價</strong>
-        <span>買 ${competition.best_buy_price || "--"} @ ${competition.best_buy_station || "--"} · 賣 ${competition.best_sell_price || "--"} @ ${competition.best_sell_station || "--"}</span>
-        <small>價差:${competition.spread} · 買方:${competition.competing_buyers} · 賣方:${competition.competing_sellers}</small>
+        <span>買 ${competition.best_buy_station ? formatUnitPrice(competition.best_buy_price) : "--"} @ ${competition.best_buy_station || "--"} · 賣 ${competition.best_sell_station ? formatUnitPrice(competition.best_sell_price) : "--"} @ ${competition.best_sell_station || "--"}</span>
+        <small>價差:${formatUnitPrice(competition.spread)} · 買方:${competition.competing_buyers} · 賣方:${competition.competing_sellers}</small>
       `;
       return row;
     });
@@ -1168,7 +1178,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       }, `Manual trade ${option.ware} @ ${option.station}`));
       row.innerHTML = `
         <strong>${option.station}</strong>
-        <span>${formatOfferSide(option.action)} ${formatWareLabel(option.ware)} · 數量:${option.amount} · 預期利潤:${option.expected_profit}cr</span>
+        <span>${formatOfferSide(option.action)} ${formatWareLabel(option.ware)} · 數量:${option.amount} · 預期利潤:${formatCredits(option.expected_profit, { signed: true })}</span>
       `;
       row.append(button);
       return row;
@@ -1206,7 +1216,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       }, `Buy ${upgrade.name}`));
       row.innerHTML = `
         <strong>${upgrade.name} Lv.${upgrade.level}</strong>
-        <span>${upgrade.cost}cr · ${upgrade.effect}</span>
+        <span>${formatCredits(upgrade.cost)} · ${upgrade.effect}</span>
         <small>目前：${upgrade.current_value || "--"}</small>
         <small>升級後：${upgrade.next_value || "--"} · ${upgrade.delta_value || ""}</small>
         <small>${upgrade.expected_effect || "預期效果：購買後立即提升艦隊營運效率"}</small>
@@ -1228,7 +1238,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       ].filter(Boolean).join(" ｜ ");
       row.innerHTML = `
         <strong>${station.name}</strong>
-        <span>${formatStationKindLabel(station.kind)} · ${formatFactionName(station.owner)} · 現金:${station.credits}cr</span>
+        <span>${formatStationKindLabel(station.kind)} · ${formatFactionName(station.owner)} · 現金:${formatCredits(station.credits)}</span>
         <small>模組 ${formatModuleList(station.modules || [])}</small>
         <small>庫存 ${formatInventory(station.inventory)} / 容量 ${formatInventory(station.capacity)}</small>
         <small>保留 入:${reservedIn} · 出:${reservedOut}</small>
