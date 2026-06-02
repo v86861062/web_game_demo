@@ -607,9 +607,9 @@ function returnHarvestHandoffCard(action, card, dashboard = {}, reportHistory = 
 
 export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssignmentCommand, onAcknowledgeOfflineReport, onContractMilestoneCommand, onSeekChronoCam } = {}) {
   if (!snapshot) return;
-  document.querySelector("#credits").textContent = String(snapshot.hud.credits);
+  document.querySelector("#credits").textContent = formatCredits(snapshot.hud.credits);
   document.querySelector("#resource-summary").textContent = formatInventory(snapshot.hud.resources);
-  document.querySelector("#time-summary").textContent = `${snapshot.time.toFixed(1)}s · ${snapshot.hud.paused ? "paused" : `${snapshot.hud.speed}x`}`;
+  document.querySelector("#time-summary").textContent = `${snapshot.time.toFixed(1)}秒 · ${snapshot.hud.paused ? "暫停" : `${snapshot.hud.speed}x`}`;
   document.querySelector("#latest-event").textContent = snapshot.hud.latest_event || "--";
 
   const ships = document.querySelector("#ship-list");
