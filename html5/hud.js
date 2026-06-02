@@ -64,6 +64,29 @@ function formatAlertKind(kind = "") {
   return labels[kind] || kind;
 }
 
+function formatChronoModeLabel(mode = "") {
+  const labels = {
+    Live: "即時 Live",
+    Replay: "回放 Replay",
+  };
+  return labels[mode] || mode || "--";
+}
+
+function formatChronoFollowLabel(chrono = {}) {
+  if (chrono.follow_live) return "跟隨即時尾端";
+  return chrono.mode === "Replay" ? "固定回放時間" : "不跟隨即時";
+}
+
+function formatMissionDescription(description = "") {
+  const labels = {
+    "Explore 3 sectors": "探索 3 個星區",
+    "Complete first ore sale": "完成第一筆礦石 Ore 銷售",
+    "Deliver energy to mine": "運送能源 Energy 到採礦站 Mine",
+    "Reach 900 credits": "累積 900 credits 資金",
+  };
+  return labels[description] || description;
+}
+
 function formatFactionStanceLabel(stance = "") {
   const labels = {
     Player: "玩家",
@@ -965,7 +988,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
   missions.replaceChildren(...snapshot.hud.missions.map((mission) => {
     const row = document.createElement("div");
     row.className = `mission ${mission.completed ? "completed" : ""}`;
-    row.innerHTML = `<span>${mission.completed ? "✓" : "○"}</span><strong>${mission.description}</strong><small>${mission.reward} credits</small>`;
+    row.innerHTML = `<span>${mission.completed ? "✓" : "○"}</span><strong>${formatMissionDescription(mission.description)}</strong><small>獎勵 ${mission.reward} credits</small>`;
     return row;
   }));
 
@@ -1191,8 +1214,8 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
   }
 
   const chrono = snapshot.chronocam || {};
-  document.querySelector("#chronocam-mode").textContent = chrono.mode || "--";
+  document.querySelector("#chronocam-mode").textContent = formatChronoModeLabel(chrono.mode);
   document.querySelector("#chronocam-view-time").textContent = `${Number(chrono.view_time || 0).toFixed(1)}s`;
-  document.querySelector("#chronocam-follow").textContent = chrono.follow_live ? "Live tail" : "Replay fixed";
+  document.querySelector("#chronocam-follow").textContent = formatChronoFollowLabel(chrono);
   document.querySelector("#chronocam-panel")?.classList.toggle("replay", chrono.mode === "Replay");
 }

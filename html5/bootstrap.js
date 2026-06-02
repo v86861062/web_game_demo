@@ -59,7 +59,7 @@ function seekChronoCam(seconds) {
 function returnChronoCamLive() {
   engine.return_to_live();
   publishSnapshot();
-  status("ChronoCam 已回到 Live");
+  status("ChronoCam 已回到即時");
 }
 
 function publishSnapshot() {
