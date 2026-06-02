@@ -356,6 +356,13 @@ function localizeCommandCopy(text = "") {
     .replace(/×\s*(\d+)\/h\b/g, "× $1/小時");
 }
 
+function localizeEventCopy(text = "") {
+  return localizeCommandCopy(text)
+    .replace(/^Mission complete:\s*/i, "任務完成：")
+    .replace(/\s*\(\+(\d+)\s+credits\)\.?$/i, "（+$1 銀河幣 credits）。")
+    .replace(/\s*\(\+(\d+)\s+銀河幣 credits\)\.?$/i, "（+$1 銀河幣 credits）。");
+}
+
 function textRow(text, className = "command-center-row") {
   const row = document.createElement("div");
   row.className = className;
@@ -610,7 +617,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
   document.querySelector("#credits").textContent = formatCredits(snapshot.hud.credits);
   document.querySelector("#resource-summary").textContent = formatInventory(snapshot.hud.resources);
   document.querySelector("#time-summary").textContent = `${snapshot.time.toFixed(1)}秒 · ${snapshot.hud.paused ? "暫停" : `${snapshot.hud.speed}x`}`;
-  document.querySelector("#latest-event").textContent = snapshot.hud.latest_event || "尚無事件";
+  document.querySelector("#latest-event").textContent = localizeEventCopy(snapshot.hud.latest_event || "尚無事件");
 
   const ships = document.querySelector("#ship-list");
   const dashboard = snapshot.fleet_dashboard || {};
@@ -1059,7 +1066,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       row.className = "market-row faction-row";
       row.innerHTML = `
         <strong>${formatFactionName(faction.name || faction.faction)}</strong>
-        <span>${formatCredits(faction.credits)} · 站點:${faction.owned_stations} · 艦船:${faction.owned_ships}</span>
+        <span>${formatCredits(faction.credits)} · 站點 ${faction.owned_stations} · 艦船 ${faction.owned_ships}</span>
       `;
       return row;
     });
@@ -1081,8 +1088,8 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       row.className = "market-row offer-row";
       row.innerHTML = `
         <strong>${formatOfferSide(offer.side)} ${formatWareLabel(offer.ware)}</strong>
-        <span>${offer.station} · ${formatUnitPrice(offer.price)} · 數量:${offer.amount}</span>
-        <small>${formatFactionName(offer.owner)} · 已保留:${offer.reserved || 0}</small>
+        <span>${offer.station} · ${formatUnitPrice(offer.price)} · 數量 ${offer.amount}</span>
+        <small>${formatFactionName(offer.owner)} · 已保留 ${offer.reserved || 0}</small>
       `;
       return row;
     });
@@ -1093,7 +1100,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       row.innerHTML = `
         <strong>${formatWareLabel(competition.ware)} 競價</strong>
         <span>買 ${competition.best_buy_station ? formatUnitPrice(competition.best_buy_price) : "--"} @ ${competition.best_buy_station || "--"} · 賣 ${competition.best_sell_station ? formatUnitPrice(competition.best_sell_price) : "--"} @ ${competition.best_sell_station || "--"}</span>
-        <small>價差:${formatUnitPrice(competition.spread)} · 買方:${competition.competing_buyers} · 賣方:${competition.competing_sellers}</small>
+        <small>價差 ${formatUnitPrice(competition.spread)} · 買方 ${competition.competing_buyers} · 賣方 ${competition.competing_sellers}</small>
       `;
       return row;
     });
@@ -1115,7 +1122,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       row.className = "market-row risk-row";
       row.innerHTML = `
         <strong>${risk.strategy_summary || `${risk.from} → ${risk.to}`}</strong>
-        <span>風險 ${formatPercent(risk.risk)} · 襲擊:${risk.recent_raids} · 巡邏覆蓋 ${formatPercent(risk.patrol_coverage || 0)}</span>
+        <span>風險 ${formatPercent(risk.risk)} · 襲擊 ${risk.recent_raids} · 巡邏覆蓋 ${formatPercent(risk.patrol_coverage || 0)}</span>
         <small>${risk.escort_hint || "護航交易：等待高價貨物"}</small>
         <small>${risk.expected_effect || "預期效果：派巡邏或護航後降低下一輪貨損風險"}</small>
       `;
@@ -1138,8 +1145,8 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       row.className = "market-row pirate-impact-row";
       row.innerHTML = `
         <strong>${impact.route}</strong>
-        <span>海盜衝擊 ${formatPercent(impact.risk)} · 襲擊:${impact.recent_raids}</span>
-        <small>受影響報價:${impact.affected_offers} · 風險溢價:${impact.buy_price_premium}%</small>
+        <span>海盜衝擊 ${formatPercent(impact.risk)} · 襲擊 ${impact.recent_raids}</span>
+        <small>受影響報價 ${impact.affected_offers} · 風險溢價 ${impact.buy_price_premium}%</small>
       `;
       return row;
     });
@@ -1149,8 +1156,8 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       row.className = "market-row history-row";
       row.innerHTML = `
         <strong>${sample.station} · ${formatWareLabel(sample.ware)}</strong>
-        <span>庫存:${sample.inventory} · 買價:${sample.buy_price} · 賣價:${sample.sell_price}</span>
-        <small>短缺 tick:${sample.shortage_ticks}</small>
+        <span>庫存 ${sample.inventory} · 買價 ${sample.buy_price} · 賣價 ${sample.sell_price}</span>
+        <small>短缺紀錄 ${sample.shortage_ticks} tick</small>
       `;
       return row;
     });
@@ -1178,7 +1185,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       }, `Manual trade ${option.ware} @ ${option.station}`));
       row.innerHTML = `
         <strong>${option.station}</strong>
-        <span>${formatOfferSide(option.action)} ${formatWareLabel(option.ware)} · 數量:${option.amount} · 預期利潤:${formatCredits(option.expected_profit, { signed: true })}</span>
+        <span>${formatOfferSide(option.action)} ${formatWareLabel(option.ware)} · 數量 ${option.amount} · 預期利潤 ${formatCredits(option.expected_profit, { signed: true })}</span>
       `;
       row.append(button);
       return row;
@@ -1213,7 +1220,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       button.addEventListener("click", () => onUpgradeCommand?.({
         type: "BuyUpgrade",
         upgrade: upgrade.id,
-      }, `Buy ${upgrade.name}`));
+      }, `購買 ${upgrade.name}`));
       row.innerHTML = `
         <strong>${upgrade.name} Lv.${upgrade.level}</strong>
         <span>${formatCredits(upgrade.cost)} · ${upgrade.effect}</span>
@@ -1238,10 +1245,10 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       ].filter(Boolean).join(" ｜ ");
       row.innerHTML = `
         <strong>${station.name}</strong>
-        <span>${formatStationKindLabel(station.kind)} · ${formatFactionName(station.owner)} · 現金:${formatCredits(station.credits)}</span>
+        <span>${formatStationKindLabel(station.kind)} · ${formatFactionName(station.owner)} · 現金 ${formatCredits(station.credits)}</span>
         <small>模組 ${formatModuleList(station.modules || [])}</small>
         <small>庫存 ${formatInventory(station.inventory)} / 容量 ${formatInventory(station.capacity)}</small>
-        <small>保留 入:${reservedIn} · 出:${reservedOut}</small>
+        <small>保留：入 ${reservedIn} · 出 ${reservedOut}</small>
         <small>${[buy, sell].filter(Boolean).join(" ｜ ") || "無公開報價"}</small>
         <small>${tags || "供需平衡"}</small>
       `;
