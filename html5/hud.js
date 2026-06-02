@@ -75,6 +75,33 @@ function formatFactionStanceLabel(stance = "") {
   return labels[stance] || stance;
 }
 
+function formatStationKindLabel(kind = "") {
+  const labels = {
+    SolarPlant: "太陽能電廠 Solar Plant",
+    MiningOutpost: "採礦前哨 Mining Outpost",
+    Refinery: "精煉廠 Refinery",
+    TradeStation: "交易站 Trade Station",
+    Shipyard: "船塢 Shipyard",
+  };
+  return labels[kind] || kind;
+}
+
+function formatModuleLabel(module = "") {
+  const labels = {
+    SolarArray: "太陽能陣列 Solar Array",
+    Mine: "採礦模組 Mine",
+    Refinery: "精煉模組 Refinery",
+    Storage: "倉儲 Storage",
+    Dock: "泊位 Dock",
+    Shipyard: "船塢 Shipyard",
+  };
+  return labels[module] || module;
+}
+
+function formatModuleList(modules = []) {
+  return modules.length ? modules.map(formatModuleLabel).join("、") : "基礎模組";
+}
+
 function formatInventory(inventory = {}, emptyLabel = "無貨物") {
   const parts = [];
   for (const [key, value] of Object.entries(inventory)) {
@@ -150,7 +177,7 @@ function formatReportShipyard(report = {}) {
   const update = (report.shipyard_updates || [])[0];
   if (!update) return "船塢：目前沒有建造佇列";
   const missing = formatInventory(update.missing || {}, "材料已備齊");
-  return `船塢：${update.station} · ETA ${formatSeconds(update.eta_seconds)} · 缺 ${missing}`;
+  return `船塢：${update.station} · 剩餘 ${formatSeconds(update.eta_seconds)} · 缺 ${missing}`;
 }
 
 function formatReportRecommendation(report = {}) {
@@ -518,7 +545,8 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
     const reportOutcome = latestReport ? `離線結算：${formatSeconds(latestReport.simulated_seconds)} · ${formatSignedCredits(latestReport.net_credits)} · 貨物 ${formatInventory(latestReport.delivered_cargo)}` : null;
     const rates = dashboard.resource_rates || {};
     const firstSessionGoal = dashboard.first_session_goal || {};
-    const firstSessionEta = (firstSessionGoal.shipyard_summary || "").match(/船塢 ETA [^·]+/)?.[0] || "船塢 ETA --";
+    const firstSessionEta = (firstSessionGoal.shipyard_summary || "").match(/船塢(?: ETA|剩餘) ([^·]+)/)?.[1];
+    const firstSessionEtaLabel = firstSessionEta ? `船塢剩餘 ${firstSessionEta}` : "船塢剩餘 --";
     const firstSessionReward = (firstSessionGoal.reward_summary || "下一個獎勵：+1 交易船 Trader").split("，")[0];
     const firstSessionRoute = firstSessionGoal.route_summary || "第一航線：等待最佳能源 Energy 航線";
     const incomeRows = [
@@ -799,7 +827,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         idleHomeCard(
           "下一目標",
           dashboard.next_goal || "累積資源準備擴張",
-          `首分鐘目標：能源 Energy → 礦石 Ore → 金屬 Metal · ${firstSessionReward} · ${firstSessionEta}`,
+          `首分鐘目標：能源 Energy → 礦石 Ore → 金屬 Metal · ${firstSessionReward} · ${firstSessionEtaLabel}`,
           "first-session-goal",
         ),
       );
@@ -955,7 +983,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       row.className = "market-row faction-row";
       row.innerHTML = `
         <strong>${faction.name || faction.faction}</strong>
-        <span>${faction.credits}cr · stations:${faction.owned_stations} · ships:${faction.owned_ships}</span>
+        <span>${faction.credits}cr · 站點:${faction.owned_stations} · 艦船:${faction.owned_ships}</span>
       `;
       return row;
     });
@@ -1000,7 +1028,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       row.innerHTML = `
         <strong>${queue.station}</strong>
         <span>${queue.owner} 正在建造 ${formatBlueprintLabel(queue.blueprint)} · ${formatPercent(queue.progress)}</span>
-        <small>需要 ${formatInventory(queue.required)} · 缺 ${formatInventory(queue.missing || {})} · ETA ${Number(queue.remaining_seconds || 0).toFixed(0)}s</small>
+        <small>需要 ${formatInventory(queue.required)} · 缺 ${formatInventory(queue.missing || {})} · 剩餘 ${formatSeconds(queue.remaining_seconds)}</small>
         <small>${queue.ready ? "材料已就緒" : "等待物流補料"}</small>
       `;
       return row;
@@ -1011,7 +1039,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       row.className = "market-row risk-row";
       row.innerHTML = `
         <strong>${risk.strategy_summary || `${risk.from} → ${risk.to}`}</strong>
-        <span>風險 ${formatPercent(risk.risk)} · raids:${risk.recent_raids} · 巡邏覆蓋 ${formatPercent(risk.patrol_coverage || 0)}</span>
+        <span>風險 ${formatPercent(risk.risk)} · 襲擊:${risk.recent_raids} · 巡邏覆蓋 ${formatPercent(risk.patrol_coverage || 0)}</span>
         <small>${risk.escort_hint || "護航交易：等待高價貨物"}</small>
         <small>${risk.expected_effect || "預期效果：派巡邏或護航後降低下一輪貨損風險"}</small>
       `;
@@ -1134,8 +1162,8 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       ].filter(Boolean).join(" ｜ ");
       row.innerHTML = `
         <strong>${station.name}</strong>
-        <span>${station.kind} · ${station.owner} · cash:${station.credits}</span>
-        <small>mods ${(station.modules || []).join(",") || "basic"}</small>
+        <span>${formatStationKindLabel(station.kind)} · ${station.owner} · 現金:${station.credits}cr</span>
+        <small>模組 ${formatModuleList(station.modules || [])}</small>
         <small>庫存 ${formatInventory(station.inventory)} / 容量 ${formatInventory(station.capacity)}</small>
         <small>保留 入:${reservedIn} · 出:${reservedOut}</small>
         <small>${[buy, sell].filter(Boolean).join(" ｜ ") || "無公開報價"}</small>
