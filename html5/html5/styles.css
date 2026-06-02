@@ -360,6 +360,17 @@ body { min-height: 100vh; touch-action: none; }
   overflow: visible;
   overflow-wrap: anywhere;
 }
+
+@media (max-width: 430px) {
+  .idle-command-brief {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+    padding: 4px;
+  }
+  .idle-brief-pill {
+    padding: 4px 5px;
+  }
+}
 .idle-command-hero {
   display: grid;
   gap: 8px;

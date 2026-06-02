@@ -454,8 +454,8 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
     const rates = dashboard.resource_rates || {};
     const firstSessionGoal = dashboard.first_session_goal || {};
     const firstSessionEta = (firstSessionGoal.shipyard_summary || "").match(/船塢 ETA [^·]+/)?.[0] || "船塢 ETA --";
-    const firstSessionReward = (firstSessionGoal.reward_summary || "下一個獎勵：+1 Trader").split("，")[0];
-    const firstSessionRoute = firstSessionGoal.route_summary || "第一航線：等待最佳 Energy 航線";
+    const firstSessionReward = (firstSessionGoal.reward_summary || "下一個獎勵：+1 交易船 Trader").split("，")[0];
+    const firstSessionRoute = firstSessionGoal.route_summary || "第一航線：等待最佳能源 Energy 航線";
     const incomeRows = [
       textRow(`${Math.round(dashboard.credits_per_hour_estimate || 0)} cr/h · ${formatResourceRate(rates.ore_per_hour, "ore")} · ${formatResourceRate(rates.metal_per_hour, "metal")}`, "command-center-kpi"),
       textRow(dashboard.top_route ? `最佳物流：${dashboard.top_route}` : "最佳物流：等待正利潤路線"),
@@ -647,10 +647,10 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
     const expansionRows = [
       textRow(expansionCadence.current_phase || "下一個星區：派 Scout 開路後解鎖新航線"),
       textRow(expansionCadence.next_sector || "下一個星區：等待偵查目標"),
-      textRow(expansionCadence.contract_summary || "物流合約：跑 Energy / Ore 合約，累積擴張資金"),
+      textRow(expansionCadence.contract_summary || "物流合約：跑能源 Energy / 礦石 Ore 合約，累積擴張資金"),
       textRow(expansionCadence.station_investment || "站點投資：補 Forge / Shipyard 材料，把收益轉成艦隊規模"),
       textRow(expansionCadence.expected_unlock || "預期解鎖：更多航線、合約入口與艦隊容量"),
-      ...(recurringContractRows.length ? recurringContractRows : [textRow("週期合約：等待正利潤航線，先補 Energy / Ore 供應")]),
+      ...(recurringContractRows.length ? recurringContractRows : [textRow("週期合約：等待正利潤航線，先補能源 Energy / 礦石 Ore 供應")]),
       textRow("可承接合約池：交易 / 採礦 / 護航", "command-center-row available-contract-summary"),
       ...(availableContractRows.length ? availableContractRows : [textRow("可承接合約池：等待市場、礦區或風險航線資料", "command-center-row available-contract-row")]),
       textRow("合約成果履歷：交易 / 採礦 / 護航收益", "command-center-row contract-payoff-summary"),
@@ -661,8 +661,8 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       ...(contractTypeUnlockRows.length ? contractTypeUnlockRows : [textRow("合約專精解鎖：等待更多成果樣本", "command-center-row contract-type-unlock-row")]),
       ...(contractMilestoneRows.length ? contractMilestoneRows : [textRow("合約里程碑：連跑 3 趟後解鎖連跑加成")]),
       ...(investmentChoiceRows.length ? investmentChoiceRows : [textRow("投資選擇：等待站點材料缺口或船塢佇列")]),
-      textRow("中期目標鏈：+1 Trader → 雙線合約 → Cargo Hold → 下一星區", "command-center-row midgame-chain-summary"),
-      ...(midgameGoalRows.length ? midgameGoalRows : [textRow("中期目標鏈：+1 Trader → 雙線合約 → Cargo Hold → 下一星區")]),
+      textRow("中期目標鏈：+1 交易船 Trader → 雙線合約 → Cargo Hold → 下一星區", "command-center-row midgame-chain-summary"),
+      ...(midgameGoalRows.length ? midgameGoalRows : [textRow("中期目標鏈：+1 交易船 Trader → 雙線合約 → Cargo Hold → 下一星區")]),
       ...(unlockReportRows.length ? unlockReportRows : [textRow("星區解鎖報告：等待偵查資料")]),
       ...expansionStepRows,
     ];
@@ -689,7 +689,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       ["收益", `估計 ${Math.round(dashboard.credits_per_hour_estimate || 0)}cr/h`],
       ["瓶頸", (dashboard.bottlenecks || [])[0] || "目前順暢"],
       ["下一步", `建議行動：${(dashboard.recommended_actions || [])[0]?.label || "等待建議"}`],
-      ["目標", dashboard.next_goal || "+1 Trader"],
+      ["目標", dashboard.next_goal || "+1 交易船 Trader"],
     ];
     const idleBrief = (() => {
       const brief = document.createElement("section");
@@ -734,7 +734,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         idleHomeCard(
           "下一目標",
           dashboard.next_goal || "累積資源準備擴張",
-          `首分鐘目標：Energy → Ore → Metal · ${firstSessionReward} · ${firstSessionEta}`,
+          `首分鐘目標：能源 Energy → 礦石 Ore → 金屬 Metal · ${firstSessionReward} · ${firstSessionEta}`,
           "first-session-goal",
         ),
       );
@@ -783,7 +783,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       ...(!latestReport && investmentQuickRow ? [investmentQuickRow] : []),
       idleHero,
       textRow(`第一航線：${firstSessionRoute.replace(/^第一航線：/, "")}`, "command-center-row first-route"),
-      textRow("進度路線：Energy → Ore → Metal → 下一艘 Trader", "command-center-kpi progression-path"),
+      textRow("進度路線：能源 Energy → 礦石 Ore → 金屬 Metal → 下一艘交易船 Trader", "command-center-kpi progression-path"),
       idleDetailSection("進階：合約/擴張", [
         textRow(expansionSummaryLine, "command-center-kpi expansion-cadence"),
         textRow(expansionDepthLine, "command-center-kpi expansion-depth"),
@@ -793,7 +793,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         ...incomeRows,
         textRow(riskSummaryLine, "command-center-kpi risk-strategy"),
         ...riskStrategyRows,
-        ...(progressionRows.length ? progressionRows : [textRow("Energy → Ore → Metal → 下一艘 Trader")]),
+        ...(progressionRows.length ? progressionRows : [textRow("能源 Energy → 礦石 Ore → 金屬 Metal → 下一艘交易船 Trader")]),
       ], "fleet-detail"),
       idleDetailSection("進階：報告/瓶頸", [
         ...(reportOutcome ? [textRow(reportOutcome), ...resultRows.slice(0, 2)] : (resultRows.length ? resultRows : [textRow("等待艦隊完成第一輪自動任務")])),
