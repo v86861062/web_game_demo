@@ -799,11 +799,15 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         : "等待成果";
       const row = document.createElement("section");
       row.className = "command-center-kpi contract-tuning-summary";
+      const headline = document.createElement("span");
+      headline.className = "contract-tuning-summary-headline";
       const title = document.createElement("strong");
       title.textContent = "合約調校摘要：";
-      const detail = document.createElement("small");
-      detail.textContent = localizeCommandCopy(`交易：${tradeLine} · 護航：風險溢價 ${compactRiskSummary(riskPremiumLine)} · 採礦：低於護航 ${compactMiningSummary(miningGapLine)}`);
-      row.append(title, detail);
+      headline.append(
+        title,
+        document.createTextNode(localizeCommandCopy(`交易：${tradeLine} · 護航：風險溢價 ${compactRiskSummary(riskPremiumLine)} · 採礦：低於護航 ${compactMiningSummary(miningGapLine)}`)),
+      );
+      row.append(headline);
       return row;
     })();
     const contractTypeUnlockRows = (expansionCadence.contract_type_unlocks || []).slice(0, 3).map((unlock) => {
