@@ -312,13 +312,24 @@ function fleetAssignmentButton(action, card, onAssignmentCommand, labelPrefix = 
   return button;
 }
 
+function trimLeadingWhitespaceText(node) {
+  while (node.firstChild?.nodeType === Node.TEXT_NODE && !node.firstChild.textContent.trim()) {
+    node.firstChild.remove();
+  }
+  if (node.firstElementChild) {
+    trimLeadingWhitespaceText(node.firstElementChild);
+  }
+  return node;
+}
+
 function marketSection(title, rows, tab = "overview") {
   const section = document.createElement("section");
   section.className = "market-section";
   section.dataset.marketTab = tab;
   const heading = document.createElement("h3");
   heading.textContent = `${title}：`;
-  section.append(heading, textSeparatorNode(), ...interleaveSemanticSeparators(rows));
+  const compactRows = rows.map((row) => trimLeadingWhitespaceText(row));
+  section.append(heading, textSeparatorNode(), ...interleaveSemanticSeparators(compactRows));
   return section;
 }
 
