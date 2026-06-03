@@ -996,7 +996,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
     fleetSummary.replaceChildren(...kpis.map(([label, value]) => {
       const row = document.createElement("div");
       row.className = "fleet-kpi";
-      row.innerHTML = `<strong>${label}</strong><span>${localizeCommandCopy(value)}</span>`;
+      row.innerHTML = `<strong>${label}：</strong><span>${localizeCommandCopy(value)}</span>`;
       return row;
     }));
   }
