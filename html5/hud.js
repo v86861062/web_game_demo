@@ -1113,13 +1113,13 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       const row = document.createElement("div");
       row.className = "fleet-alert";
       const message = document.createElement("span");
-      message.textContent = `${formatAlertKind(alert.kind)}：${alert.message}`;
-      row.append(message);
       const suggested = chooseAlertAction(alert, fleetCards);
+      message.textContent = `${formatAlertKind(alert.kind)}：${alert.message}${suggested.card ? "｜" : ""}`;
+      row.append(message);
       if (suggested.card) {
         const button = fleetAssignmentButton(suggested, suggested.card, onAssignmentCommand, "一鍵處理");
         button.textContent = `一鍵處理：${suggested.label}`;
-        row.append(textSeparatorNode(), button);
+        row.append(button);
       }
       return row;
     });
