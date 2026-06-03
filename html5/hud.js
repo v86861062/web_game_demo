@@ -1040,7 +1040,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       if (suggested.card) {
         const button = fleetAssignmentButton(suggested, suggested.card, onAssignmentCommand, "一鍵處理");
         button.textContent = `一鍵處理：${suggested.label}`;
-        row.append(document.createTextNode(" "), button);
+        row.append(document.createTextNode(" ｜ "), button);
       }
       return row;
     });
