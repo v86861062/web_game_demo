@@ -1139,12 +1139,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
     const plan = ship.trade_plan
       ? `${ship.trade_plan.ware} ${ship.trade_plan.amount} · POI ${ship.trade_plan.source_poi} → ${ship.trade_plan.destination_poi}`
       : "";
-    row.innerHTML = `
-      <strong>${ship.name}</strong>
-      <span>${formatShipRoleLabel(ship.role)} · ${formatAssignment(assignment)} · ${formatRiskPolicyLabel(card?.risk_policy || "Balanced")}${cargo !== "無貨物" ? ` · 貨物 ${cargo}` : ""}</span>
-      <small>${ship.sector}${ship.target ? ` → ${ship.target}` : ""}${plan ? ` · ${plan}` : ""}</small>
-      ${card?.alert ? `<small>⚠ ${card.alert}</small>` : ""}
-    `;
+    row.innerHTML = `<strong>${ship.name}</strong><span>${formatShipRoleLabel(ship.role)} · ${formatAssignment(assignment)} · ${formatRiskPolicyLabel(card?.risk_policy || "Balanced")}${cargo !== "無貨物" ? ` · 貨物 ${cargo}` : ""}</span><small>${ship.sector}${ship.target ? ` → ${ship.target}` : ""}${plan ? ` · ${plan}` : ""}</small>${card?.alert ? `<small>⚠ ${card.alert}</small>` : ""}`;
     if (card?.ship_id !== undefined && card?.ship_id !== null) {
       const details = document.createElement("details");
       details.className = "ship-actions-details";
