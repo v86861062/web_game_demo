@@ -388,7 +388,7 @@ function idleHomeCard(label, value, detail = "", className = "") {
   title.textContent = `${label}：`;
   const valueNode = document.createElement("span");
   valueNode.textContent = localizeCommandCopy(value);
-  card.append(title, valueNode);
+  card.append(title, textSeparatorNode(), valueNode);
   if (detail) {
     const detailNode = document.createElement("small");
     detailNode.textContent = `｜ ${localizeCommandCopy(detail)}`;
