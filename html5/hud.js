@@ -1158,7 +1158,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
     }
     return row;
   });
-  ships.replaceChildren(...interleaveTextSeparators(shipRows, "\n｜\n"));
+  ships.replaceChildren(...interleaveTextSeparators(shipRows, "｜\n"));
 
   const missions = document.querySelector("#mission-list");
   const missionRows = snapshot.hud.missions.map((mission) => {
