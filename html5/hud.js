@@ -322,15 +322,36 @@ function trimLeadingWhitespaceText(node) {
   return node;
 }
 
+function normalizeMarketRowText(row) {
+  if (!row?.classList?.contains("market-row")) return row;
+  const children = [...row.childNodes];
+  for (const child of children) {
+    if (child.nodeType === Node.TEXT_NODE && !child.textContent.trim()) {
+      child.remove();
+    }
+  }
+  const direct = [...row.childNodes].filter((child) => child.nodeType === Node.ELEMENT_NODE);
+  for (let index = direct.length - 1; index > 0; index -= 1) {
+    const current = direct[index];
+    const previous = direct[index - 1];
+    if (current.classList?.contains("text-content-separator") || previous.classList?.contains("text-content-separator")) {
+      continue;
+    }
+    row.insertBefore(textSeparatorNode("｜ "), current);
+  }
+  return row;
+}
+
 function marketSection(title, rows, tab = "overview") {
   const section = document.createElement("section");
   section.className = "market-section";
   section.dataset.marketTab = tab;
   const heading = document.createElement("h3");
   heading.textContent = `${title}：`;
-  const compactRows = rows.map((row) => trimLeadingWhitespaceText(row));
+  const compactRows = rows.map((row) => normalizeMarketRowText(trimLeadingWhitespaceText(row)));
   const [firstRow, ...remainingRows] = compactRows;
-  section.append(heading, textSeparatorNode());
+  const headingSeparator = firstRow?.classList?.contains("alert-row") ? "\n｜\n" : "｜";
+  section.append(heading, textSeparatorNode(headingSeparator));
   if (firstRow) {
     section.append(firstRow);
   }
