@@ -1077,13 +1077,13 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
   }));
 
   const missions = document.querySelector("#mission-list");
-  missions.replaceChildren(...snapshot.hud.missions.map((mission, index) => {
+  const missionRows = snapshot.hud.missions.map((mission) => {
     const row = document.createElement("div");
     row.className = `mission ${mission.completed ? "completed" : ""}`;
-    const marker = `${index > 0 ? "— " : ""}${mission.completed ? "✓" : "○"}`;
-    row.innerHTML = `<span>${marker}</span><strong>${formatMissionDescription(mission.description)}</strong><small>｜ ${formatMissionReward(mission.reward)}</small>`;
+    row.innerHTML = `<span>${mission.completed ? "✓" : "○"}</span><strong>${formatMissionDescription(mission.description)}</strong><small>｜ ${formatMissionReward(mission.reward)}</small>`;
     return row;
-  }));
+  });
+  missions.replaceChildren(...interleaveTextSeparators(missionRows));
 
   const market = document.querySelector("#market-list");
   if (market) {
@@ -1091,8 +1091,8 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
     const routeRow = document.createElement("div");
     routeRow.className = "market-row best-route";
     routeRow.innerHTML = route
-      ? `<strong>最佳物流</strong><span>${formatTradePlan(route)}</span><small>依站點庫存/價格/容量自動評估</small>`
-      : `<strong>最佳物流</strong><span>暫無正利潤路線</span><small>等待庫存、需求或價格變化</small>`;
+      ? `<strong>最佳物流：</strong><span>${formatTradePlan(route)}</span><small>｜ 依站點庫存/價格/容量自動評估</small>`
+      : `<strong>最佳物流：</strong><span>暫無正利潤路線</span><small>｜ 等待庫存、需求或價格變化</small>`;
 
     const factionRows = (snapshot.market?.factions || []).map((faction) => {
       const row = document.createElement("div");
