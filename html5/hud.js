@@ -1317,7 +1317,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       marketSection("市場歷史", historyRows, "stations"),
       marketSection("站點", stationRows, "stations"),
     ];
-    market.replaceChildren(...interleaveTextSeparators(marketSections));
+    market.replaceChildren(...interleaveSemanticSeparators(marketSections));
   }
 
   const chrono = snapshot.chronocam || {};
