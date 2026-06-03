@@ -363,6 +363,13 @@ function localizeEventCopy(text = "") {
     .replace(/\s*\(\+(\d+)\s+銀河幣 credits\)\.?$/i, "（+$1 銀河幣 credits）。");
 }
 
+function textSeparatorNode(separator = "｜") {
+  const span = document.createElement("span");
+  span.className = "text-content-separator";
+  span.textContent = separator;
+  return span;
+}
+
 function textRow(text, className = "command-center-row") {
   const row = document.createElement("div");
   row.className = className;
@@ -411,7 +418,7 @@ function commandActionRow(action, card, onAssignmentCommand, labelPrefix, classN
   const rawExpected = String(action.expected_effect || "");
   const expectedCopy = rawExpected ? localizeCommandCopy(rawExpected.startsWith("預期") ? rawExpected : `預期效果：${rawExpected}`) : "";
   copy.innerHTML = `<strong>${localizeCommandCopy(action.label)}</strong>${detailCopy ? `<small>｜ ${detailCopy}</small>` : ""}${expectedCopy ? `<small>｜ ${expectedCopy}</small>` : ""}`;
-  row.append(copy, document.createTextNode(" "), fleetAssignmentButton({ ...action, risk_policy: action.risk_policy || "balanced" }, card, onAssignmentCommand, labelPrefix));
+  row.append(copy, textSeparatorNode(), fleetAssignmentButton({ ...action, risk_policy: action.risk_policy || "balanced" }, card, onAssignmentCommand, labelPrefix));
   return row;
 }
 
@@ -823,7 +830,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       const buttons = document.createElement("div");
       buttons.className = "expansion-investment-buttons";
       buttons.append(...interleaveTextSeparators(investmentChoices.map((choice) => investmentButtonForChoice(choice, true)), " "));
-      row.append(copy, document.createTextNode(" "), buttons);
+      row.append(copy, textSeparatorNode(), buttons);
       return row;
     };
     const investmentQuickRow = makeInvestmentQuickRow();
@@ -832,7 +839,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       row.className = "command-center-action expansion-investment-action";
       const copy = document.createElement("span");
       copy.innerHTML = `<strong>${localizeCommandCopy(`投資選擇：${choice.label || "站點投資"}`)}</strong><small>｜ ${localizeCommandCopy(`${choice.target || "下一輪擴張"} · ${choice.cost_summary || "材料待評估"}`)}</small><small>｜ ${localizeCommandCopy(`預期效果：${choice.expected_effect || "改善擴張瓶頸"}`)}</small>`;
-      row.append(copy, document.createTextNode(" "), investmentButtonForChoice(choice));
+      row.append(copy, textSeparatorNode(), investmentButtonForChoice(choice));
       return row;
     });
     const unlockReport = expansionCadence.sector_unlock_report || {};
@@ -941,7 +948,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
           "first-session-goal",
         ),
       ];
-      homeCards.slice(0, -1).forEach((card) => card.append(document.createTextNode("｜")));
+      homeCards.slice(0, -1).forEach((card) => card.append(textSeparatorNode()));
       grid.append(...interleaveTextSeparators(homeCards));
       hero.append(header, grid);
       return hero;
@@ -1040,7 +1047,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       if (suggested.card) {
         const button = fleetAssignmentButton(suggested, suggested.card, onAssignmentCommand, "一鍵處理");
         button.textContent = `一鍵處理：${suggested.label}`;
-        row.append(document.createTextNode(" ｜ "), button);
+        row.append(textSeparatorNode(), button);
       }
       return row;
     });
