@@ -918,10 +918,10 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       const header = document.createElement("div");
       header.className = "idle-hero-header";
       const title = document.createElement("strong");
-      title.textContent = "營運首頁 · 現在按哪個｜";
+      title.textContent = "營運首頁 · 現在按哪個";
       const scope = document.createElement("small");
       scope.textContent = "星圖是局勢，這裡是主操作";
-      header.append(title, scope);
+      header.append(title, textSeparatorNode(), scope);
       const grid = document.createElement("div");
       grid.className = "idle-home-grid";
       const homeCards = [
@@ -950,7 +950,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       ];
       homeCards.slice(0, -1).forEach((card) => card.append(textSeparatorNode()));
       grid.append(...interleaveTextSeparators(homeCards));
-      hero.append(header, grid);
+      hero.append(header, textSeparatorNode(), grid);
       return hero;
     })();
     const primaryActionsSection = (() => {
