@@ -381,6 +381,10 @@ function interleaveTextSeparators(nodes, separator = "\n") {
   return nodes.flatMap((node, index) => (index === 0 ? [node] : [document.createTextNode(separator), node]));
 }
 
+function interleaveSemanticSeparators(nodes, separator = "｜") {
+  return nodes.flatMap((node, index) => (index === 0 ? [node] : [textSeparatorNode(separator), node]));
+}
+
 function idleHomeCard(label, value, detail = "", className = "") {
   const card = document.createElement("div");
   card.className = `idle-home-card ${className}`.trim();
@@ -793,7 +797,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
           type: "ClaimContractMilestone",
           target: Math.round(milestone.target || 0),
         }, `領取合約獎勵 ${Math.round(milestone.target || 0)} 趟`));
-        row.append(document.createTextNode(" "), button);
+        row.append(textSeparatorNode(), button);
       }
       return row;
     });
@@ -1076,7 +1080,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       summary.textContent = "進階派工 / 手動覆寫";
       const actions = document.createElement("div");
       actions.className = "fleet-actions";
-      actions.append(...interleaveTextSeparators(FLEET_ACTIONS.map((action) => fleetAssignmentButton(action, card, onAssignmentCommand, ship.name)), " "));
+      actions.append(...interleaveSemanticSeparators(FLEET_ACTIONS.map((action) => fleetAssignmentButton(action, card, onAssignmentCommand, ship.name))));
       details.append(summary, document.createTextNode("\n"), actions);
       row.append(details);
     }
@@ -1174,10 +1178,10 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         riskActions.append(fleetAssignmentButton({ label: "派巡邏", assignment: "patrol_route_risk", risk_policy: "safe", hint: risk.expected_effect }, patrolCard, onAssignmentCommand, "風險航線"));
       }
       if (escortCard) {
-        if (riskActions.childNodes.length) riskActions.append(document.createTextNode(" "));
+        if (riskActions.childNodes.length) riskActions.append(textSeparatorNode());
         riskActions.append(fleetAssignmentButton({ label: "護航交易", assignment: "escort_high_value_trade", risk_policy: "balanced", hint: risk.escort_hint }, escortCard, onAssignmentCommand, "風險航線"));
       }
-      row.append(document.createTextNode(" "), riskActions);
+      row.append(textSeparatorNode(), riskActions);
       return row;
     });
 
@@ -1228,7 +1232,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         <strong>${option.station}</strong>
         <span>${formatOfferSide(option.action)} ${formatWareLabel(option.ware)} · 數量 ${option.amount} · 預期利潤 ${formatCredits(option.expected_profit, { signed: true })}</span>
       `;
-      row.append(document.createTextNode(" "), button);
+      row.append(textSeparatorNode(), button);
       return row;
     });
 
@@ -1269,7 +1273,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         <small>升級後：${upgrade.next_value || "--"} · ${upgrade.delta_value || ""}</small>
         <small>${upgrade.expected_effect || "預期效果：購買後立即提升艦隊營運效率"}</small>
       `;
-      row.append(document.createTextNode(" "), button);
+      row.append(textSeparatorNode(), button);
       return row;
     });
 
