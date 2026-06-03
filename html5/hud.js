@@ -370,6 +370,10 @@ function textRow(text, className = "command-center-row") {
   return row;
 }
 
+function interleaveTextSeparators(nodes, separator = "\n") {
+  return nodes.flatMap((node, index) => (index === 0 ? [node] : [document.createTextNode(separator), node]));
+}
+
 function idleHomeCard(label, value, detail = "", className = "") {
   const card = document.createElement("div");
   card.className = `idle-home-card ${className}`.trim();
@@ -380,7 +384,7 @@ function idleHomeCard(label, value, detail = "", className = "") {
   card.append(title, valueNode);
   if (detail) {
     const detailNode = document.createElement("small");
-    detailNode.textContent = localizeCommandCopy(detail);
+    detailNode.textContent = `｜ ${localizeCommandCopy(detail)}`;
     card.append(detailNode);
   }
   return card;
@@ -873,12 +877,13 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
     const idleBrief = (() => {
       const brief = document.createElement("section");
       brief.className = "idle-command-brief";
-      brief.append(...briefItems.map(([label, value]) => {
+      const pills = briefItems.map(([label, value], index) => {
         const pill = document.createElement("div");
         pill.className = "idle-brief-pill";
-        pill.innerHTML = `<strong>${label}：</strong><span>${localizeCommandCopy(value)}</span>`;
+        pill.innerHTML = `<strong>${label}：</strong><span>${localizeCommandCopy(value)}</span>${index < briefItems.length - 1 ? `<span aria-hidden="true">｜</span>` : ""}`;
         return pill;
-      }));
+      });
+      brief.append(...interleaveTextSeparators(pills));
       return brief;
     })();
     const idleHero = (() => {
@@ -887,13 +892,13 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       const header = document.createElement("div");
       header.className = "idle-hero-header";
       const title = document.createElement("strong");
-      title.textContent = "營運首頁 · 現在按哪個";
+      title.textContent = "營運首頁 · 現在按哪個｜";
       const scope = document.createElement("small");
       scope.textContent = "星圖是局勢，這裡是主操作";
       header.append(title, scope);
       const grid = document.createElement("div");
       grid.className = "idle-home-grid";
-      grid.append(
+      const homeCards = [
         idleHomeCard(
           "收益",
           `估計收益 ${Math.round(dashboard.credits_per_hour_estimate || 0)}cr/h`,
@@ -916,7 +921,9 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
           `首分鐘目標：能源 Energy → 礦石 Ore → 金屬 Metal · ${firstSessionReward} · ${firstSessionEtaLabel}`,
           "first-session-goal",
         ),
-      );
+      ];
+      homeCards.slice(0, -1).forEach((card) => card.append(document.createTextNode("｜")));
+      grid.append(...interleaveTextSeparators(homeCards));
       hero.append(header, grid);
       return hero;
     })();
@@ -945,7 +952,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       if (quickRow) strip.append(quickRow);
       return strip.childElementCount ? strip : null;
     })() : null;
-    commandCenter.replaceChildren(
+    const commandCenterSections = [
       (() => {
         const title = document.createElement("h2");
         title.textContent = "艦隊指揮中心 · 現在按哪個";
@@ -981,7 +988,8 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         textRow(dashboard.next_goal || "累積資源，準備下一輪擴張"),
       ], "report-detail"),
       idleDetailSection("進階：建議行動", actionRows.length ? actionRows : [textRow("暫無建議行動")], "action-detail"),
-    );
+    ];
+    commandCenter.replaceChildren(...interleaveTextSeparators(commandCenterSections));
   }
   const fleetSummary = document.querySelector("#fleet-summary");
   if (fleetSummary) {
