@@ -54,17 +54,20 @@
         <section id="tools-panel" class="drawer-panel" data-sheet-panel="tools" aria-label="工具">
           <h2>工具 / 回放</h2>
           <section id="chronocam-panel" class="tool-card" aria-label="ChronoCam">
-            <h3>ChronoCam</h3>
+            <h3>ChronoCam：</h3>
             <div class="chrono-row"><strong>模式：</strong><span id="chronocam-mode">--</span></div>
+            <span class="text-content-separator">｜</span>
             <div class="chrono-row"><strong>觀看時間：</strong><span id="chronocam-view-time">--</span></div>
+            <span class="text-content-separator">｜</span>
             <div class="chrono-row"><strong>跟隨狀態：</strong><span id="chronocam-follow">--</span></div>
             <div class="chrono-actions">
-              <button data-command="chrono_rewind_5">回看 5s</button>
-              <button data-command="chrono_live">回到即時</button>
+              <button type="button" data-command="chrono_rewind_5">回看 5s</button>
+              <span class="text-content-separator">｜</span>
+              <button type="button" data-command="chrono_live">回到即時</button>
             </div>
           </section>
           <section id="mission-panel" class="tool-card" aria-label="任務">
-            <h3>任務紀錄</h3>
+            <h3>任務紀錄：</h3>
             <div id="mission-list"></div>
           </section>
         </section>

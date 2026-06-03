@@ -317,7 +317,7 @@ function marketSection(title, rows, tab = "overview") {
   section.className = "market-section";
   section.dataset.marketTab = tab;
   const heading = document.createElement("h3");
-  heading.textContent = title;
+  heading.textContent = `${title}：`;
   section.append(heading, document.createTextNode("\n"), ...interleaveTextSeparators(rows));
   return section;
 }
