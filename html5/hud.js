@@ -146,7 +146,7 @@ function formatModuleList(modules = []) {
 function formatInventory(inventory = {}, emptyLabel = "無貨物") {
   const parts = [];
   for (const [key, value] of Object.entries(inventory)) {
-    if (value) parts.push(`${formatWareLabel(key)}:${value}`);
+    if (value) parts.push(`${formatWareLabel(key)} ×${value}`);
   }
   return parts.length ? parts.join(" · ") : emptyLabel;
 }
@@ -165,7 +165,7 @@ function formatUnitPrice(value) {
 function formatPriceLines(prefix, prices = {}) {
   return Object.entries(prices)
     .filter(([, value]) => value)
-    .map(([ware, value]) => `${prefix} ${formatWareLabel(ware)}:${formatUnitPrice(value)}`)
+    .map(([ware, value]) => `${prefix} ${formatWareLabel(ware)} ${formatUnitPrice(value)}`)
     .join(" · ");
 }
 
