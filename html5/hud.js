@@ -374,7 +374,7 @@ function idleHomeCard(label, value, detail = "", className = "") {
   const card = document.createElement("div");
   card.className = `idle-home-card ${className}`.trim();
   const title = document.createElement("strong");
-  title.textContent = label;
+  title.textContent = `${label}：`;
   const valueNode = document.createElement("span");
   valueNode.textContent = localizeCommandCopy(value);
   card.append(title, valueNode);
@@ -403,7 +403,10 @@ function commandActionRow(action, card, onAssignmentCommand, labelPrefix, classN
   const row = document.createElement("div");
   row.className = className;
   const copy = document.createElement("span");
-  copy.innerHTML = `<strong>${localizeCommandCopy(action.label)}</strong><small>${localizeCommandCopy(action.detail || "")}</small><small>${action.expected_effect ? localizeCommandCopy(`預期效果：${action.expected_effect}`) : ""}</small>`;
+  const detailCopy = localizeCommandCopy(action.detail || "");
+  const rawExpected = String(action.expected_effect || "");
+  const expectedCopy = rawExpected ? localizeCommandCopy(rawExpected.startsWith("預期") ? rawExpected : `預期效果：${rawExpected}`) : "";
+  copy.innerHTML = `<strong>${localizeCommandCopy(action.label)}</strong>${detailCopy ? `<small>｜ ${detailCopy}</small>` : ""}${expectedCopy ? `<small>｜ ${expectedCopy}</small>` : ""}`;
   row.append(copy, fleetAssignmentButton({ ...action, risk_policy: action.risk_policy || "balanced" }, card, onAssignmentCommand, labelPrefix));
   return row;
 }
@@ -873,7 +876,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       brief.append(...briefItems.map(([label, value]) => {
         const pill = document.createElement("div");
         pill.className = "idle-brief-pill";
-        pill.innerHTML = `<strong>${label}</strong><span>${localizeCommandCopy(value)}</span>`;
+        pill.innerHTML = `<strong>${label}：</strong><span>${localizeCommandCopy(value)}</span>`;
         return pill;
       }));
       return brief;
