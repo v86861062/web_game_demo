@@ -1045,10 +1045,11 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
   }));
 
   const missions = document.querySelector("#mission-list");
-  missions.replaceChildren(...snapshot.hud.missions.map((mission) => {
+  missions.replaceChildren(...snapshot.hud.missions.map((mission, index) => {
     const row = document.createElement("div");
     row.className = `mission ${mission.completed ? "completed" : ""}`;
-    row.innerHTML = `<span>${mission.completed ? "✓" : "○"}</span><strong>${formatMissionDescription(mission.description)}</strong><small>｜ ${formatMissionReward(mission.reward)}</small>`;
+    const marker = `${index > 0 ? "— " : ""}${mission.completed ? "✓" : "○"}`;
+    row.innerHTML = `<span>${marker}</span><strong>${formatMissionDescription(mission.description)}</strong><small>｜ ${formatMissionReward(mission.reward)}</small>`;
     return row;
   }));
 
