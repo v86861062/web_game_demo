@@ -954,7 +954,15 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       const pills = briefItems.map(([label, value], index) => {
         const pill = document.createElement("div");
         pill.className = "idle-brief-pill";
-        pill.innerHTML = `<strong>${label}：</strong><span>${localizeCommandCopy(value)}</span>${index < briefItems.length - 1 ? `<span aria-hidden="true">｜</span>` : ""}`;
+        const headline = document.createElement("span");
+        headline.className = "idle-brief-pill-headline";
+        const title = document.createElement("strong");
+        title.textContent = `${label}：`;
+        headline.append(title, document.createTextNode(localizeCommandCopy(value)));
+        pill.append(headline);
+        if (index < briefItems.length - 1) {
+          pill.append(textSeparatorNode());
+        }
         return pill;
       });
       brief.append(...interleaveTextSeparators(pills));
