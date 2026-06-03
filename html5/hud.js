@@ -415,6 +415,24 @@ function commandActionRow(action, card, onAssignmentCommand, labelPrefix, classN
   return row;
 }
 
+function stripLeadingReportLabel(value, label) {
+  const text = localizeCommandCopy(String(value || "")).trim();
+  const prefixes = [
+    `${label}：`,
+    `${label}:`,
+    ...(label === "瓶頸" ? ["瓶頸變化：", "瓶頸變化:"] : []),
+    ...(label === "下一步" ? ["建議下一步：", "建議下一步:"] : []),
+    ...(label === "船塢" ? ["船塢：", "船塢:"] : []),
+    ...(label === "ChronoCam 書籤" ? ["ChronoCam 書籤：", "ChronoCam 書籤:"] : []),
+  ];
+  const prefix = prefixes.find((candidate) => text.startsWith(candidate));
+  return prefix ? text.slice(prefix.length).trim() : text;
+}
+
+function reportLabeledHtml(label, value, tag = "span") {
+  return `<strong>${label}：</strong><${tag}>${stripLeadingReportLabel(value, label)}</${tag}>`;
+}
+
 function returnHarvestCard(report = {}, onAcknowledgeOfflineReport, className = "", onSeekChronoCam) {
   const returnSummary = report.return_summary || {};
   const card = document.createElement("article");
@@ -439,7 +457,7 @@ function returnHarvestCard(report = {}, onAcknowledgeOfflineReport, className = 
   metrics.append(...metricItems.map(([label, value]) => {
     const metric = document.createElement("div");
     metric.className = "return-harvest-metric";
-    metric.innerHTML = `<strong>${label}</strong><span>${value}</span>`;
+    metric.innerHTML = reportLabeledHtml(label, value);
     return metric;
   }));
 
@@ -448,7 +466,7 @@ function returnHarvestCard(report = {}, onAcknowledgeOfflineReport, className = 
     : "";
   const bookmarkActions = document.createElement("div");
   bookmarkActions.className = "chronocam-bookmark-actions";
-  for (const bookmark of (report.chronocam_bookmarks || []).slice(0, 4)) {
+  const bookmarkButtons = (report.chronocam_bookmarks || []).slice(0, 4).map((bookmark) => {
     const seconds = Number(bookmark.time_seconds || 0);
     const button = document.createElement("button");
     button.type = "button";
@@ -458,8 +476,9 @@ function returnHarvestCard(report = {}, onAcknowledgeOfflineReport, className = 
     button.disabled = !Number.isFinite(seconds) || seconds < 0;
     button.title = `${bookmark.label || "ChronoCam 書籤"} @ ${formatSeconds(seconds)}`;
     button.addEventListener("click", () => onSeekChronoCam?.(seconds, bookmark));
-    bookmarkActions.append(button);
-  }
+    return button;
+  });
+  bookmarkActions.append(...interleaveTextSeparators(bookmarkButtons, " "));
 
   const footnote = document.createElement("small");
   footnote.className = "return-harvest-footnote";
@@ -471,7 +490,7 @@ function returnHarvestCard(report = {}, onAcknowledgeOfflineReport, className = 
     formatReportBestShip(report),
     formatReportShipyard(report),
     formatReportRecommendation(report),
-    `風險事件:${report.pirate_incidents?.length || 0} · ${Number(report.capped_seconds || 0) > 0 ? `離線上限略過:${formatSeconds(report.capped_seconds)}` : "未受離線上限影響"}`,
+    `風險事件：${report.pirate_incidents?.length || 0} · ${Number(report.capped_seconds || 0) > 0 ? `離線上限略過：${formatSeconds(report.capped_seconds)}` : "未受離線上限影響"}`,
   ].filter(Boolean).join(" · ");
 
   const detailPanel = document.createElement("section");
@@ -483,17 +502,17 @@ function returnHarvestCard(report = {}, onAcknowledgeOfflineReport, className = 
       <button type="button" class="return-report-detail-close">關閉</button>
     </div>
     <div class="return-report-detail-body">
-      <p><strong>營運結算</strong>${formatSeconds(report.simulated_seconds)} · ${formatSignedCredits(report.net_credits)} · 貨物 ${formatInventory(report.delivered_cargo)}</p>
-      <p><strong>最大收益</strong>${returnSummary.top_gain || formatReportBestShip(report)}</p>
-      <p><strong>最大損失</strong>${returnSummary.top_loss || "最大損失：無貨損"}</p>
-      <p><strong>瓶頸變化</strong>${returnSummary.bottleneck_change || formatReportBottleneck(report)}</p>
-      <p><strong>下一步</strong>${returnSummary.next_best_action || formatReportRecommendation(report)}</p>
-      <p><strong>船塢解鎖進度</strong>${returnSummary.unlock_progress || formatReportShipyard(report)}</p>
-      <p><strong>風險摘要</strong>${returnSummary.risk_summary || `風險摘要：${report.pirate_incidents?.length || 0} 起事件`}</p>
-      <p><strong>最佳艦</strong>${formatReportBestShip(report)}</p>
-      <p><strong>船塢</strong>${formatReportShipyard(report)}</p>
-      <p><strong>離線上限</strong>${Number(report.capped_seconds || 0) > 0 ? `離線上限略過 ${formatSeconds(report.capped_seconds)}` : "未受離線上限影響"}</p>
-      <p><strong>ChronoCam 書籤</strong>${bookmarkSummary || "ChronoCam 書籤：本輪沒有可回看書籤"}</p>
+      <p>${reportLabeledHtml("營運結算", `${formatSeconds(report.simulated_seconds)} · ${formatSignedCredits(report.net_credits)} · 貨物 ${formatInventory(report.delivered_cargo)}`)}</p>
+      <p>${reportLabeledHtml("最大收益", returnSummary.top_gain || formatReportBestShip(report))}</p>
+      <p>${reportLabeledHtml("最大損失", returnSummary.top_loss || "最大損失：無貨損")}</p>
+      <p>${reportLabeledHtml("瓶頸變化", returnSummary.bottleneck_change || formatReportBottleneck(report))}</p>
+      <p>${reportLabeledHtml("下一步", returnSummary.next_best_action || formatReportRecommendation(report))}</p>
+      <p>${reportLabeledHtml("船塢解鎖進度", returnSummary.unlock_progress || formatReportShipyard(report))}</p>
+      <p>${reportLabeledHtml("風險摘要", returnSummary.risk_summary || `風險摘要：${report.pirate_incidents?.length || 0} 起事件`)}</p>
+      <p>${reportLabeledHtml("最佳艦", formatReportBestShip(report))}</p>
+      <p>${reportLabeledHtml("船塢", formatReportShipyard(report))}</p>
+      <p>${reportLabeledHtml("離線上限", Number(report.capped_seconds || 0) > 0 ? `離線上限略過 ${formatSeconds(report.capped_seconds)}` : "未受離線上限影響")}</p>
+      <p>${reportLabeledHtml("ChronoCam 書籤", bookmarkSummary || "ChronoCam 書籤：本輪沒有可回看書籤")}</p>
     </div>
   `;
 
@@ -518,7 +537,7 @@ function returnHarvestCard(report = {}, onAcknowledgeOfflineReport, className = 
 
   const actions = document.createElement("div");
   actions.className = "return-harvest-actions";
-  actions.append(detailButton, claim);
+  actions.append(detailButton, document.createTextNode(" "), claim);
 
   card.append(header, metrics, ...(bookmarkActions.childElementCount ? [bookmarkActions] : []), footnote, actions, detailPanel);
   return card;
@@ -550,13 +569,13 @@ function reportHistoryRow(summary = {}) {
       <strong>歷史離線報告</strong>
       <button type="button" class="report-history-detail-close">收合</button>
     </div>
-    <p><strong>最大收益</strong>${returnSummary.top_gain || summary.headline || "最大收益：等待紀錄"}</p>
-    <p><strong>最大損失</strong>${returnSummary.top_loss || "最大損失：歷史摘要未保留細項"}</p>
-    <p><strong>瓶頸變化</strong>${returnSummary.bottleneck_change || "瓶頸變化：歷史摘要未保留細項"}</p>
-    <p><strong>下一步</strong>${returnSummary.next_best_action || "建議下一步：查看當前瓶頸"}</p>
-    <p><strong>船塢解鎖進度</strong>${returnSummary.unlock_progress || "船塢解鎖進度：歷史摘要未保留細項"}</p>
-    <p><strong>風險摘要</strong>${returnSummary.risk_summary || "風險摘要：歷史摘要未保留細項"}</p>
-    <p><strong>ChronoCam 書籤</strong>${bookmarkSummary}</p>
+    <p>${reportLabeledHtml("最大收益", returnSummary.top_gain || summary.headline || "最大收益：等待紀錄")}</p>
+    <p>${reportLabeledHtml("最大損失", returnSummary.top_loss || "最大損失：歷史摘要未保留細項")}</p>
+    <p>${reportLabeledHtml("瓶頸變化", returnSummary.bottleneck_change || "瓶頸變化：歷史摘要未保留細項")}</p>
+    <p>${reportLabeledHtml("下一步", returnSummary.next_best_action || "建議下一步：查看當前瓶頸")}</p>
+    <p>${reportLabeledHtml("船塢解鎖進度", returnSummary.unlock_progress || "船塢解鎖進度：歷史摘要未保留細項")}</p>
+    <p>${reportLabeledHtml("風險摘要", returnSummary.risk_summary || "風險摘要：歷史摘要未保留細項")}</p>
+    <p>${reportLabeledHtml("ChronoCam 書籤", bookmarkSummary)}</p>
   `;
   button.addEventListener("click", () => {
     globalThis.__starboundReportHistoryDetailOpenId = historyId;
@@ -568,7 +587,7 @@ function reportHistoryRow(summary = {}) {
     }
     panel.classList.remove("open");
   });
-  row.append(button, panel);
+  row.append(document.createTextNode(" "), button, document.createTextNode(" "), panel);
   return row;
 }
 
@@ -601,21 +620,21 @@ function returnHarvestHandoffCard(action, card, dashboard = {}, reportHistory = 
   const copy = document.createElement("span");
   copy.innerHTML = isProcessing ? `
     <strong>瓶頸處理中 · 已派工</strong>
-    <small>剛剛的離線報告已收進紀錄${latestHistory?.net_credits !== undefined ? ` · ${formatSignedCredits(latestHistory.net_credits)}` : ""}</small>
-    <small>已派工：${card?.name || "艦隊"} → ${assignmentAction.label || "補船塢"} · ${relief}</small>
-    <small>預計改善：${expectedEffect}</small>
-    <small>${incomeLine}</small>
-    <small>${nextGoalLine}</small>
+    <small>｜ 剛剛的離線報告已收進紀錄${latestHistory?.net_credits !== undefined ? ` · ${formatSignedCredits(latestHistory.net_credits)}` : ""}</small>
+    <small>｜ 已派工：${card?.name || "艦隊"} → ${assignmentAction.label || "補船塢"} · ${relief}</small>
+    <small>｜ 預計改善：${expectedEffect}</small>
+    <small>｜ ${incomeLine}</small>
+    <small>｜ ${nextGoalLine}</small>
   ` : `
     <strong>成果已收取 · 下一步：修瓶頸</strong>
-    <small>剛剛的離線報告已收進紀錄${latestHistory?.net_credits !== undefined ? ` · ${formatSignedCredits(latestHistory.net_credits)}` : ""}</small>
-    <small>瓶頸：${bottleneck}</small>
-    <small>預期效果：${expectedEffect}</small>
+    <small>｜ 剛剛的離線報告已收進紀錄${latestHistory?.net_credits !== undefined ? ` · ${formatSignedCredits(latestHistory.net_credits)}` : ""}</small>
+    <small>｜ 瓶頸：${bottleneck}</small>
+    <small>｜ 預期效果：${expectedEffect}</small>
   `;
 
   const button = fleetAssignmentButton(assignmentAction, card, onAssignmentCommand, "成果已收取後修瓶頸");
   button.textContent = `${isProcessing ? "調整瓶頸" : "修瓶頸"}：${assignmentAction.label || "補船塢"}`;
-  handoff.append(copy, button);
+  handoff.append(copy, document.createTextNode(" "), button);
   return handoff;
 }
 
