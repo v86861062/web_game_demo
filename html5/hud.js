@@ -892,7 +892,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       copy.innerHTML = `<strong>投資選擇：補船塢 / 採礦補給 / 最佳交易</strong><small>｜ ${localizeCommandCopy(investmentChoices[0]?.expected_effect || "點選後直接派工並改善擴張瓶頸")}</small>`;
       const buttons = document.createElement("div");
       buttons.className = "expansion-investment-buttons";
-      buttons.append(...interleaveTextSeparators(investmentChoices.map((choice) => investmentButtonForChoice(choice, true)), " "));
+      buttons.append(...interleaveTextSeparators(investmentChoices.map((choice) => investmentButtonForChoice(choice, true)), "｜"));
       row.append(copy, textSeparatorNode(), buttons);
       return row;
     };
