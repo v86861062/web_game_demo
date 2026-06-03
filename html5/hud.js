@@ -1048,7 +1048,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
   missions.replaceChildren(...snapshot.hud.missions.map((mission) => {
     const row = document.createElement("div");
     row.className = `mission ${mission.completed ? "completed" : ""}`;
-    row.innerHTML = `<span>${mission.completed ? "✓" : "○"}</span><strong>${formatMissionDescription(mission.description)}</strong><small>${formatMissionReward(mission.reward)}</small>`;
+    row.innerHTML = `<span>${mission.completed ? "✓" : "○"}</span><strong>${formatMissionDescription(mission.description)}</strong><small>｜ ${formatMissionReward(mission.reward)}</small>`;
     return row;
   }));
 
