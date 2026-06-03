@@ -1152,13 +1152,13 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       summary.textContent = "進階派工 / 手動覆寫";
       const actions = document.createElement("div");
       actions.className = "fleet-actions";
-      actions.append(...interleaveSemanticSeparators(FLEET_ACTIONS.map((action) => fleetAssignmentButton(action, card, onAssignmentCommand, ship.name))));
+      actions.append(...interleaveSemanticSeparators(FLEET_ACTIONS.map((action) => fleetAssignmentButton(action, card, onAssignmentCommand, ship.name))), textSeparatorNode("｜"));
       details.append(summary, textSeparatorNode("｜"), actions);
       row.append(details);
     }
     return row;
   });
-  ships.replaceChildren(...interleaveTextSeparators(shipRows, "｜\n"));
+  ships.replaceChildren(...interleaveTextSeparators(shipRows, "\n"));
 
   const missions = document.querySelector("#mission-list");
   const missionRows = snapshot.hud.missions.map((mission) => {
