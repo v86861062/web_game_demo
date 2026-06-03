@@ -1153,7 +1153,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       const actions = document.createElement("div");
       actions.className = "fleet-actions";
       actions.append(...interleaveSemanticSeparators(FLEET_ACTIONS.map((action) => fleetAssignmentButton(action, card, onAssignmentCommand, ship.name))));
-      details.append(summary, document.createTextNode("\n"), actions);
+      details.append(summary, textSeparatorNode("｜"), actions, textSeparatorNode("｜"));
       row.append(details);
     }
     return row;
