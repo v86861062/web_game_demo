@@ -1207,6 +1207,12 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       `;
       return row;
     });
+    if (!historyRows.length) {
+      historyRows.push(Object.assign(document.createElement("div"), {
+        className: "market-row history-row history-empty",
+        textContent: "尚無市場歷史紀錄。",
+      }));
+    }
 
     const alertRows = (snapshot.market?.alerts || []).map((alert) => {
       const row = document.createElement("div");
@@ -1249,7 +1255,9 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
     } else {
       reportRows.push(Object.assign(document.createElement("div"), {
         className: "market-row report-row offline-report-empty",
-        textContent: "目前沒有未讀離線報告。最近收益紀錄如下。",
+        textContent: (snapshot.report_history || []).length
+          ? "目前沒有未讀離線報告。最近收益紀錄如下。"
+          : "目前沒有未讀離線報告。尚無收益紀錄。",
       }));
     }
     for (const summary of snapshot.report_history || []) {
