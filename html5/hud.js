@@ -329,7 +329,12 @@ function marketSection(title, rows, tab = "overview") {
   const heading = document.createElement("h3");
   heading.textContent = `${title}：`;
   const compactRows = rows.map((row) => trimLeadingWhitespaceText(row));
-  section.append(heading, textSeparatorNode(), ...interleaveSemanticSeparators(compactRows));
+  const [firstRow, ...remainingRows] = compactRows;
+  section.append(heading, textSeparatorNode());
+  if (firstRow) {
+    section.append(firstRow);
+  }
+  section.append(...remainingRows.flatMap((row) => [textSeparatorNode("\n｜\n"), row]));
   return section;
 }
 
