@@ -927,7 +927,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       const homeCards = [
         idleHomeCard(
           "收益",
-          `估計收益 ${Math.round(dashboard.credits_per_hour_estimate || 0)}cr/h`,
+          `估計 ${Math.round(dashboard.credits_per_hour_estimate || 0)}cr/h`,
           `${formatResourceRate(rates.ore_per_hour, "ore")} · ${formatResourceRate(rates.metal_per_hour, "metal")} · ${dashboard.income_estimate_basis || "等待第一筆交易"}`,
         ),
         idleHomeCard(
