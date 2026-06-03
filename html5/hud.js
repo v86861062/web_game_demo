@@ -674,7 +674,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       const row = document.createElement("div");
       row.className = "command-center-row available-contract-row";
       const copy = document.createElement("span");
-      copy.innerHTML = `<strong>${localizeCommandCopy(contract.label || "可承接合約")}</strong><small>${localizeCommandCopy(`${contract.contract_type || "合約"} · ${contract.route || "待選航線"} · ${contract.reward_preview || "獎勵待估"}`)}</small><small>${localizeCommandCopy(`${contract.cadence_summary || "等待節奏"} · ${contract.risk_summary || "風險待評估"}`)}</small><small>${localizeCommandCopy(contract.expected_effect || "預期效果：累積擴張資金")}</small>`;
+      copy.innerHTML = `<strong>${localizeCommandCopy(contract.label || "可承接合約")}</strong><small>｜ ${localizeCommandCopy(`${contract.contract_type || "合約"} · ${contract.route || "待選航線"} · ${contract.reward_preview || "獎勵待估"}`)}</small><small>｜ ${localizeCommandCopy(`${contract.cadence_summary || "等待節奏"} · ${contract.risk_summary || "風險待評估"}`)}</small><small>｜ ${localizeCommandCopy(contract.expected_effect || "預期效果：累積擴張資金")}</small>`;
       const assignment = commandAssignment(contract.recommended_assignment);
       const card = fleetCards.find((fleetCard) => idValue(fleetCard.ship_id, "ship") === idValue(contract.target_ship_id, "ship")) || fleetCards[0];
       const button = fleetAssignmentButton({
@@ -686,7 +686,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         risk_policy: assignment === "escort_high_value_trade" ? "safe" : "balanced",
       }, card, onAssignmentCommand, "承接合約");
       button.classList.add("available-contract-button");
-      row.append(copy, button);
+      row.append(copy, document.createTextNode(" "), button);
       return row;
     });
     const contractPayoffRows = (expansionCadence.contract_payoff_history || []).slice(0, 4).map((payoff) => textRow(
@@ -796,11 +796,11 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       const row = document.createElement("div");
       row.className = "expansion-investment-quick";
       const copy = document.createElement("span");
-      copy.innerHTML = `<strong>投資選擇：補船塢 / 採礦補給 / 最佳交易</strong><small>${localizeCommandCopy(investmentChoices[0]?.expected_effect || "點選後直接派工並改善擴張瓶頸")}</small>`;
+      copy.innerHTML = `<strong>投資選擇：補船塢 / 採礦補給 / 最佳交易</strong><small>｜ ${localizeCommandCopy(investmentChoices[0]?.expected_effect || "點選後直接派工並改善擴張瓶頸")}</small>`;
       const buttons = document.createElement("div");
       buttons.className = "expansion-investment-buttons";
       buttons.append(...investmentChoices.map((choice) => investmentButtonForChoice(choice, true)));
-      row.append(copy, buttons);
+      row.append(copy, document.createTextNode(" "), buttons);
       return row;
     };
     const investmentQuickRow = makeInvestmentQuickRow();
@@ -808,8 +808,8 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       const row = document.createElement("div");
       row.className = "command-center-action expansion-investment-action";
       const copy = document.createElement("span");
-      copy.innerHTML = `<strong>${localizeCommandCopy(`投資選擇：${choice.label || "站點投資"}`)}</strong><small>${localizeCommandCopy(`${choice.target || "下一輪擴張"} · ${choice.cost_summary || "材料待評估"}`)}</small><small>${localizeCommandCopy(`預期效果：${choice.expected_effect || "改善擴張瓶頸"}`)}</small>`;
-      row.append(copy, investmentButtonForChoice(choice));
+      copy.innerHTML = `<strong>${localizeCommandCopy(`投資選擇：${choice.label || "站點投資"}`)}</strong><small>｜ ${localizeCommandCopy(`${choice.target || "下一輪擴張"} · ${choice.cost_summary || "材料待評估"}`)}</small><small>｜ ${localizeCommandCopy(`預期效果：${choice.expected_effect || "改善擴張瓶頸"}`)}</small>`;
+      row.append(copy, document.createTextNode(" "), investmentButtonForChoice(choice));
       return row;
     });
     const unlockReport = expansionCadence.sector_unlock_report || {};
