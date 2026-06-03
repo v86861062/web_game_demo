@@ -318,7 +318,7 @@ function marketSection(title, rows, tab = "overview") {
   section.dataset.marketTab = tab;
   const heading = document.createElement("h3");
   heading.textContent = title;
-  section.append(heading, ...rows);
+  section.append(heading, document.createTextNode("\n"), ...interleaveTextSeparators(rows));
   return section;
 }
 
@@ -327,7 +327,7 @@ function commandCenterSection(title, rows, className = "") {
   section.className = `command-center-section ${className}`.trim();
   const heading = document.createElement("h3");
   heading.textContent = title;
-  section.append(heading, ...rows);
+  section.append(heading, document.createTextNode("\n"), ...interleaveTextSeparators(rows));
   return section;
 }
 
@@ -398,8 +398,8 @@ function idleDetailSection(title, rows, className = "", open = false) {
   summary.textContent = title;
   const body = document.createElement("div");
   body.className = "idle-detail-body";
-  body.append(...rows);
-  section.append(summary, body);
+  body.append(...interleaveTextSeparators(rows));
+  section.append(summary, document.createTextNode("\n"), body);
   return section;
 }
 
@@ -411,7 +411,7 @@ function commandActionRow(action, card, onAssignmentCommand, labelPrefix, classN
   const rawExpected = String(action.expected_effect || "");
   const expectedCopy = rawExpected ? localizeCommandCopy(rawExpected.startsWith("預期") ? rawExpected : `預期效果：${rawExpected}`) : "";
   copy.innerHTML = `<strong>${localizeCommandCopy(action.label)}</strong>${detailCopy ? `<small>｜ ${detailCopy}</small>` : ""}${expectedCopy ? `<small>｜ ${expectedCopy}</small>` : ""}`;
-  row.append(copy, fleetAssignmentButton({ ...action, risk_policy: action.risk_policy || "balanced" }, card, onAssignmentCommand, labelPrefix));
+  row.append(copy, document.createTextNode(" "), fleetAssignmentButton({ ...action, risk_policy: action.risk_policy || "balanced" }, card, onAssignmentCommand, labelPrefix));
   return row;
 }
 
@@ -755,7 +755,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       const row = document.createElement("div");
       row.className = "command-center-action contract-type-unlock-row";
       const copy = document.createElement("span");
-      copy.innerHTML = `<strong>${localizeCommandCopy(`${unlock.contract_type || "合約專精解鎖"} · ${unlock.status || "蒐集資料中"}`)}</strong><small>${localizeCommandCopy(`${unlock.unlock_summary || "等待更多成果樣本"} · ${Math.round(unlock.progress_percent || 0)}%`)}</small><small>${localizeCommandCopy(unlock.expected_effect || "預期效果：依合約類型解鎖投資分支")}</small><small>${localizeCommandCopy(unlock.active_modifier || "實際效果：等待專精樣本啟用")}</small>`;
+      copy.innerHTML = `<strong>${localizeCommandCopy(`${unlock.contract_type || "合約專精解鎖"} · ${unlock.status || "蒐集資料中"}`)}</strong><small>｜ ${localizeCommandCopy(`${unlock.unlock_summary || "等待更多成果樣本"} · ${Math.round(unlock.progress_percent || 0)}%`)}</small><small>｜ ${localizeCommandCopy(unlock.expected_effect || "預期效果：依合約類型解鎖投資分支")}</small><small>｜ ${localizeCommandCopy(unlock.active_modifier || "實際效果：等待專精樣本啟用")}</small>`;
       const assignment = commandAssignment(unlock.recommended_assignment);
       const card = fleetCards.find((fleetCard) => idValue(fleetCard.ship_id, "ship") === idValue(unlock.target_ship_id, "ship")) || fleetCards[0];
       const button = fleetAssignmentButton({
@@ -768,7 +768,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         risk_policy: assignment === "escort_high_value_trade" ? "safe" : "balanced",
       }, card, onAssignmentCommand, "合約專精解鎖");
       button.classList.add("contract-type-unlock-button");
-      row.append(copy, button);
+      row.append(copy, document.createTextNode(" "), button);
       return row;
     });
     const contractMilestoneRows = (expansionCadence.contract_milestones || []).slice(0, 3).map((milestone) => {
@@ -786,7 +786,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
           type: "ClaimContractMilestone",
           target: Math.round(milestone.target || 0),
         }, `領取合約獎勵 ${Math.round(milestone.target || 0)} 趟`));
-        row.append(button);
+        row.append(document.createTextNode(" "), button);
       }
       return row;
     });
@@ -822,7 +822,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       copy.innerHTML = `<strong>投資選擇：補船塢 / 採礦補給 / 最佳交易</strong><small>｜ ${localizeCommandCopy(investmentChoices[0]?.expected_effect || "點選後直接派工並改善擴張瓶頸")}</small>`;
       const buttons = document.createElement("div");
       buttons.className = "expansion-investment-buttons";
-      buttons.append(...investmentChoices.map((choice) => investmentButtonForChoice(choice, true)));
+      buttons.append(...interleaveTextSeparators(investmentChoices.map((choice) => investmentButtonForChoice(choice, true)), " "));
       row.append(copy, document.createTextNode(" "), buttons);
       return row;
     };
@@ -1020,16 +1020,17 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       ["瓶頸處理", `${dashboard.bottlenecks_in_progress ?? 0}/${(dashboard.bottlenecks || []).length || 0}`],
       ["瓶頸", dashboard.current_bottleneck || "--"],
     ];
-    fleetSummary.replaceChildren(...kpis.map(([label, value]) => {
+    const fleetKpiRows = kpis.map(([label, value]) => {
       const row = document.createElement("div");
       row.className = "fleet-kpi";
       row.innerHTML = `<strong>${label}：</strong><span>${localizeCommandCopy(value)}</span>`;
       return row;
-    }));
+    });
+    fleetSummary.replaceChildren(...interleaveTextSeparators(fleetKpiRows));
   }
   const fleetAlerts = document.querySelector("#fleet-alerts");
   if (fleetAlerts) {
-    fleetAlerts.replaceChildren(...(snapshot.alerts || []).slice(0, 3).map((alert) => {
+    const alertRows = (snapshot.alerts || []).slice(0, 3).map((alert) => {
       const row = document.createElement("div");
       row.className = "fleet-alert";
       const message = document.createElement("span");
@@ -1039,10 +1040,11 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       if (suggested.card) {
         const button = fleetAssignmentButton(suggested, suggested.card, onAssignmentCommand, "一鍵處理");
         button.textContent = `一鍵處理：${suggested.label}`;
-        row.append(button);
+        row.append(document.createTextNode(" "), button);
       }
       return row;
-    }));
+    });
+    fleetAlerts.replaceChildren(...interleaveTextSeparators(alertRows));
   }
   ships.replaceChildren(...snapshot.hud.ships.map((ship, index) => {
     const row = document.createElement("div");
@@ -1067,8 +1069,8 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       summary.textContent = "進階派工 / 手動覆寫";
       const actions = document.createElement("div");
       actions.className = "fleet-actions";
-      actions.append(...FLEET_ACTIONS.map((action) => fleetAssignmentButton(action, card, onAssignmentCommand, ship.name)));
-      details.append(summary, actions);
+      actions.append(...interleaveTextSeparators(FLEET_ACTIONS.map((action) => fleetAssignmentButton(action, card, onAssignmentCommand, ship.name)), " "));
+      details.append(summary, document.createTextNode("\n"), actions);
       row.append(details);
     }
     return row;
@@ -1165,9 +1167,10 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         riskActions.append(fleetAssignmentButton({ label: "派巡邏", assignment: "patrol_route_risk", risk_policy: "safe", hint: risk.expected_effect }, patrolCard, onAssignmentCommand, "風險航線"));
       }
       if (escortCard) {
+        if (riskActions.childNodes.length) riskActions.append(document.createTextNode(" "));
         riskActions.append(fleetAssignmentButton({ label: "護航交易", assignment: "escort_high_value_trade", risk_policy: "balanced", hint: risk.escort_hint }, escortCard, onAssignmentCommand, "風險航線"));
       }
-      row.append(riskActions);
+      row.append(document.createTextNode(" "), riskActions);
       return row;
     });
 
@@ -1218,7 +1221,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         <strong>${option.station}</strong>
         <span>${formatOfferSide(option.action)} ${formatWareLabel(option.ware)} · 數量 ${option.amount} · 預期利潤 ${formatCredits(option.expected_profit, { signed: true })}</span>
       `;
-      row.append(button);
+      row.append(document.createTextNode(" "), button);
       return row;
     });
 
@@ -1259,7 +1262,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         <small>升級後：${upgrade.next_value || "--"} · ${upgrade.delta_value || ""}</small>
         <small>${upgrade.expected_effect || "預期效果：購買後立即提升艦隊營運效率"}</small>
       `;
-      row.append(button);
+      row.append(document.createTextNode(" "), button);
       return row;
     });
 
@@ -1286,7 +1289,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       return row;
     });
 
-    market.replaceChildren(
+    const marketSections = [
       marketSection("勢力態勢", factionPressureRows, "overview"),
       routeRow,
       marketSection("派系錢包", factionRows, "overview"),
@@ -1301,7 +1304,8 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       marketSection("離線報告", reportRows.length ? reportRows : [Object.assign(document.createElement("div"), { className: "market-row", textContent: "目前沒有未讀離線報告。" })], "reports"),
       marketSection("市場歷史", historyRows, "stations"),
       marketSection("站點", stationRows, "stations"),
-    );
+    ];
+    market.replaceChildren(...interleaveTextSeparators(marketSections));
   }
 
   const chrono = snapshot.chronocam || {};
