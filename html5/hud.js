@@ -716,7 +716,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         risk_policy: assignment === "escort_high_value_trade" ? "safe" : "balanced",
       }, card, onAssignmentCommand, "承接合約");
       button.classList.add("available-contract-button");
-      row.append(copy, document.createTextNode(" "), button);
+      row.append(copy, textSeparatorNode(), button);
       return row;
     });
     const contractPayoffRows = (expansionCadence.contract_payoff_history || []).slice(0, 4).map((payoff) => textRow(
@@ -775,7 +775,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
         risk_policy: assignment === "escort_high_value_trade" ? "safe" : "balanced",
       }, card, onAssignmentCommand, "合約專精解鎖");
       button.classList.add("contract-type-unlock-button");
-      row.append(copy, document.createTextNode(" "), button);
+      row.append(copy, textSeparatorNode(), button);
       return row;
     });
     const contractMilestoneRows = (expansionCadence.contract_milestones || []).slice(0, 3).map((milestone) => {
