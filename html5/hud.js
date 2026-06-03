@@ -350,8 +350,12 @@ function marketSection(title, rows, tab = "overview") {
   heading.textContent = `${title}：`;
   const compactRows = rows.map((row) => normalizeMarketRowText(trimLeadingWhitespaceText(row)));
   const [firstRow, ...remainingRows] = compactRows;
-  const headingSeparator = firstRow?.classList?.contains("alert-row") ? "\n｜\n" : "｜";
-  section.append(heading, textSeparatorNode(headingSeparator));
+  const headingSeparator = firstRow?.classList?.contains("alert-row") ? "" : "｜";
+  if (headingSeparator) {
+    section.append(heading, textSeparatorNode(headingSeparator));
+  } else {
+    section.append(heading);
+  }
   if (firstRow) {
     section.append(firstRow);
   }
