@@ -426,7 +426,7 @@ function interleaveSemanticSeparators(nodes, separator = "｜") {
   return nodes.flatMap((node, index) => (index === 0 ? [node] : [textSeparatorNode(separator), node]));
 }
 
-function interleaveSemanticLineBreaks(nodes, separator = "｜") {
+function interleaveSemanticLineBreaks(nodes, separator = "\n｜") {
   return nodes.flatMap((node, index) => (
     index === 0 ? [node] : [textSeparatorNode(separator), document.createTextNode("\n"), node]
   ));
