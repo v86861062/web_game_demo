@@ -1,7 +1,7 @@
-import init, { StarboundHeadlessEngine } from "./out/starbound_orders.js?v=html5-copy-20260603";
-import { createRenderer } from "./render_canvas.js?v=html5-copy-20260603";
-import { installInput } from "./input.js?v=html5-copy-20260603";
-import { renderHud } from "./hud.js?v=html5-copy-20260603";
+import init, { StarboundHeadlessEngine } from "./out/starbound_orders.js?v=html5-copy-20260603-fleet-row";
+import { createRenderer } from "./render_canvas.js?v=html5-copy-20260603-fleet-row";
+import { installInput } from "./input.js?v=html5-copy-20260603-fleet-row";
+import { renderHud } from "./hud.js?v=html5-copy-20260603-fleet-row";
 
 const TICK_SECONDS = 1 / 30;
 const COMMAND_PROTOCOL_VERSION = 1;
