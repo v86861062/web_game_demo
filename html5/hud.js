@@ -431,11 +431,12 @@ function interleaveSemanticLineBreaks(nodes, separator = "｜") {
 function idleHomeCard(label, value, detail = "", className = "") {
   const card = document.createElement("div");
   card.className = `idle-home-card ${className}`.trim();
+  const headline = document.createElement("span");
+  headline.className = "idle-home-card-headline";
   const title = document.createElement("strong");
   title.textContent = `${label}：`;
-  const valueNode = document.createElement("span");
-  valueNode.textContent = localizeCommandCopy(value);
-  card.append(title, textSeparatorNode(), valueNode);
+  headline.append(title, document.createTextNode(localizeCommandCopy(value)));
+  card.append(headline);
   if (detail) {
     const detailNode = document.createElement("small");
     detailNode.textContent = `｜ ${localizeCommandCopy(detail)}`;
