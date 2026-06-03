@@ -1057,7 +1057,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
     });
     fleetAlerts.replaceChildren(...interleaveTextSeparators(alertRows));
   }
-  ships.replaceChildren(...snapshot.hud.ships.map((ship, index) => {
+  const shipRows = snapshot.hud.ships.map((ship, index) => {
     const row = document.createElement("div");
     row.className = "ship-row";
     row.dataset.shipIndex = String(index);
@@ -1085,7 +1085,8 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       row.append(details);
     }
     return row;
-  }));
+  });
+  ships.replaceChildren(...interleaveTextSeparators(shipRows, "\n｜\n"));
 
   const missions = document.querySelector("#mission-list");
   const missionRows = snapshot.hud.missions.map((mission) => {
