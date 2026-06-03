@@ -465,7 +465,14 @@ function commandActionRow(action, card, onAssignmentCommand, labelPrefix, classN
   const detailCopy = localizeCommandCopy(action.detail || "");
   const rawExpected = String(action.expected_effect || "");
   const expectedCopy = rawExpected ? localizeCommandCopy(rawExpected.startsWith("預期") ? rawExpected : `預期效果：${rawExpected}`) : "";
-  copy.innerHTML = `<strong>${localizeCommandCopy(action.label)}</strong>${detailCopy ? `<small>｜ ${detailCopy}</small>` : ""}${expectedCopy ? `<small>｜ ${expectedCopy}</small>` : ""}`;
+  const segments = [localizeCommandCopy(action.label)];
+  if (detailCopy) {
+    segments.push(detailCopy);
+  }
+  if (expectedCopy) {
+    segments.push(expectedCopy);
+  }
+  copy.textContent = segments.join("｜ ");
   row.append(copy, textSeparatorNode(), fleetAssignmentButton({ ...action, risk_policy: action.risk_policy || "balanced" }, card, onAssignmentCommand, labelPrefix));
   return row;
 }
