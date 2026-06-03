@@ -170,7 +170,7 @@ function formatPriceLines(prefix, prices = {}) {
 }
 
 function formatTags(label, values = []) {
-  return values.length ? `${label} ${values.join(",")}` : "";
+  return values.length ? `${label}：${values.map(formatWareLabel).join("、")}` : "";
 }
 
 function formatTradePlan(plan) {
@@ -722,7 +722,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       const row = document.createElement("section");
       row.className = "command-center-kpi contract-tuning-summary";
       const title = document.createElement("strong");
-      title.textContent = "合約調校摘要";
+      title.textContent = "合約調校摘要：";
       const detail = document.createElement("small");
       detail.textContent = localizeCommandCopy(`交易：${tradeLine} · 護航：風險溢價 ${compactRiskSummary(riskPremiumLine)} · 採礦：低於護航 ${compactMiningSummary(miningGapLine)}`);
       row.append(title, detail);
