@@ -385,6 +385,12 @@ function interleaveSemanticSeparators(nodes, separator = "｜") {
   return nodes.flatMap((node, index) => (index === 0 ? [node] : [textSeparatorNode(separator), node]));
 }
 
+function interleaveSemanticLineBreaks(nodes, separator = "｜") {
+  return nodes.flatMap((node, index) => (
+    index === 0 ? [node] : [textSeparatorNode(separator), document.createTextNode("\n"), node]
+  ));
+}
+
 function idleHomeCard(label, value, detail = "", className = "") {
   const card = document.createElement("div");
   card.className = `idle-home-card ${className}`.trim();
@@ -1325,7 +1331,7 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
       marketSection("市場歷史", historyRows, "stations"),
       marketSection("站點", stationRows, "stations"),
     ];
-    market.replaceChildren(...interleaveSemanticSeparators(marketSections));
+    market.replaceChildren(...interleaveSemanticLineBreaks(marketSections));
   }
 
   const chrono = snapshot.chronocam || {};
