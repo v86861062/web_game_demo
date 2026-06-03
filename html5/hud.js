@@ -1086,7 +1086,12 @@ export function renderHud(snapshot, { onTradeCommand, onUpgradeCommand, onAssign
     const fleetKpiRows = kpis.map(([label, value]) => {
       const row = document.createElement("div");
       row.className = "fleet-kpi";
-      row.innerHTML = `<strong>${label}：</strong><span>${localizeCommandCopy(value)}</span>`;
+      const headline = document.createElement("span");
+      headline.className = "fleet-kpi-headline";
+      const title = document.createElement("strong");
+      title.textContent = `${label}：`;
+      headline.append(title, document.createTextNode(localizeCommandCopy(value)));
+      row.append(headline);
       return row;
     });
     fleetSummary.replaceChildren(...interleaveTextSeparators(fleetKpiRows));
